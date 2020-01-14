@@ -1,14 +1,16 @@
+#!env python
+import sys
+from fontTools.ttLib import TTFont
 from fontFeatures.tt2feaLib import unparse
+from argparse import ArgumentParser
 
-def main():
-    import sys
-    from fontTools.ttLib import TTFont
-    if not len(sys.argv) > 1:
-        raise Exception('font-file argument missing')
-    fontPath = sys.argv[1]
-    font = TTFont(fontPath)
-    ff = unparse(font)
-    print(ff.asFea())
+parser = ArgumentParser()
+parser.add_argument("input",
+                    help="font file to process", metavar="FILE")
+parser.add_argument("--gdef", dest="gdef", action='store_true',
+                    help="Also output GDEF table information")
+args = parser.parse_args()
 
-if __name__ == '__main__':
-    main()
+font = TTFont(args.input)
+ff = unparse(font, do_gdef = args.gdef)
+print(ff.asFea())

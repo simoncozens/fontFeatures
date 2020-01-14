@@ -27,16 +27,16 @@ def unparseLanguageSystems(tables, featureFile):
             featureFile.statements.append(LanguageSystemStatement(script,language.strip()))
     return scripts
 
-def unparse(font):
+def unparse(font, do_gdef = False):
     gsub_gpos = [font[tableTag] for tableTag in ('GSUB', 'GPOS') if tableTag in font]
     ff = FeatureFile()
 
     languageSystems = unparseLanguageSystems(gsub_gpos, featureFile = ff)
 
-    # if 'GDEF' in font:
-    #     table = GDEFUnparser(font["GDEF"]).unparse()
-    #     if table:
-    #         ff.statements.append(table)
+    if 'GDEF' in font:
+        table = GDEFUnparser(font["GDEF"]).unparse()
+        if table:
+            ff.statements.append(table)
 
     if 'GSUB' in font:
         GSUBUnparser(font["GSUB"], ff, languageSystems).unparse()
