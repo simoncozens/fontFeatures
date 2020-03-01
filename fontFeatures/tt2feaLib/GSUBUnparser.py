@@ -31,7 +31,7 @@ class GSUBUnparser (GTableUnparser):
             suffix = []
             if hasattr(sub, "BacktrackCoverage"):
                 for coverage in reversed(sub.BacktrackCoverage):
-                    prefix.append(GlyphClass([ GlyphName(c) for c in coverage.glyphs ]))
+                    prefix.append(self.makeGlyphClass( coverage.glyphs ))
             if hasattr(sub, "SubstLookupRecord"):
                 for sl in sub.SubstLookupRecord:
                     self.lookups[sl.LookupListIndex]["inline"] = False
@@ -43,10 +43,10 @@ class GSUBUnparser (GTableUnparser):
                     lookups[sl.SequenceIndex] = self.lookups[sl.LookupListIndex]["lookup"]
             if hasattr(sub, "InputCoverage"):
                 for coverage in sub.InputCoverage:
-                    inputs.append(GlyphClass([ GlyphName(c) for c in coverage.glyphs ]))
+                    inputs.append(self.makeGlyphClass(coverage.glyphs))
             if hasattr(sub, "LookAheadCoverage"):
                 for i, coverage in enumerate(sub.LookAheadCoverage):
-                    suffix.append(GlyphClass([ GlyphName(c) for c in coverage.glyphs ]))
+                    suffix.append(self.makeGlyphClass(coverage.glyphs))
             if len(lookups) <= len(inputs):
                 lookups.extend([None] * (1+len(inputs)-len(lookups)))
             if len(prefix) > 0 or len(suffix)>0 or any([x is not None for x in lookups]):
@@ -54,7 +54,6 @@ class GSUBUnparser (GTableUnparser):
             elif len(inputs) > 0 and (len(lookups) == 0 or all([x is None for x in lookups])):
                 b.statements.append(IgnoreSubstStatement([(prefix,inputs,suffix)]))
             else:
-                import code; code.interact(local=locals())
                 b.statements.append(Comment("# Another kind of contextual XXX"))
         return b, []
 
@@ -92,12 +91,11 @@ class GSUBUnparser (GTableUnparser):
         b = LookupBlock(name='AlternateSubstitution'+self.gensym())
         for sub in lookup.SubTable:
             for in_glyph, out_glyphs in sub.alternates.items():
-                out_array =  [GlyphName(x) for x in out_glyphs]
                 b.statements.append(AlternateSubstStatement(
                     [],
                     GlyphName(in_glyph),
                     [],
-                    GlyphClass(out_glyphs),False))
+                    self.makeGlyphClass(out_glyphs),False))
         return b, []
 
     def unparseSingleSubstitution(self,lookup):
@@ -105,6 +103,11 @@ class GSUBUnparser (GTableUnparser):
         # XXX Lookup flag
 
         for sub in lookup.SubTable:
-            for k,v in sub.mapping.items():
-                b.statements.append(SingleSubstStatement([GlyphName(k)],[GlyphName(v)],[],[],False))
+            if len(sub.mapping) > 5:
+                k = self.makeGlyphClass(sub.mapping.keys())
+                v = self.makeGlyphClass(sub.mapping.values())
+                b.statements.append(SingleSubstStatement([k],[v],[],[],False))
+            else:
+                for k,v in sub.mapping.items():
+                    b.statements.append(SingleSubstStatement([GlyphName(k)],[GlyphName(v)],[],[],False))
         return b, []

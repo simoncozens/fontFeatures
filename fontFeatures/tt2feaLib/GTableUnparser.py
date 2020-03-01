@@ -10,6 +10,7 @@ class GTableUnparser:
         self.lookupNames = []
         self.index = 0
         self.lookups = {}
+        self.sharedClasses = {}
         self.languageSystems = languageSystems
         self.sharedLookups = set([])
 
@@ -17,11 +18,27 @@ class GTableUnparser:
         self.index = self.index + 1
         return str(self.index)
 
+    def makeGlyphClass(self, glyphnames):
+        asclass = GlyphClass([GlyphName(x) for x in glyphnames])
+        if len(glyphnames) < 10:
+            return asclass
+        # Share it
+        if not tuple(glyphnames) in self.sharedClasses:
+            self.sharedClasses[tuple(sorted(glyphnames))] = GlyphClassDefinition("GlyphClass"+self.gensym(), asclass)
+        return GlyphClassName(self.sharedClasses[tuple(sorted(glyphnames))])
+
     def unparse(self):
         self.unparseLookups()
         self.collectFeatures()
         self.tidyFeatures()
+        self.inlineFeatures()
+        self.addGlyphClasses()
         self.addFeatures()
+
+    def addGlyphClasses(self):
+        self.feature.statements.append(Comment('\n# Glyph classes\n'))
+        for gc in self.sharedClasses.values():
+            self.feature.statements.append(gc)
 
     def _prepareFeatureLangSys(self, langTag, langSys, table, features, scriptTag):
         # This is a part of prepareFeatures
@@ -117,7 +134,7 @@ class GTableUnparser:
             newOrder = []
             for lookupIdx in lookupOrder:
                 lookup = self.table.LookupList.Lookup[lookupIdx]
-                if lookup.LookupType == 6:
+                if lookup.LookupType == 6: # XXX?
                     for sub in lookup.SubTable:
                         if hasattr(sub, "SubstLookupRecord"):
                             for sl in sub.SubstLookupRecord:
