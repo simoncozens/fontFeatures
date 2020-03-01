@@ -132,11 +132,14 @@ class GTableUnparser:
 
         for lookupIdx in lookupOrder:
             lookup = self.table.LookupList.Lookup[lookupIdx]
-            unparser = getattr(self, "unparse"+self.lookupTypes[lookup.LookupType])
-            res, dependencies = unparser(lookup)
+            res, dependencies = self.unparseLookup(lookup)
             self.lookups[lookupIdx] = {
                 "lookup": res,
                 "dependencies": dependencies,
                 "useCount": 0,
                 "inline": True
             }
+
+    def unparseLookup(self, lookup):
+        unparser = getattr(self, "unparse"+self.lookupTypes[lookup.LookupType])
+        return unparser(lookup)

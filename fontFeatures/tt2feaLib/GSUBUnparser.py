@@ -12,14 +12,19 @@ class GSUBUnparser (GTableUnparser):
         4: "LigatureSubstitution",
         5: "ChainingContextualSubstitution",
         6: "ChainingContextualSubstitution",
-        7: "NotImplemented7GSUB",
+        7: "Extension",
         8: "NotImplemented8GSUB",
     }
+
+    def unparseExtension(self, lookup):
+        for xt in lookup.SubTable:
+            xt.SubTable = [ xt.ExtSubTable ]
+            xt.LookupType = xt.ExtSubTable.LookupType
+            return self.unparseLookup(xt)
 
     def unparseChainingContextualSubstitution(self,lookup):
         b = LookupBlock(name='ChainingContextualSubstitution'+self.gensym())
         for sub in lookup.SubTable:
-            lookups = {}
             prefix = []
             inputs = []
             lookups = []
