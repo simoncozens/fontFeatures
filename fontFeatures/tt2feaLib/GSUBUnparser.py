@@ -49,9 +49,12 @@ class GSUBUnparser (GTableUnparser):
                     suffix.append(GlyphClass([ GlyphName(c) for c in coverage.glyphs ]))
             if len(lookups) <= len(inputs):
                 lookups.extend([None] * (1+len(inputs)-len(lookups)))
-            if len(prefix) > 0 or len(suffix)>0:
+            if len(prefix) > 0 or len(suffix)>0 or any([x is not None for x in lookups]):
                 b.statements.append(ChainContextSubstStatement(prefix,inputs,suffix,lookups))
+            elif len(inputs) > 0 and (len(lookups) == 0 or all([x is None for x in lookups])):
+                b.statements.append(IgnoreSubstStatement([(prefix,inputs,suffix)]))
             else:
+                import code; code.interact(local=locals())
                 b.statements.append(Comment("# Another kind of contextual XXX"))
         return b, []
 
