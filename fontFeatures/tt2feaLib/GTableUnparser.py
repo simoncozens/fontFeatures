@@ -21,6 +21,7 @@ class GTableUnparser:
         return str(self.index)
 
     def makeGlyphClass(self, glyphnames):
+        if len(glyphnames) == 1: return GlyphName(glyphnames[0])
         asclass = GlyphClass([GlyphName(x) for x in glyphnames])
         if len(glyphnames) < 10:
             return asclass
