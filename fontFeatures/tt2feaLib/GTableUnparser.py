@@ -27,13 +27,15 @@ class GTableUnparser:
             self.sharedClasses[tuple(sorted(glyphnames))] = GlyphClassDefinition("GlyphClass"+self.gensym(), asclass)
         return GlyphClassName(self.sharedClasses[tuple(sorted(glyphnames))])
 
-    def unparse(self):
-        self.unparseLookups()
+    def unparse(self, doLookups = True):
+        if doLookups:
+            self.unparseLookups()
         self.collectFeatures()
         self.tidyFeatures()
-        self.inlineFeatures()
-        self.addGlyphClasses()
-        self.addFeatures()
+        if doLookups:
+            self.inlineFeatures()
+            self.addGlyphClasses()
+        self.addFeatures(doLookups=doLookups)
 
     def addGlyphClasses(self):
         self.feature.statements.append(Comment('\n# Glyph classes\n'))
@@ -103,10 +105,11 @@ class GTableUnparser:
                             self.sharedLookups.add(lookupIdx)
 
 
-    def addFeatures(self):
-        self.feature.statements.append(Comment('\n# Shared lookups\n'))
-        for l in self.sharedLookups:
-            self.feature.statements.append(self.lookups[l]["lookup"])
+    def addFeatures(self, doLookups = True):
+        if doLookups:
+            self.feature.statements.append(Comment('\n# Shared lookups\n'))
+            for l in self.sharedLookups:
+                self.feature.statements.append(self.lookups[l]["lookup"])
 
         for name, feature in self.features.items():
             f = FeatureBlock(name=name)
@@ -116,13 +119,14 @@ class GTableUnparser:
                         f.statements.append(Comment(""))
                         f.statements.append(ScriptStatement(scriptname))
                         f.statements.append(LanguageStatement(lang))
-                    for lookupIdx in lookups:
-                        lookup = self.lookups[lookupIdx]["lookup"]
-                        if self.lookups[lookupIdx]["inline"]:
-                            for s in lookup.statements:
-                                f.statements.append(s)
-                        else:
-                            f.statements.append(LookupReferenceStatement(lookup))
+                    if doLookups:
+                        for lookupIdx in lookups:
+                            lookup = self.lookups[lookupIdx]["lookup"]
+                            if self.lookups[lookupIdx]["inline"]:
+                                for s in lookup.statements:
+                                    f.statements.append(s)
+                            else:
+                                f.statements.append(LookupReferenceStatement(lookup))
             self.feature.statements.append(f)
 
     def unparseLookups(self):

@@ -5,6 +5,7 @@ from collections import OrderedDict
 
 from .GDEFUnparser import GDEFUnparser
 from .GSUBUnparser import GSUBUnparser
+from .GPOSUnparser import GPOSUnparser
 
 def unparseLanguageSystems(tables, featureFile):
     scripts = OrderedDict()
@@ -27,20 +28,20 @@ def unparseLanguageSystems(tables, featureFile):
             featureFile.statements.append(LanguageSystemStatement(script,language.strip()))
     return scripts
 
-def unparse(font, do_gdef = False):
+def unparse(font, do_gdef = False, doLookups = True):
     gsub_gpos = [font[tableTag] for tableTag in ('GSUB', 'GPOS') if tableTag in font]
     ff = FeatureFile()
 
     languageSystems = unparseLanguageSystems(gsub_gpos, featureFile = ff)
 
-    if 'GDEF' in font:
+    if 'GDEF' in font and do_gdef:
         table = GDEFUnparser(font["GDEF"]).unparse()
         if table:
             ff.statements.append(table)
 
     if 'GSUB' in font:
-        GSUBUnparser(font["GSUB"], ff, languageSystems).unparse()
+        GSUBUnparser(font["GSUB"], ff, languageSystems).unparse(doLookups=doLookups)
 
-    # if 'GPOS' in font:
-    #     unparseGPOS(font['GPOS'], featureFile = ff)
+    if 'GPOS' in font:
+        GPOSUnparser(font['GPOS'], ff, languageSystems).unparse(doLookups=doLookups)
     return ff
