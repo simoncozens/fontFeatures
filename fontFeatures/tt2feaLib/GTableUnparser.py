@@ -2,10 +2,12 @@ from fontTools.misc.py23 import *
 import fontTools
 from fontTools.feaLib.ast import *
 from collections import OrderedDict
+from fontTools.misc.xmlWriter import XMLWriter
 
 class GTableUnparser:
-    def __init__(self, table, ff, languageSystems):
+    def __init__(self, table, ff, languageSystems, font=None):
         self.table = table.table
+        self.font = font
         self.feature = ff
         self.lookupNames = []
         self.index = 0
@@ -138,13 +140,12 @@ class GTableUnparser:
             newOrder = []
             for lookupIdx in lookupOrder:
                 lookup = self.table.LookupList.Lookup[lookupIdx]
-                if lookup.LookupType == 6: # XXX?
-                    for sub in lookup.SubTable:
-                        if hasattr(sub, "SubstLookupRecord"):
-                            for sl in sub.SubstLookupRecord:
-                                if not sl.LookupListIndex in newOrder:
-                                    newOrder.append(sl.LookupListIndex)
-                                    changed = True
+                if self.isChaining(lookup.LookupType):
+                    dependencies = self.getDependencies(lookup)
+                    for l in dependencies:
+                        if not l in newOrder:
+                            newOrder.append(l)
+                            changed = True
                 if not lookupIdx in newOrder:
                     newOrder.append(lookupIdx)
             lookupOrder = newOrder
@@ -164,3 +165,24 @@ class GTableUnparser:
     def unparseLookup(self, lookup):
         unparser = getattr(self, "unparse"+self.lookupTypes[lookup.LookupType])
         return unparser(lookup)
+
+    def unparseExtension(self, lookup):
+        for xt in lookup.SubTable:
+            xt.SubTable = [ xt.ExtSubTable ]
+            xt.LookupType = xt.ExtSubTable.LookupType
+            return self.unparseLookup(xt)
+
+    def asXML(self, sub):
+        writer = XMLWriter(BytesIO())
+        sub.toXML(writer, self.font)
+        out = writer.file.getvalue().decode("utf-8")
+        return out
+
+    def unparsable(self, b, e, sub):
+        b.statements.append(Comment("# XXX Unparsable rule: "+str(e)))
+        b.statements.append(Comment("# ----"))
+        out = self.asXML(sub).splitlines()
+        for ln in out:
+            b.statements.append(Comment("# "+ln))
+        b.statements.append(Comment("# ----\n"))
+

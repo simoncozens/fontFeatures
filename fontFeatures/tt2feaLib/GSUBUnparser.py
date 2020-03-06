@@ -4,7 +4,6 @@ from fontTools.feaLib.ast import *
 from collections import OrderedDict
 from .GTableUnparser import GTableUnparser
 from itertools import groupby
-from fontTools.misc.xmlWriter import XMLWriter
 
 def _invertClassDef(a):
     return {k: [j for j, _ in list(v)] for k, v in groupby(a.items(), lambda x: x[1])}
@@ -24,16 +23,16 @@ class GSUBUnparser (GTableUnparser):
     def isChaining(self, lookupType):
         return lookupType >= 6
 
-    def unparseExtension(self, lookup):
-        for xt in lookup.SubTable:
-            xt.SubTable = [ xt.ExtSubTable ]
-            xt.LookupType = xt.ExtSubTable.LookupType
-            return self.unparseLookup(xt)
-
     def unparseContextualSubstitution(self,lookup):
         b = LookupBlock(name='ContextualSubstitution'+self.gensym())
 
         b.statements.append( Comment("# A contextual subst goes here") )
+        for sub in lookup.SubTable:
+            if sub.Format == 1:
+                self._unparse_contextual_format1(sub, b)
+            else:
+                self.unparsable(b, "Lookup type 5", sub)
+
         return b, []
 
     def unparseChainingContextualSubstitution(self,lookup):
@@ -115,10 +114,7 @@ class GSUBUnparser (GTableUnparser):
                         lookups.extend([None] * (1+len(input_)-len(lookups)))
                     b.statements.append(ChainContextSubstStatement(prefix,input_,suffix,lookups))
         except Exception as e:
-            writer = XMLWriter(BytesIO())
-            b.statements.append(Comment("# XXX Unparsable rule: "+str(e)))
-            sub.toXML(writer, self.font)
-            b.statements.append(Comment(writer.file.getvalue().decode("utf-8")))
+            self.unparsable(b, e, sub)
 
     def unparseLigatureSubstitution(self,lookup):
         b = LookupBlock(name='LigatureSubstitution'+self.gensym())
