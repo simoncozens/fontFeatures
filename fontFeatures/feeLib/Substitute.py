@@ -20,7 +20,7 @@ class Substitute:
     for ix, o in enumerate(outputs):
       m = re.match("^\$(\d+)(?:([\.~])(.*))?$", o)
       if m:
-        outputs[ix] = inputs[int(m[1])-1]
+        outputs[ix] = list(inputs[int(m[1])-1])
         if m[2] == ".":
           for jx,g in enumerate(outputs[ix]):
             outputs[ix][jx] = g + "." + m[3]
