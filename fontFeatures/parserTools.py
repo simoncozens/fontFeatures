@@ -48,7 +48,7 @@ class ParseContext:
 
 	def expect(self, expectations):
 		for e in expectations:
-			if len(self.string) >= self.cursor+len(e) and self.string[self.cursor:self.cursor+len(e)] == e and (self.cursor+len(e) == len(self.string) or self.string[self.cursor+len(e)] in " \n\t"):
+			if len(self.string) >= self.cursor+len(e) and self.string[self.cursor:self.cursor+len(e)] == e and (self.cursor+len(e) == len(self.string) or self.string[self.cursor+len(e)] in " \n\t;}"):
 				self.char = self.char + len(e)
 				self.cursor = self.cursor + len(e)
 				return e
