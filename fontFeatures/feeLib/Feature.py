@@ -12,8 +12,10 @@ class Feature:
 
   @classmethod
   def storeBlock(self, parser, token, block):
-    if not token.token in parser.fea.features:
-      parser.fea.features[token.token] = []
-    contents = parser.parseString(block)
-    print(token.token, block, contents)
+    featurename = token.token
+    if not featurename in parser.fea.features:
+      parser.fea.features[featurename] = []
+    for el in parser.parseString(block):
+      # Check if it needs putting into a routine???
+      parser.fea.features[featurename].append(el)
     return []

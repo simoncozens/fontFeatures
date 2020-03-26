@@ -13,6 +13,7 @@ class FeeParser:
   DEFAULT_PLUGINS = [
     "ClassDefinition",
     "Feature",
+    "Substitute",
     "LoadPlugin"
   ]
 
@@ -67,10 +68,10 @@ class FeeParser:
         @foo~sc  -> contents of class foo, with .sc removed
     """
     if not s.startswith("@"):
-      if s in self.glyphs:
-        return [s]
-      else:
-        raise ValueError("Couldn't find glyph '%s' in font" % s)
+      m = re.match("(.*)([\.~])(.*)$", s)
+      if not s in self.glyphs:
+        warnings.warn("Couldn't find glyph '%s' in font" % s)
+      return [ s ]
     s = s[1:]
     if s in self.fea.namedClasses: return self.fea.namedClasses[s]
     m = re.match("(.*)([\.~])(.*)$", s)

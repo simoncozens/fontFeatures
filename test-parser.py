@@ -1,0 +1,8 @@
+from fontFeatures.feeLib import FeeParser
+from fontTools.ttLib import TTFont
+import sys
+
+p = FeeParser(TTFont(sys.argv[1]))
+
+p.parseFile(sys.argv[2])
+print(p.fea.asFea())

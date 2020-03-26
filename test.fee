@@ -1,0 +1,6 @@
+DefineClass @alternates = /\.alt$/;
+Feature ss01 { Substitute @alternates~alt -> @alternates; } ;
+
+Feature rlig {
+	Substitute uni17D2 uni1780 -> $2.coeng;
+} ;
