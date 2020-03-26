@@ -1,3 +1,4 @@
+#!env python3
 from fontFeatures.feeLib import FeeParser
 from fontTools.ttLib import TTFont
 import sys
