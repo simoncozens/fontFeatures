@@ -5,7 +5,7 @@ import re
 import warnings
 
 def warning_on_one_line(message, category, filename, lineno, file=None, line=None):
-        return '%s\n' % ( message)
+        return '# [warning] %s\n' % ( message)
 
 warnings.formatwarning = warning_on_one_line
 
@@ -91,6 +91,6 @@ class FeeParser:
           if newglyph.endswith("."+suffix): newglyph = newglyph[:-(len(suffix)+1)]
         if not newglyph in self.glyphs:
           op = operation == "." and "" or "de-"
-          warnings.warn("Couldn't find glyph '%s' in font during %ssuffixing operation @%s" % (newglyph,op, s))
+          warnings.warn("# Couldn't find glyph '%s' in font during %ssuffixing operation @%s" % (newglyph,op, s))
         expanded.append(newglyph)
       return expanded
