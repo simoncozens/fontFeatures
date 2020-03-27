@@ -11,12 +11,28 @@ class Substitute:
   @classmethod
   def store(self, parser, tokens):
     import fontFeatures, re
-    tokens = [t.token for t in tokens]
-    op = tokens.index("->")
-    inputs = tokens[0:op]
-    for ix, i in enumerate(inputs):
-      inputs[ix] = parser.expandGlyphOrClassName(i)
-    outputs = tokens[op+1:]
+    texttokens = [t.token for t in tokens]
+    op = texttokens.index("->")
+    inputs = []
+    addingToClass = False
+    for ix, i in enumerate(texttokens[0:op]):
+      if i[0] == "[":
+        inputs.append(parser.expandGlyphOrClassName(i[1:]))
+        addingToClass = True
+      elif addingToClass:
+        if i[-1] == "]":
+          addingToClass = False
+          i = i[:-1]
+        inputs[-1].extend(parser.expandGlyphOrClassName(i))
+      else:
+        inputs.append(parser.expandGlyphOrClassName(i))
+    outputs = texttokens[op+1:]
+    languages = None
+    if outputs[-1].startswith("<"):
+      languages = outputs[-1][1:-1]
+      outputs = outputs[:-1]
+      import warnings
+      warnings.warn("Language support not currently implemented at %i,%i" % tokens[-1].address)
     for ix, o in enumerate(outputs):
       m = re.match("^\$(\d+)(?:([\.~])(.*))?$", o)
       if m:
@@ -28,4 +44,4 @@ class Substitute:
           raise NotImplementedError
       else:
         outputs[ix] = parser.expandGlyphOrClassName(o)
-    return [fontFeatures.Substitution(inputs, outputs)]
+    return [fontFeatures.Substitution(inputs, outputs, languages = languages)]

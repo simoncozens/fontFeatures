@@ -39,7 +39,7 @@ class Routine:
 
 class Substitution:
 
-  def __init__(self, input_, replacement, precontext = [], postcontext = [], address = None):
+  def __init__(self, input_, replacement, precontext = [], postcontext = [], address = None, languages = None):
     self.precontext = precontext
     self.postcontext = postcontext
     self.input = input_
@@ -71,5 +71,8 @@ class Substitution:
         [glyphref(x) for x in self.replacement],
         False
       )
+    if len(self.input) > 1 and len(self.replacement) > 1:
+      # Now we have to get creative
+      pass
 
     raise ValueError()
