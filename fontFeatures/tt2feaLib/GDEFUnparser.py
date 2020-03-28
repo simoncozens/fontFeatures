@@ -84,8 +84,7 @@ class GDEFUnparser:
     def unparseAttachList(self):
         for idx, glyph in enumerate(self.table.AttachList.Coverage.glyphs):
             attachmentPoints = self.table.AttachList.AttachPoint[idx]
-            for point in attachmentPoints.PointIndex:
-                self.feature.statements.append(AttachStatement(GlyphName(glyph), point))
+            self.feature.statements.append(AttachStatement(GlyphName(glyph), attachmentPoints.PointIndex))
 
     def unparseLigCaretList(self):
         ligCaretList = self.table.LigCaretList

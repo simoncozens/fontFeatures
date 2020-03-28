@@ -189,6 +189,7 @@ class GSUBUnparser (GTableUnparser):
                         deps.append(sl.LookupListIndex)
         else:
             for sub in lookup.SubTable:
-                for sl in sub.SubstLookupRecord:
-                    deps.append(sl.LookupListIndex)
+                if hasattr(sub, "SubstLookupRecord"):
+                    for sl in sub.SubstLookupRecord:
+                        deps.append(sl.LookupListIndex)
         return set(deps)
