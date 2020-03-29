@@ -82,7 +82,7 @@ class GPOSUnparser (GTableUnparser):
 
     def unparseMarkToBase(self, lookup):
         b = LookupBlock(name='MarkToBase'+self.gensym())
-        self.unparsable(b, "Mark to base pos", lookup)
+        # self.unparsable(b, "Mark to base pos", lookup)
         for subtable in lookup.SubTable: # fontTools.ttLib.tables.otTables.MarkBasePos
             assert subtable.Format == 1
             anchorClassPrefix = 'Anchor'+self.gensym()
@@ -119,13 +119,13 @@ class GPOSUnparser (GTableUnparser):
         for i, baseRecord in enumerate(baseArray.BaseRecord):
             anchors = []
             for classId, anchor in enumerate(baseRecord.BaseAnchor):
-                anchors.append((Anchor(anchor.XCoordinate, anchor.YCoordinate),anchorClassPrefix + "_" + str(classId)))
+                anchors.append((Anchor(anchor.XCoordinate, anchor.YCoordinate),GlyphClassDefinition(anchorClassPrefix + "_" + str(classId),[])))
             if not tuple(anchors) in bases:
                 bases[tuple(anchors)] = []
             bases[tuple(anchors)].append(id2Name[i])
         markbasepos = []
-        # for k,v in bases.items():
-            # markbasepos.append(MarkBasePosStatement(self.makeGlyphClass(v), k))
+        for k,v in bases.items():
+            markbasepos.append(MarkBasePosStatement(self.makeGlyphClass(v), list(k)))
         return markbasepos
 
     def unparseMarkToLigature(self, lookup):
