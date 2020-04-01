@@ -23,8 +23,13 @@ class TestUnparse(unittest.TestCase):
     g,_ = self.unparser.unparseLookup(self.lookups[10])
     self.assertEqual(g.rules[0].asFea(),"sub uni08B6 by uni0628 smallmeem.above;")
 
+  def test_ignore(self):
+    g,_ = self.unparser.unparseLookup(self.lookups[48])
+    self.assertEqual(g.rules[0].asFea(),"ignore sub [uni0622 uni0627 uni0648 uni0671 uni0627.fina uni0671.fina] uni0644.init' uni0644.medi' [uni0647.fina uni06C1.fina];")
+
   def test_chaining(self):
     self.unparser.unparseLookups()
     g,_ = self.unparser.unparseLookup(self.lookups[33]) # part of calt in quran.fea
     self.assertEqual(g.rules[0].asFea(),"sub uni0644' lookup SingleSubstitution32 uni0621' lookup SingleSubstitution31 uni0627' lookup SingleSubstitution32;")
+
 
