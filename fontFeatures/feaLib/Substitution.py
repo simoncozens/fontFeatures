@@ -45,6 +45,11 @@ def asFeaAST(self):
       glyphref(self.replacement[0]),
       False
     )
+
+  if len(self.input) > 1 and len(self.replacement) > 1:
+    # Now we have to get creative
+    raise ValueError
+
   if len(self.replacement) > 1:
     return feaast.MultipleSubstStatement(
     [glyphref(x) for x in self.precontext],
@@ -52,9 +57,6 @@ def asFeaAST(self):
     [glyphref(x) for x in self.postcontext],
     [glyphref(x) for x in self.replacement])
 
-  if len(self.input) > 1 and len(self.replacement) > 1:
-    # Now we have to get creative
-    pass
 
   raise ValueError()
 
