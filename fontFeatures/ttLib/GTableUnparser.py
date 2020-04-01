@@ -1,7 +1,7 @@
 import fontTools
 from collections import OrderedDict
 from fontTools.misc.xmlWriter import XMLWriter
-from fontFeatures import Routine
+import fontFeatures
 
 class GTableUnparser:
     def __init__(self, table, ff, languageSystems, font=None):
@@ -122,7 +122,7 @@ class GTableUnparser:
                             if not (scriptname == "DFLT" and lang == "dflt"):
                                 self.lookups[lookupIdx]["inline"] = True
                             if self.lookups[lookupIdx]["inline"]:
-                                newroutine = Routine(languages=[(scriptname,lang)])
+                                newroutine = fontFeatures.Routine(languages=[(scriptname,lang)])
                                 newroutine.rules.extend(routine.rules)
                                 f.append(newroutine)
                             else:
