@@ -29,7 +29,7 @@ class Substitute:
     outputs = texttokens[op+1:]
     languages = None
     if outputs[-1].startswith("<"):
-      languages = outputs[-1][1:-1]
+      languages = parser.parse_languages(outputs[-1])
       outputs = outputs[:-1]
       import warnings
       warnings.warn("Language support not currently implemented at %i,%i" % tokens[-1].address)

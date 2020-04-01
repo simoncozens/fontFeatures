@@ -94,3 +94,10 @@ class FeeParser:
           warnings.warn("# Couldn't find glyph '%s' in font during %ssuffixing operation @%s" % (newglyph,op, s))
         expanded.append(newglyph)
       return expanded
+
+  def parse_languages(self, token):
+    assert(token[0] == "<")
+    assert(token[-1] == ">")
+    token = token[1:-1]
+    scriptlangs = token.split(",")
+    return [ tuple(l.split("/")) for l in scriptlangs ]
