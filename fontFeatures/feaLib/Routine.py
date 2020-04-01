@@ -31,10 +31,13 @@ def arrange_by_lookup_type(self):
     if not lookup_type(r) in ruleTypes: ruleTypes[lookup_type(r)] = []
     ruleTypes[lookup_type(r)].append(r)
   if len(ruleTypes.keys()) == 1: return
+  # Special case the fact that a single sub can be expressed as part of a
+  # multiple sub if needed
+  if tuple(ruleTypes.keys()) == (1,2): return
   routines = []
   for k,v in ruleTypes.items():
     r = Routine( rules = v)
-    if self.name: r.name = self.name + "_" + k
+    if self.name: r.name = self.name + "_" + str(k)
     routines.append(r)
   return routines
 

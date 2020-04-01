@@ -21,7 +21,7 @@ class FontFeatures:
   def __init__(self):
     self.namedClasses = {}
     self.routines = []
-    self.features = {}
+    self.features = OrderedDict()
 
   def addRoutine(self, r):
     assert(isinstance(r,Routine))
