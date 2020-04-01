@@ -28,6 +28,20 @@ class FontFeatures:
 
   from .feaLib.FontFeatures import asFea, asFeaAST
 
+  def hoistLanguages(self):
+    languages = {}
+    for k in self.routines:
+      if k.languages:
+        languages[k.languages] = True
+    for feat in self.features.values():
+      for thing in feat:
+        if hasattr(thing, "languages") and thing.languages:
+          for l in thing.languages:
+            if l[1] != "*": languages[l] = True
+
+    self.languages = list(languages.keys())
+    if len(self.languages) > 0: self.languages.insert(0, ("DLFT", "dflt"))
+
 class Routine:
   def __init__(self, name = None, rules = None, address = None, inlined = False, languages = None):
     self.name  = name

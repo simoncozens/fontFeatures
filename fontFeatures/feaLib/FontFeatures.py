@@ -1,6 +1,14 @@
 # Code for converting a FontFeatures object into feaLib statements
 import fontTools.feaLib.ast as feaast
 
+def addLanguageSystemStatements(self, ff):
+  self.hoistLanguages()
+  if len(self.languages) == 0: return
+  if len(self.languages) == 1 and self.languages[0] == ("DLFT", "dflt"): return
+  # Sort into scripts and languages, resolve wildcards
+  for l in self.languages:
+    ff.statements.append(feaast.LanguageSystemStatement(*l))
+
 def asFea(self):
   return self.asFeaAST().asFea()
 
@@ -10,6 +18,7 @@ def asFeaAST(self):
   from fontFeatures import Routine
   ff = feaast.FeatureFile()
 
+  addLanguageSystemStatements(self, ff)
   for k,v in self.namedClasses.items():
     asclass = feaast.GlyphClass([feaast.GlyphName(x) for x in v])
     ff.statements.append(feaast.GlyphClassDefinition(k, asclass))
