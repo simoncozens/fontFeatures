@@ -24,9 +24,6 @@ def unparseLanguageSystems(tables):
             if languages and not scriptTag in scripts:
                 scripts[scriptTag] = languages
 
-    # for script, languages in scripts.items():
-    #     for language in languages:
-    #         featureFile.statements.append(LanguageSystemStatement(script,language.strip()))
     return scripts
 
 def unparse(font, do_gdef = False, doLookups = True):
