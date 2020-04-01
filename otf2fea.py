@@ -1,7 +1,7 @@
 #!env python
 import sys
 from fontTools.ttLib import TTFont
-from fontFeatures.tt2feaLib import unparse
+from fontFeatures.ttLib import unparse
 from argparse import ArgumentParser
 
 parser = ArgumentParser()

@@ -1,14 +1,13 @@
-from fontTools.misc.py23 import *
 import fontTools
-from fontTools.feaLib.ast import *
 from collections import OrderedDict
 from fontTools.misc.xmlWriter import XMLWriter
+from fontFeatures import Routine
 
 class GTableUnparser:
     def __init__(self, table, ff, languageSystems, font=None):
         self.table = table.table
         self.font = font
-        self.feature = ff
+        self.fontFeatures = ff
         self.lookupNames = []
         self.index = 0
         self.lookups = {}
@@ -37,13 +36,13 @@ class GTableUnparser:
         self.tidyFeatures()
         if doLookups:
             self.inlineFeatures()
-            self.addGlyphClasses()
+            # self.addGlyphClasses()
         self.addFeatures(doLookups=doLookups)
 
-    def addGlyphClasses(self):
-        self.feature.statements.append(Comment('\n# Glyph classes\n'))
-        for gc in self.sharedClasses.values():
-            self.feature.statements.append(gc)
+    # def addGlyphClasses(self):
+    #     self.feature.statements.append(Comment('\n# Glyph classes\n'))
+    #     for gc in self.sharedClasses.values():
+    #         self.feature.statements.append(gc)
 
     def _prepareFeatureLangSys(self, langTag, langSys, table, features, scriptTag):
         # This is a part of prepareFeatures
@@ -103,34 +102,32 @@ class GTableUnparser:
                 for langLookups in script.values():
                     for lookupIdx in langLookups:
                         self.lookups[lookupIdx]["useCount"] = self.lookups[lookupIdx]["useCount"]+1
-                        if self.lookups[lookupIdx]["useCount"] > 1 and len(self.lookups[lookupIdx]["lookup"].statements) > 3:
+                        if self.lookups[lookupIdx]["useCount"] > 1 and len(self.lookups[lookupIdx]["lookup"].rules) > 3:
                             self.lookups[lookupIdx]["inline"] = False
                             self.sharedLookups.add(lookupIdx)
 
 
     def addFeatures(self, doLookups = True):
         if doLookups:
-            self.feature.statements.append(Comment('\n# Shared lookups\n'))
             for l in self.sharedLookups:
-                self.feature.statements.append(self.lookups[l]["lookup"])
+                self.fontFeatures.routines.append(self.lookups[l]["lookup"])
 
         for name, feature in self.features.items():
-            f = FeatureBlock(name=name)
+            f = []
             for scriptname, langs in feature.items():
                 for lang, lookups in langs.items():
-                    if not (scriptname == "DFLT" and lang == "dflt"):
-                        f.statements.append(Comment(""))
-                        f.statements.append(ScriptStatement(scriptname))
-                        f.statements.append(LanguageStatement(lang))
                     if doLookups:
                         for lookupIdx in lookups:
-                            lookup = self.lookups[lookupIdx]["lookup"]
+                            routine = self.lookups[lookupIdx]["lookup"]
+                            if not (scriptname == "DFLT" and lang == "dflt"):
+                                self.lookups[lookupIdx]["inline"] = True
                             if self.lookups[lookupIdx]["inline"]:
-                                for s in lookup.statements:
-                                    f.statements.append(s)
+                                newroutine = Routine(languages=[(scriptname,lang)])
+                                newroutine.rules.extend(routine.rules)
+                                f.append(newroutine)
                             else:
-                                f.statements.append(LookupReferenceStatement(lookup))
-            self.feature.statements.append(f)
+                                f.append(routine)
+            self.fontFeatures.features[name] = f
 
     def unparseLookups(self):
         lookupOrder = range(0,len(self.table.LookupList.Lookup))
@@ -179,11 +176,11 @@ class GTableUnparser:
         out = writer.file.getvalue().decode("utf-8")
         return out
 
-    def unparsable(self, b, e, sub):
-        b.statements.append(Comment("# XXX Unparsable rule: "+str(e)))
-        b.statements.append(Comment("# ----"))
-        out = self.asXML(sub).splitlines()
-        for ln in out:
-            b.statements.append(Comment("# "+ln))
-        b.statements.append(Comment("# ----\n"))
+    # def unparsable(self, b, e, sub):
+    #     b.statements.append(Comment("# XXX Unparsable rule: "+str(e)))
+    #     b.statements.append(Comment("# ----"))
+    #     out = self.asXML(sub).splitlines()
+    #     for ln in out:
+    #         b.statements.append(Comment("# "+ln))
+    #     b.statements.append(Comment("# ----\n"))
 

@@ -6,8 +6,9 @@ from collections import OrderedDict
 from .GDEFUnparser import GDEFUnparser
 from .GSUBUnparser import GSUBUnparser
 from .GPOSUnparser import GPOSUnparser
+from fontFeatures import FontFeatures
 
-def unparseLanguageSystems(tables, featureFile):
+def unparseLanguageSystems(tables):
     scripts = OrderedDict()
     for table in tables:
         for scriptRecord in table.table.ScriptList.ScriptRecord:
@@ -23,25 +24,25 @@ def unparseLanguageSystems(tables, featureFile):
             if languages and not scriptTag in scripts:
                 scripts[scriptTag] = languages
 
-    for script, languages in scripts.items():
-        for language in languages:
-            featureFile.statements.append(LanguageSystemStatement(script,language.strip()))
+    # for script, languages in scripts.items():
+    #     for language in languages:
+    #         featureFile.statements.append(LanguageSystemStatement(script,language.strip()))
     return scripts
 
 def unparse(font, do_gdef = False, doLookups = True):
     gsub_gpos = [font[tableTag] for tableTag in ('GSUB', 'GPOS') if tableTag in font]
-    ff = FeatureFile()
+    ff = FontFeatures()
 
-    languageSystems = unparseLanguageSystems(gsub_gpos, featureFile = ff)
+    languageSystems = unparseLanguageSystems(gsub_gpos)
 
-    if 'GDEF' in font and do_gdef:
-        table = GDEFUnparser(font["GDEF"]).unparse()
-        if table:
-            ff.statements.append(table)
+    # if 'GDEF' in font and do_gdef:
+    #     table = GDEFUnparser(font["GDEF"]).unparse()
+    #     if table:
+    #         ff.statements.append(table)
 
     if 'GSUB' in font:
         GSUBUnparser(font["GSUB"], ff, languageSystems).unparse(doLookups=doLookups)
 
-    if 'GPOS' in font:
-        GPOSUnparser(font['GPOS'], ff, languageSystems).unparse(doLookups=doLookups)
+    # if 'GPOS' in font:
+        # GPOSUnparser(font['GPOS'], ff, languageSystems).unparse(doLookups=doLookups)
     return ff

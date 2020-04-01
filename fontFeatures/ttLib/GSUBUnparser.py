@@ -1,12 +1,22 @@
 from fontTools.misc.py23 import *
 import fontTools
-from fontTools.feaLib.ast import *
 from collections import OrderedDict
 from .GTableUnparser import GTableUnparser
 from itertools import groupby
 
+from fontFeatures import Substitution, Routine
+
 def _invertClassDef(a):
     return {k: [j for j, _ in list(v)] for k, v in groupby(a.items(), lambda x: x[1])}
+
+# These are silly little functions which help to document the intent
+
+def glyph(x):
+    assert(isinstance(x, str))
+    return [x]
+
+def singleglyph(x):
+    return [glyph(x)]
 
 class GSUBUnparser (GTableUnparser):
     lookupTypes = {
@@ -24,9 +34,9 @@ class GSUBUnparser (GTableUnparser):
         return lookupType >= 6
 
     def unparseContextualSubstitution(self,lookup):
-        b = LookupBlock(name='ContextualSubstitution'+self.gensym())
+        b = Routine(name='ContextualSubstitution'+self.gensym())
 
-        b.statements.append( Comment("# A contextual subst goes here") )
+        b.addComment("A contextual subst goes here")
         for sub in lookup.SubTable:
             if sub.Format == 1:
                 self._unparse_contextual_format1(sub, b)
@@ -36,7 +46,7 @@ class GSUBUnparser (GTableUnparser):
         return b, []
 
     def unparseChainingContextualSubstitution(self,lookup):
-        b = LookupBlock(name='ChainingContextualSubstitution'+self.gensym())
+        b = Routine(name='ChainingContextualSubstitution'+self.gensym())
         for sub in lookup.SubTable:
             if sub.Format == 1 or sub.Format == 3:
                 self._unparse_contextual_format1(sub, b)
@@ -53,7 +63,7 @@ class GSUBUnparser (GTableUnparser):
         suffix = []
         if hasattr(sub, "BacktrackCoverage"):
             for coverage in reversed(sub.BacktrackCoverage):
-                prefix.append(self.makeGlyphClass( coverage.glyphs ))
+                prefix.append( coverage.glyphs )
         if hasattr(sub, "SubstLookupRecord"):
             for sl in sub.SubstLookupRecord:
                 self.lookups[sl.LookupListIndex]["inline"] = False
@@ -65,18 +75,19 @@ class GSUBUnparser (GTableUnparser):
                 lookups[sl.SequenceIndex] = self.lookups[sl.LookupListIndex]["lookup"]
         if hasattr(sub, "InputCoverage"):
             for coverage in sub.InputCoverage:
-                inputs.append(self.makeGlyphClass(coverage.glyphs))
+                inputs.append(coverage.glyphs)
         if hasattr(sub, "LookAheadCoverage"):
             for i, coverage in enumerate(sub.LookAheadCoverage):
-                suffix.append(self.makeGlyphClass(coverage.glyphs))
+                suffix.append(coverage.glyphs)
         if len(lookups) <= len(inputs):
             lookups.extend([None] * (1+len(inputs)-len(lookups)))
         if len(prefix) > 0 or len(suffix)>0 or any([x is not None for x in lookups]):
-            b.statements.append(ChainContextSubstStatement(prefix,inputs,suffix,lookups))
+            b.addRule(Substitution(inputs,inputs,prefix,suffix,lookups = lookups))
         elif len(inputs) > 0 and (len(lookups) == 0 or all([x is None for x in lookups])):
-            b.statements.append(IgnoreSubstStatement([(prefix,inputs,suffix)]))
+            # This is an Ignore
+            b.addRule(Substitution(inputs,inputs,prefix,suffix,lookups = lookups))
         else:
-            b.statements.append(Comment("# Another kind of contextual "+str(sub.Format)))
+            b.addComment("# Another kind of contextual "+str(sub.Format))
 
     def _unparse_contextual_format2(self, sub, b):
         # Coverage table largely irrelevant
@@ -97,11 +108,11 @@ class GSUBUnparser (GTableUnparser):
             for classId, ruleset in enumerate(rulesets):
                 if not ruleset: continue
                 rules = hasattr(ruleset, "ChainSubClassRule") and ruleset.ChainSubClassRule or ruleset.SubClassRule
-                inputclass = self.makeGlyphClass(inputs[classId])
+                inputclass = inputs[classId]
                 for r in rules:
-                    prefix = [ self.makeGlyphClass(backtrack[x]) for x in r.Backtrack ]
-                    input_ = [inputclass] + [ self.makeGlyphClass(inputs[x]) for x in r.Input ]
-                    suffix = [ self.makeGlyphClass(lookahead[x]) for x in r.LookAhead ]
+                    prefix = [ backtrack[x] for x in r.Backtrack ]
+                    input_ = [ inputclass ] + [ inputs[x] for x in r.Input ]
+                    suffix = [ lookahead[x] for x in r.LookAhead ]
                     lookups = []
                     for sl in r.SubstLookupRecord:
                         self.lookups[sl.LookupListIndex]["inline"] = False
@@ -112,63 +123,50 @@ class GSUBUnparser (GTableUnparser):
                         lookups[sl.SequenceIndex] = self.lookups[sl.LookupListIndex]["lookup"]
                     if len(lookups) <= len(input_):
                         lookups.extend([None] * (1+len(input_)-len(lookups)))
-                    b.statements.append(ChainContextSubstStatement(prefix,input_,suffix,lookups))
+                    b.addRule(Substitution(input_,input_,prefix,suffix,lookups=lookups))
         except Exception as e:
             self.unparsable(b, e, sub)
 
     def unparseLigatureSubstitution(self,lookup):
-        b = LookupBlock(name='LigatureSubstitution'+self.gensym())
+        b = Routine(name='LigatureSubstitution'+self.gensym())
         # XXX Lookup flag
 
         for sub in lookup.SubTable:
             for first, ligatures in sub.ligatures.items():
                 for lig in ligatures:
-                    substarray =  [GlyphName(first)]
+                    substarray = [glyph(first)]
                     for x in lig.Component:
-                        substarray.append(GlyphName(x))
-                    b.statements.append(LigatureSubstStatement(
-                        [],
-                        substarray,
-                        [],
-                        GlyphName(lig.LigGlyph),False))
+                        substarray.append(glyph(x))
+                    b.addRule(Substitution(substarray, singleglyph(lig.LigGlyph)))
         return b, []
 
     def unparseMultipleSubstitution(self,lookup):
-        b = LookupBlock(name='MultipleSubstitution'+self.gensym())
+        b = Routine(name='MultipleSubstitution'+self.gensym())
 
         for sub in lookup.SubTable:
             for in_glyph, out_glyphs in sub.mapping.items():
-                out_array =  [GlyphName(x) for x in out_glyphs]
-                b.statements.append(MultipleSubstStatement(
-                    [],
-                    GlyphName(in_glyph),
-                    [],
-                    out_glyphs,False))
+                b.addRule(Substitution(singleglyph(in_glyph), [glyph(x) for x in out_glyphs]))
         return b, []
 
     def unparseAlternateSubstitution(self,lookup):
-        b = LookupBlock(name='AlternateSubstitution'+self.gensym())
+        b = Routine(name='AlternateSubstitution'+self.gensym())
         for sub in lookup.SubTable:
             for in_glyph, out_glyphs in sub.alternates.items():
-                b.statements.append(AlternateSubstStatement(
-                    [],
-                    GlyphName(in_glyph),
-                    [],
-                    self.makeGlyphClass(out_glyphs),False))
+                b.addRule(Substitution(singleglyph(in_glyph), [out_glyphs]))
         return b, []
 
     def unparseSingleSubstitution(self,lookup):
-        b = LookupBlock(name='SingleSubstitution'+self.gensym())
+        b = Routine(name='SingleSubstitution'+self.gensym())
         # XXX Lookup flag
 
         for sub in lookup.SubTable:
             if len(sub.mapping) > 5:
-                k = self.makeGlyphClass(sub.mapping.keys())
-                v = self.makeGlyphClass(sub.mapping.values())
-                b.statements.append(SingleSubstStatement([k],[v],[],[],False))
+                k =sub.mapping.keys()
+                v =sub.mapping.values()
+                b.addRule(Substitution([k],[v]))
             else:
                 for k,v in sub.mapping.items():
-                    b.statements.append(SingleSubstStatement([GlyphName(k)],[GlyphName(v)],[],[],False))
+                    b.addRule(Substitution([[k]],[[v]]))
         return b, []
 
     def getDependencies(self, lookup):
