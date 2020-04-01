@@ -1,4 +1,4 @@
-# Code for converting a FontFeature object into feaLib statements
+# Code for converting a FontFeatures object into feaLib statements
 import fontTools.feaLib.ast as feaast
 
 def asFea(self):
