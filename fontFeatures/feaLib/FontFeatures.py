@@ -1,13 +1,13 @@
 # Code for converting a FontFeatures object into feaLib statements
 import fontTools.feaLib.ast as feaast
 
-def addLanguageSystemStatements(self, ff):
-  self.hoistLanguages()
-  if len(self.languages) == 0: return
-  if len(self.languages) == 1 and self.languages[0] == ("DLFT", "dflt"): return
-  # Sort into scripts and languages, resolve wildcards
-  for l in self.languages:
-    ff.statements.append(feaast.LanguageSystemStatement(*l))
+def add_language_system_statements(self, ff):
+  self.hoist_languages()
+  if len(self.scripts_and_languages.keys()) == 0: return
+  if len(self.scripts_and_languages.keys()) == 1: return
+  for s, entry in self.scripts_and_languages.items():
+    for l in entry:
+      ff.statements.append(feaast.LanguageSystemStatement(s,l))
 
 def asFea(self):
   return self.asFeaAST().asFea()
@@ -18,7 +18,7 @@ def asFeaAST(self):
   from fontFeatures import Routine
   ff = feaast.FeatureFile()
 
-  addLanguageSystemStatements(self, ff)
+  add_language_system_statements(self, ff)
   for k,v in self.namedClasses.items():
     asclass = feaast.GlyphClass([feaast.GlyphName(x) for x in v])
     ff.statements.append(feaast.GlyphClassDefinition(k, asclass))
@@ -36,6 +36,9 @@ def asFeaAST(self):
       # If it's a routine and it's in self.routines, use a reference
       if isinstance(n, Routine) and n in self.routines:
         f.statements.append(feaast.LookupReferenceStatement(n.asFeaAST()))
+      elif not isinstance(n, Routine):
+        r = Routine(rules=[n], languages=n.languages, parent=self)
+        f.statements.append(r.asFeaAST())
       else:
         f.statements.append(n.asFeaAST())
     ff.statements.append(f)

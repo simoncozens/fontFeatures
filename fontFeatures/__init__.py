@@ -1,4 +1,5 @@
 from fontTools.ttLib import TTFont
+from collections import OrderedDict
 
 class FontFeatures:
   """The FontFeatures class is a way of representing the transformations -
@@ -25,25 +26,48 @@ class FontFeatures:
   def addRoutine(self, r):
     assert(isinstance(r,Routine))
     self.routines.append(r)
+    r.parent = self
+
+  def addFeature(self, name, rs):
+    if not name in self.features: self.features[name] = []
+    for r in rs:
+      r.parent = self
+      self.features[name].append(r)
 
   from .feaLib.FontFeatures import asFea, asFeaAST
 
-  def hoistLanguages(self):
-    languages = {}
+  def hoist_languages(self):
+    # Sort into scripts and languages, resolve wildcards
+    scripts = OrderedDict()
+    count = 0
+    def add_language(p):
+      nonlocal scripts
+      nonlocal count
+      s,l = p
+      if not s in scripts: scripts[s] = []
+      if l == "*": return
+      if not l in scripts[s]:
+        count = count + 1
+        scripts[s].append(l)
+
     for k in self.routines:
       if k.languages:
-        languages[k.languages] = True
+        for l in k.languages: add_language(l)
     for feat in self.features.values():
       for thing in feat:
         if hasattr(thing, "languages") and thing.languages:
-          for l in thing.languages:
-            if l[1] != "*": languages[l] = True
+          for l in thing.languages: add_language(l)
 
-    self.languages = list(languages.keys())
-    if len(self.languages) > 0: self.languages.insert(0, ("DLFT", "dflt"))
+    if count > 0 and not "DFLT" in scripts:
+      scripts["DFLT"] = []
+      scripts.move_to_end("DFLT", last=False)
+    if count > 0 and not "dflt" in scripts["DFLT"]:
+      scripts["DFLT"].insert(0, "dflt")
+
+    self.scripts_and_languages = scripts
 
 class Routine:
-  def __init__(self, name = None, rules = None, address = None, inlined = False, languages = None):
+  def __init__(self, name = "", rules = None, address = None, inlined = False, languages = None, parent = None):
     self.name  = name
     if rules:
       self.rules = rules
@@ -53,6 +77,7 @@ class Routine:
     self.comments = []
     self.inlined = inlined
     self.languages = languages
+    self.parent = parent
 
   def addRule(self, rule):
     assert(isinstance(rule, Substitution))

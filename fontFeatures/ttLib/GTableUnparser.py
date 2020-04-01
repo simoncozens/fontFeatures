@@ -110,7 +110,7 @@ class GTableUnparser:
     def addFeatures(self, doLookups = True):
         if doLookups:
             for l in self.sharedLookups:
-                self.fontFeatures.routines.append(self.lookups[l]["lookup"])
+                self.fontFeatures.addRoutine(self.lookups[l]["lookup"])
 
         for name, feature in self.features.items():
             f = []
@@ -127,7 +127,7 @@ class GTableUnparser:
                                 f.append(newroutine)
                             else:
                                 f.append(routine)
-            self.fontFeatures.features[name] = f
+            self.fontFeatures.addFeature(name, f)
 
     def unparseLookups(self):
         lookupOrder = range(0,len(self.table.LookupList.Lookup))

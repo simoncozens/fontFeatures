@@ -31,8 +31,6 @@ class Substitute:
     if outputs[-1].startswith("<"):
       languages = parser.parse_languages(outputs[-1])
       outputs = outputs[:-1]
-      import warnings
-      warnings.warn("Language support not currently implemented at %i,%i" % tokens[-1].address)
     for ix, o in enumerate(outputs):
       m = re.match("^\$(\d+)(?:([\.~])(.*))?$", o)
       if m:

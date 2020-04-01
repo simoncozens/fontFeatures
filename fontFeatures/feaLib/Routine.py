@@ -4,8 +4,9 @@ from fontFeatures.ttLib.Substitution import lookup_type as sub_lookup_type
 from fontFeatures.ttLib.Positioning import lookup_type as pos_lookup_type
 
 def lookup_type(rule):
+  from fontFeatures import Substitution#,Positioning
   if isinstance(rule,Substitution): return sub_lookup_type(rule)
-  if isinstance(rule,Positioning): return pos_lookup_type(rule)
+  # if isinstance(rule,Positioning): return pos_lookup_type(rule)
   raise ValueError
 
 def arrange_by_type(self):
@@ -17,8 +18,9 @@ def arrange_by_type(self):
     ruleTypes[type(r)].append(r)
   if len(ruleTypes.keys()) == 1: return
   routines = []
-  for k,v in ruleTypes.enumerate():
-    routines.append(Routine(name = self.name + "_" + k, rules = v))
+  for k,v in ruleTypes.items():
+    r = Routine( rules = v)
+    if self.name: r.name = self.name + "_" + k
   return routines
 
 # A lookup in OpenType can only contain rules of the same lookup type
@@ -30,16 +32,44 @@ def arrange_by_lookup_type(self):
     ruleTypes[lookup_type(r)].append(r)
   if len(ruleTypes.keys()) == 1: return
   routines = []
-  for k,v in ruleTypes.enumerate():
-    routines.append(Routine(name = self.name + "_" + k, rules = v))
+  for k,v in ruleTypes.items():
+    r = Routine( rules = v)
+    if self.name: r.name = self.name + "_" + k
+    routines.append(r)
   return routines
+
+def arrange_by_language(self):
+  from fontFeatures import Routine
+  if not self.languages: return
+  languages = {}
+  def add_lang(p,r):
+    nonlocal languages
+    if not p in languages: languages[p] = []
+    languages[p].extend(r)
+  for s,l in self.languages:
+    if l == "*":
+      add_lang( (s,"dflt"), self.rules)
+    else:
+      add_lang( (s,l), self.rules)
+
+  if len(languages.keys()) < 2: return
+  routines = []
+  for k,v in languages.items():
+    r = Routine(rules = v, languages = [k])
+    if self.name: r.name = self.name + "_" + k[0] + "_" + k[1]
+    routines.append(r)
+  return routines
+
 def arrange(self):
   splitType = arrange_by_type(self)
   if splitType: return splitType
+  splitType = arrange_by_lookup_type(self)
+  if splitType: return splitType
+  splitLang = arrange_by_language(self)
+  if splitLang: return splitLang
+  return None
 
 def asFeaAST(self):
-  if self.languages and len(self.languages) > 1:
-    raise ValueError("Can't unparsed shared routine yet")
   if self.name:
     f = feaast.LookupBlock(name = self.name)
   else:
@@ -50,8 +80,11 @@ def asFeaAST(self):
     for a in arranged: f.statements.append(asFeaAST(a))
     return f
   if self.languages and not (self.languages[0][0] == "DFLT" and self.languages[0][1] == "dflt"):
-    f.statements.append(feaast.ScriptStatement(self.languages[0][0]))
-    f.statements.append(feaast.LanguageStatement(self.languages[0][1]))
+    s,l = self.languages[0]
+    f.statements.append(feaast.ScriptStatement(s))
+    if l != "*":
+      l = "%4s" % l
+      f.statements.append(feaast.LanguageStatement(l))
   for x in self.comments:
     f.statements.append(Comment(x))
 
