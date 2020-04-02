@@ -110,3 +110,18 @@ class Substitution(Rule):
     self.languages = languages
 
   from .feaLib.Substitution import asFea, asFeaAST
+
+class Chaining(Rule):
+  # For now
+  def __init__(self, input_,
+               precontext = [], postcontext = [],
+               address = None, languages = None,
+               lookups = []):
+    self.precontext = precontext
+    self.postcontext = postcontext
+    self.input = input_
+    self.address = address
+    self.lookups = lookups
+    self.languages = languages
+
+  from .feaLib.Chaining import asFea, asFeaAST

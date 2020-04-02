@@ -81,10 +81,10 @@ class GSUBUnparser (GTableUnparser):
         if len(lookups) <= len(inputs):
             lookups.extend([None] * (1+len(inputs)-len(lookups)))
         if len(prefix) > 0 or len(suffix)>0 or any([x is not None for x in lookups]):
-            b.addRule(fontFeatures.Substitution(inputs,inputs,prefix,suffix,lookups = lookups))
+            b.addRule(fontFeatures.Chaining(inputs,prefix,suffix,lookups = lookups))
         elif len(inputs) > 0 and (len(lookups) == 0 or all([x is None for x in lookups])):
             # This is an Ignore
-            b.addRule(fontFeatures.Substitution(inputs,inputs,prefix,suffix,lookups = lookups))
+            b.addRule(fontFeatures.Chaining(inputs,prefix,suffix,lookups = lookups))
         else:
             b.addComment("# Another kind of contextual "+str(sub.Format))
 
@@ -122,7 +122,7 @@ class GSUBUnparser (GTableUnparser):
                         lookups[sl.SequenceIndex] = self.lookups[sl.LookupListIndex]["lookup"]
                     if len(lookups) <= len(input_):
                         lookups.extend([None] * (1+len(input_)-len(lookups)))
-                    b.addRule(fontFeatures.Substitution(input_,input_,prefix,suffix,lookups=lookups))
+                    b.addRule(fontFeatures.Chaining(input_,input_,prefix,suffix,lookups=lookups))
         except Exception as e:
             self.unparsable(b, e, sub)
 
