@@ -40,6 +40,6 @@ def unparse(font, do_gdef = False, doLookups = True):
     if 'GSUB' in font:
         GSUBUnparser(font["GSUB"], ff, languageSystems).unparse(doLookups=doLookups)
 
-    # if 'GPOS' in font:
-        # GPOSUnparser(font['GPOS'], ff, languageSystems).unparse(doLookups=doLookups)
+    if 'GPOS' in font:
+        GPOSUnparser(font['GPOS'], ff, languageSystems).unparse(doLookups=doLookups)
     return ff

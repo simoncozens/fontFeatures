@@ -3,6 +3,13 @@ import fontTools
 from collections import OrderedDict
 from .GTableUnparser import GTableUnparser
 import fontFeatures
+from itertools import groupby
+
+def _invertClassDef(a, coverage = None):
+    defs = {k: sorted([j for j, _ in list(v)]) for k, v in groupby(a.items(), lambda x: x[1])}
+    if coverage:
+        defs[0] = set(coverage) - set(a.keys())
+    return defs
 
 class GPOSUnparser (GTableUnparser):
     lookupTypes = {
@@ -75,9 +82,20 @@ class GPOSUnparser (GTableUnparser):
                         )
                         b.addRule(spos)
             else:
-                # import code; code.interact(local=locals())
-                # self.unparsable(b, "Pair pos", lookup)
-                pass
+                class1 = _invertClassDef(subtable.ClassDef1.classDefs, subtable.Coverage.glyphs)
+                class2 = _invertClassDef(subtable.ClassDef2.classDefs)
+                for ix1, c1 in enumerate(subtable.Class1Record):
+                    if not ix1 in class1: continue # XXX
+                    for ix2, c2 in enumerate(c1.Class2Record):
+                        if not ix2 in class2: continue # XXX
+                        vr1 = self.makeValueRecord(c2.Value1, subtable.ValueFormat1)
+                        vr2 = self.makeValueRecord(c2.Value2, subtable.ValueFormat2)
+                        if not vr1 and not vr2: continue
+                        spos = fontFeatures.Positioning(
+                            [class1[ix1], class2[ix2]],
+                            [vr1,vr2]
+                        )
+                        b.addRule(spos)
         return b, []
 
     def unparseCursiveAttachment(self, lookup):
