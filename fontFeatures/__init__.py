@@ -1,5 +1,6 @@
 from fontTools.ttLib import TTFont
 from collections import OrderedDict
+from fontTools.feaLib.ast import ValueRecord
 
 class FontFeatures:
   """The FontFeatures class is a way of representing the transformations -
@@ -125,3 +126,19 @@ class Chaining(Rule):
     self.languages = languages
 
   from .feaLib.Chaining import asFea, asFeaAST
+
+class Positioning(Rule):
+  def __init__(self, glyphs, valuerecords,
+             precontext = [], postcontext = [],
+             address = None, languages = None,
+             lookups = []):
+    self.precontext = precontext
+    self.postcontext = postcontext
+    assert(len(glyphs) == len(valuerecords))
+    self.glyphs = glyphs
+    self.valuerecords = valuerecords
+    self.address = address
+    self.lookups = lookups
+    self.languages = languages
+
+  from .feaLib.Positioning import asFea, asFeaAST

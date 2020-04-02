@@ -1,8 +1,8 @@
 from fontTools.misc.py23 import *
 import fontTools
-from fontTools.feaLib.ast import *
 from collections import OrderedDict
 from .GTableUnparser import GTableUnparser
+import fontFeatures
 
 class GPOSUnparser (GTableUnparser):
     lookupTypes = {
@@ -34,7 +34,7 @@ class GPOSUnparser (GTableUnparser):
         # NOTE: this is likely not correct anymore when we start doing the
         # <device> tables in Value record format C.
         values = [getattr(valueRecord, name, 0) or None for name, _ in valueFormatFlags]
-        return ValueRecord(*values)
+        return fontFeatures.ValueRecord(*values)
 
     def isChaining(self, lookupType):
         return lookupType == 7 or lookupType == 8
@@ -43,31 +43,45 @@ class GPOSUnparser (GTableUnparser):
         return []
 
     def unparseSinglePositioning(self, lookup):
-        b = LookupBlock(name='SinglePositioning'+self.gensym())
+        b = fontFeatures.Routine(name='SinglePositioning'+self.gensym())
 
         for subtable in lookup.SubTable:
             if subtable.Format == 1:
-                spos = SinglePosStatement(
-                        [ [self.makeGlyphClass(subtable.Coverage.glyphs),
-                          self.makeValueRecord(subtable.Value, subtable.ValueFormat)
-                          ]
-                        ],
-                        [],
-                        [],
-                        False
+                spos = fontFeatures.Positioning(
+                        [subtable.Coverage.glyphs],
+                        [self.makeValueRecord(subtable.Value, subtable.ValueFormat)]
                 )
-                b.statements.append(spos)
+                b.addRule(spos)
             else:
-                self.unparsable(b, "Format 2 pos", subtable)
+                # Optimize it later
+                for g,v in zip(subtable.Coverage.glyphs, subtable.Value):
+                    spos = fontFeatures.Positioning(
+                            [[g]],
+                            [self.makeValueRecord(v, subtable.ValueFormat)]
+                    )
+                    b.addRule(spos)
         return b, []
 
     def unparsePairPositioning(self, lookup):
-        b = LookupBlock(name='PairPositioning'+self.gensym())
-        self.unparsable(b, "Pair pos", lookup)
+        b = fontFeatures.Routine(name='PairPositioning'+self.gensym())
+        for subtable in lookup.SubTable:
+            if subtable.Format == 1:
+                for g, pair in zip(subtable.Coverage.glyphs, subtable.PairSet):
+                    for vr in pair.PairValueRecord:
+                        spos = fontFeatures.Positioning(
+                            [[g], [vr.SecondGlyph]],
+                            [self.makeValueRecord(vr.Value1, subtable.ValueFormat1),
+                             self.makeValueRecord(vr.Value2, subtable.ValueFormat2)]
+                        )
+                        b.addRule(spos)
+            else:
+                # import code; code.interact(local=locals())
+                # self.unparsable(b, "Pair pos", lookup)
+                pass
         return b, []
 
     def unparseCursiveAttachment(self, lookup):
-        b = LookupBlock(name='CursiveAttachment'+self.gensym())
+        b = fontFeatures.Routine(name='CursiveAttachment'+self.gensym())
         for s in lookup.SubTable:
             assert s.Format == 1
             for glyph, record in zip(s.Coverage.glyphs, s.EntryExitRecord):
@@ -81,7 +95,7 @@ class GPOSUnparser (GTableUnparser):
         return b, []
 
     def unparseMarkToBase(self, lookup):
-        b = LookupBlock(name='MarkToBase'+self.gensym())
+        b = fontFeatures.Routine(name='MarkToBase'+self.gensym())
         # self.unparsable(b, "Mark to base pos", lookup)
         for subtable in lookup.SubTable: # fontTools.ttLib.tables.otTables.MarkBasePos
             assert subtable.Format == 1
@@ -129,21 +143,21 @@ class GPOSUnparser (GTableUnparser):
         return markbasepos
 
     def unparseMarkToLigature(self, lookup):
-        b = LookupBlock(name='MarkToLigature'+self.gensym())
+        b = fontFeatures.Routine(name='MarkToLigature'+self.gensym())
         self.unparsable(b, "Mark to lig pos", lookup)
         return b, []
 
     def unparseMarkToMark(self, lookup):
-        b = LookupBlock(name='MarkToMark'+self.gensym())
+        b = fontFeatures.Routine(name='MarkToMark'+self.gensym())
         self.unparsable(b, "Mark to Mark pos", lookup)
         return b, []
 
     def unparseContextualPositioning(self, lookup):
-        b = LookupBlock(name='ContextualPositioning'+self.gensym())
+        b = fontFeatures.Routine(name='ContextualPositioning'+self.gensym())
         self.unparsable(b, "Contextual pos", lookup)
         return b, []
 
     def unparseChainedContextualPositioning(self, lookup):
-        b = LookupBlock(name='ChainedContextualPositioning'+self.gensym())
-        self.unparsable(b, "Chained Contextual pos", lookup)
+        b = fontFeatures.Routine(name='ChainedContextualPositioning'+self.gensym())
+        # self.unparsable(b, "Chained Contextual pos", lookup)
         return b, []

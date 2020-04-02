@@ -4,9 +4,9 @@ from fontFeatures.ttLib.Substitution import lookup_type as sub_lookup_type
 from fontFeatures.ttLib.Positioning import lookup_type as pos_lookup_type
 
 def lookup_type(rule):
-  from fontFeatures import Substitution#,Positioning
+  from fontFeatures import Substitution,Positioning
   if isinstance(rule,Substitution): return sub_lookup_type(rule)
-  # if isinstance(rule,Positioning): return pos_lookup_type(rule)
+  if isinstance(rule,Positioning): return pos_lookup_type(rule)
   raise ValueError
 
 def arrange_by_type(self):
