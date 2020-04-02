@@ -15,10 +15,10 @@ class Anchors:
         raise ParseError("Repeated anchor %s" % name, token.address, self)
       names.append(name)
       x = b.consumeToken()
-      if not re.match("^<-?[\d.]+$", x.token):
+      if not re.match("^<-?[\\d.]+$", x.token):
         raise ParseError("Invalid X coordinate for %s anchor" % name, token.address, self)
       y = b.consumeToken()
-      if not re.match("^-?[\d.]+>$", y.token):
+      if not re.match("^-?[\\d.]+>$", y.token):
         raise ParseError("Invalid Y coordinate for %s anchor" % name, token.address, self)
     return True
 
@@ -32,7 +32,7 @@ class Anchors:
       name = b.consumeToken().token
       x = b.consumeToken().token
       y = b.consumeToken().token
-      anchors[name] = ( int(x[1:]), int(y[:-2]) ) # Or float?
+      anchors[name] = ( int(x[1:]), int(y[:-1]) ) # Or float?
 
     for g in glyphs:
       if not g in parser.fea.anchors:

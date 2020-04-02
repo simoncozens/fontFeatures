@@ -58,7 +58,7 @@ class ParseContext:
 	def consumeToken(self):
 		token = ""
 		startOfToken = self.address
-		while self.moreToParse and not (self.currentChar in " \t;"):
+		while self.moreToParse and not (self.currentChar in " \t;\n"):
 			token = token + self.consume()
 		self.skipWhitespaceAndComments()
 		return Token(token, startOfToken)
