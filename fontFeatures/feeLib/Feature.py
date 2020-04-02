@@ -17,7 +17,7 @@ class Feature:
       parser.fea.features[featurename] = []
     for el in parser.parseString(block):
       # Check if it needs putting into a routine???
-      parser.fea.features[featurename].append(el)
+      parser.fea.addFeature(featurename,[el])
     return []
 
 class FeatureName:

@@ -25,6 +25,3 @@ def asFeaAST(self):
       self.valuerecords[1]
     )
   raise ValueError()
-
-def asFea(self):
-  return self.asFeaAST().asFea()

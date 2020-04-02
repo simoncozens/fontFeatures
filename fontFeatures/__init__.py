@@ -23,6 +23,7 @@ class FontFeatures:
     self.namedClasses = {}
     self.routines = []
     self.features = OrderedDict()
+    self.anchors = {}
 
   def addRoutine(self, r):
     assert(isinstance(r,Routine))
@@ -90,7 +91,9 @@ class Routine:
   from .feaLib.Routine import asFea, asFeaAST
 
 class Rule:
-  pass
+  def asFea(self):
+    return self.asFeaAST().asFea()
+
 
 class Substitution(Rule):
   """A substitution represents any kind of exchange of one set of glyphs for
@@ -110,7 +113,7 @@ class Substitution(Rule):
     self.lookups = lookups
     self.languages = languages
 
-  from .feaLib.Substitution import asFea, asFeaAST
+  from .feaLib.Substitution import asFeaAST
 
 class Chaining(Rule):
   # For now
@@ -125,7 +128,7 @@ class Chaining(Rule):
     self.lookups = lookups
     self.languages = languages
 
-  from .feaLib.Chaining import asFea, asFeaAST
+  from .feaLib.Chaining import asFeaAST
 
 class Positioning(Rule):
   def __init__(self, glyphs, valuerecords,
@@ -141,4 +144,18 @@ class Positioning(Rule):
     self.lookups = lookups
     self.languages = languages
 
-  from .feaLib.Positioning import asFea, asFeaAST
+  from .feaLib.Positioning import asFeaAST
+
+class Attachment(Rule):
+  def __init__(self, base_name, mark_name, bases, marks):
+    self.base_name = base_name
+    self.mark_name = mark_name
+    self.bases = bases
+    self.marks = marks
+
+  @property
+  def is_cursive(self):
+    return not(not(self.marks))
+
+  from .feaLib.Attachment import asFeaAST
+

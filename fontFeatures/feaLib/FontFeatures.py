@@ -37,7 +37,9 @@ def asFeaAST(self):
       if isinstance(n, Routine) and n in self.routines:
         f.statements.append(feaast.LookupReferenceStatement(n.asFeaAST()))
       elif not isinstance(n, Routine):
-        r = Routine(rules=[n], languages=n.languages, parent=self)
+        r = Routine(rules=[n], parent=self)
+        if hasattr(n, "languages"):
+          r.languages=n.languages
         f.statements.append(r.asFeaAST())
       else:
         f.statements.append(n.asFeaAST())

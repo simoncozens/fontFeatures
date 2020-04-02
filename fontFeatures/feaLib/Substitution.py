@@ -43,6 +43,3 @@ def asFeaAST(self):
 
 
   raise ValueError()
-
-def asFea(self):
-  return self.asFeaAST().asFea()

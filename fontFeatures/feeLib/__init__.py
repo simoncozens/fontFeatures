@@ -14,7 +14,8 @@ class FeeParser:
     "ClassDefinition",
     "Feature",
     "Substitute",
-    "LoadPlugin"
+    "LoadPlugin",
+    "Anchors"
   ]
 
   def __init__(self, font):
