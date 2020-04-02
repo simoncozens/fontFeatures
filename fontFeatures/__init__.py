@@ -80,7 +80,7 @@ class Routine:
     self.parent = parent
 
   def addRule(self, rule):
-    assert(isinstance(rule, Substitution))
+    assert(isinstance(rule, Rule))
     self.rules.append(rule)
 
   def addComment(self, comment):
@@ -88,7 +88,10 @@ class Routine:
 
   from .feaLib.Routine import asFea, asFeaAST
 
-class Substitution:
+class Rule:
+  pass
+
+class Substitution(Rule):
   """A substitution represents any kind of exchange of one set of glyphs for
   another: single substitutions, multiple substitutions and ligatures are all
   substitutions. Optionally, substitutions may be followed by precontext and
