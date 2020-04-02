@@ -17,16 +17,20 @@ class TestFeeAnchors(unittest.TestCase):
         top <611 1612>
       };
 
-      Anchors acutecomb {
-        _top <-570 1290>
-      };
-
-      Anchors circumflexcomb {
-        _top <-591 1290>
-      };
+      Anchors acutecomb { _top <-570 1290> };
+      Anchors tildecomb { _top <-542 1256> };
 
       Feature mark { Attach &top &_top; };
 """)
 
     self.assertEqual(self.p.fea.anchors["A"]["top"], (679,1600))
-    print(self.p.fea.asFea())
+    self.assertEqual(self.p.fea.asFea(),"""
+feature mark {
+                        markClass acutecomb <anchor -570 129> @top;
+            markClass tildecomb <anchor -542 125> @top;
+            pos base A <anchor 679 1600> mark @top;
+            pos base B <anchor 611 1612> mark @top;
+
+
+} mark;
+""")
