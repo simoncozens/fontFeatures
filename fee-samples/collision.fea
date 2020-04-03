@@ -1,0 +1,8 @@
+DefineClass @lower = /^[a-z]$/;
+
+LoadPlugin AvoidCollision;
+
+Feature kern {
+    AvoidCollision Q @lower kern 50;
+};
+
