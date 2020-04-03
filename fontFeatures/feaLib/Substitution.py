@@ -41,5 +41,6 @@ def asFeaAST(self):
     [glyphref(x) for x in self.postcontext],
     [glyphref(x) for x in self.replacement])
 
-
+  import warnings
+  warnings.warn("Couldn't convert Substitution Lookup Type %i" % lut)
   raise ValueError()
