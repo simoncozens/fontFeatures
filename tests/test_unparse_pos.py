@@ -30,8 +30,8 @@ class TestUnparse(unittest.TestCase):
 
   def test_pair_f2(self):
     g,_ = self.unparser.unparseLookup(self.lookups[76]) # kerns
-    self.assertEqual(g.rules[0].asFea(),"pos [zero.prop zero] [Abreve Amacron Aogonek] -10;")
-    self.assertEqual(g.rules[1].asFea(),"pos [zero.prop zero] Ygrave -21;")
+    self.assertEqual(g.rules[0].asFea(),"pos [zero zero.prop] [Abreve Amacron Aogonek] -10;")
+    self.assertEqual(g.rules[1].asFea(),"pos [zero zero.prop] Ygrave -21;")
 
   # def test_pair(self):
   #   g,_ = self.unparser.unparseLookup(self.lookups[56])

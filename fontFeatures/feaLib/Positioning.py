@@ -4,7 +4,7 @@ from fontFeatures.ttLib.Positioning import lookup_type
 def glyphref(g):
   if len(g) == 1:
     return feaast.GlyphName(g[0])
-  return feaast.GlyphClass([feaast.GlyphName(x) for x in g])
+  return feaast.GlyphClass([feaast.GlyphName(x) for x in sorted(g)])
 
 def asFeaAST(self):
   lut = lookup_type(self)

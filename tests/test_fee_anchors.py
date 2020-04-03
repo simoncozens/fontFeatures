@@ -4,10 +4,10 @@ from fontTools.ttLib import TTFont
 import unittest
 
 class TestFeeAnchors(unittest.TestCase):
-  p = FeeParser(TTFont("fonts/Roboto-Regular.ttf"))
 
   def test_parse_to_ff(self):
-    self.p.parseString("""
+    p = FeeParser(TTFont("fonts/Roboto-Regular.ttf"))
+    p.parseString("""
       Anchors A {
         top <679 1600>
         bottom <691 0>
@@ -23,12 +23,13 @@ class TestFeeAnchors(unittest.TestCase):
       Feature mark { Attach &top &_top; };
 """)
 
-    self.assertEqual(self.p.fea.anchors["A"]["top"], (679,1600))
-    self.assertEqual(self.p.fea.asFea(),"""
+    self.assertEqual(p.fea.anchors["A"]["top"], (679,1600))
+    self.assertEqual(p.fea.asFea(),"""
+    markClass acutecomb <anchor -570 1290> @top;
+    markClass tildecomb <anchor -542 1256> @top;
+
 feature mark {
-                        markClass acutecomb <anchor -570 129> @top;
-            markClass tildecomb <anchor -542 125> @top;
-            pos base A <anchor 679 1600> mark @top;
+                        pos base A <anchor 679 1600> mark @top;
             pos base B <anchor 611 1612> mark @top;
 
 
