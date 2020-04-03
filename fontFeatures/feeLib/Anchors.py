@@ -48,23 +48,30 @@ class Attach:
   @classmethod
   def validate(self, tokens, verbaddress):
     from fontFeatures.parserTools import ParseError
-    if len(tokens) != 2: 
+    if len(tokens) < 2 or len(tokens) >3:
       raise ParseError("Wrong number of arguments", token[0].address, self)
     if not (tokens[0].token.startswith("&")):
       raise ParseError("Anchor class should start with &", token[0].address, self)
     if not (tokens[1].token.startswith("&")):
-      raise ParseError("Anchor class should start with &", token[0].address, self)
-
+      raise ParseError("Anchor class should start with &", token[1].address, self)
+    if len(tokens) == 3 and (tokens[2].token != "bases" and tokens[2].token != "marks"):
+      raise ParseError("Anchor filter should be 'marks' or 'bases'", token[2].address, self)
     return True
 
   @classmethod
-  def store(self, parser, tokens):
+  def store(self, parser, tokens, doFilter = None):
     import fontFeatures
     aFrom = tokens[0].token[1:]
     aTo = tokens[1].token[1:]
-    bases = [] # These may actually be marks in a mkmk case, but we'll sort that
+    bases = []
     marks = []
     for k,v in parser.fea.anchors.items():
       if aFrom in v: bases.append( (k, v[aFrom]) )
       if aTo in v:   marks.append( (k, v[aTo]) )
+    if len(tokens) == 3:
+      if tokens[2].token == "bases":
+        bases = list(filter(lambda k: parser.categorize_glyph(k[0])[0] == "base", bases))
+      else:
+        bases = list(filter(lambda k: parser.categorize_glyph(k[0])[0] == "mark", bases))
+      marks = list(filter(lambda k: parser.categorize_glyph(k[0])[0] == "mark", marks))
     return [ fontFeatures.Attachment(aFrom, aTo, bases, marks) ]

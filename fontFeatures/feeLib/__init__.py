@@ -102,3 +102,19 @@ class FeeParser:
     token = token[1:-1]
     scriptlangs = token.split(",")
     return [ tuple(l.split("/")) for l in scriptlangs ]
+
+  def categorize_glyph(self, glyphname):
+    classdefs = self.font["GDEF"].table.GlyphClassDef.classDefs
+    assert(glyphname in classdefs)
+    if classdefs[glyphname] == 1: return ("base",None)
+    if classdefs[glyphname] == 2: return ("ligature",None)
+    if classdefs[glyphname] == 3:
+        # Now find attachment class
+        if self.font["GDEF"].table.MarkAttachClassDef:
+          markAttachClassDef = self.font["GDEF"].table.MarkAttachClassDef.classDefs
+          mclass = markAttachClassDef[glyphname]
+        else:
+          mclass = None
+        return ("mark",mclass)
+    if classdefs[glyphname] == 4: return ("component",None)
+    raise ValueError
