@@ -73,6 +73,12 @@ def arrange(self):
   if splitLang: return splitLang
   return None
 
+def feaPreamble(self, ff):
+  preamble = []
+  for r in self.rules:
+    preamble.extend(r.feaPreamble(ff))
+  return preamble
+
 def asFeaAST(self):
   if self.name:
     f = feaast.LookupBlock(name = self.name)

@@ -24,6 +24,7 @@ class FontFeatures:
     self.routines = []
     self.features = OrderedDict()
     self.anchors = {}
+    self.scratch = {} # Space for items to communicate context to each other. :(
 
   def addRoutine(self, r):
     assert(isinstance(r,Routine))
@@ -88,12 +89,13 @@ class Routine:
   def addComment(self, comment):
     self.comments.append(comment)
 
-  from .feaLib.Routine import asFea, asFeaAST
+  from .feaLib.Routine import asFea, asFeaAST, feaPreamble
 
 class Rule:
   def asFea(self):
     return self.asFeaAST().asFea()
-
+  def feaPreamble(self, ff):
+    return []
 
 class Substitution(Rule):
   """A substitution represents any kind of exchange of one set of glyphs for
@@ -157,5 +159,5 @@ class Attachment(Rule):
   def is_cursive(self):
     return not(not(self.marks))
 
-  from .feaLib.Attachment import asFeaAST
+  from .feaLib.Attachment import asFeaAST, feaPreamble
 

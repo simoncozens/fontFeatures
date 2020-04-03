@@ -19,6 +19,8 @@ def asFeaAST(self):
   ff = feaast.FeatureFile()
 
   add_language_system_statements(self, ff)
+
+  # Preamble
   for k,v in self.namedClasses.items():
     asclass = feaast.GlyphClass([feaast.GlyphName(x) for x in v])
     ff.statements.append(feaast.GlyphClassDefinition(k, asclass))
@@ -27,6 +29,14 @@ def asFeaAST(self):
 
   for k in self.routines:
     assert(isinstance(k, Routine))
+    pre = r.feaPreamble(self)
+    for s in pre: ff.statements.append(s)
+  for k,v in self.features.items():
+    for r in v:
+      pre = r.feaPreamble(self)
+      for s in pre: ff.statements.append(s)
+
+  for k in self.routines:
     if not k.inlined:
       ff.statements.append(k.asFeaAST())
 

@@ -21,15 +21,23 @@ def sortByAnchor(self):
     anchors[base[1]].append(base[0])
   self.bases =  [ (v, k) for k, v in anchors.items() ]
 
+def feaPreamble(self, ff):
+  sortByAnchor(self)
+  if not "mark_classes_done" in ff.scratch:
+    ff.scratch["mark_classes_done"] = {}
+  b = feaast.Block()
+  for mark in self.marks:
+    if not (self.base_name, tuple(mark[0])) in ff.scratch["mark_classes_done"]:
+      b.statements.append(feaast.MarkClassDefinition(
+        feaast.MarkClass(self.base_name),
+        feaast.Anchor(*mark[1]),
+        glyphref(mark[0])
+      ))
+      ff.scratch["mark_classes_done"][(self.base_name, tuple(mark[0]))] = True
+  return [b]
+
 def asFeaAST(self):
   b = feaast.Block()
-  sortByAnchor(self)
-  for mark in self.marks:
-    b.statements.append(feaast.MarkClassDefinition(
-      feaast.MarkClass(self.base_name),
-      feaast.Anchor(*mark[1]),
-      glyphref(mark[0])
-    ))
   for base in self.bases:
     b.statements.append(feaast.MarkBasePosStatement(
       glyphref(base[0]),
