@@ -12,6 +12,18 @@ The purpose of this library is to provide a middle ground for representing featu
 
 > How is this different from fontTool's `feaLib`? I'm glad you asked. `feaLib` translates between the Adobe feature file format and a abstract syntax tree representing *elements of the feature file* - not representing the feature data. The AST is still "source equivalent". For example, when you code an `aalt` feature in feature file format, you might include code like `feature salt` to include lookups from another feature. But what's actually *meant* by that is a set of lookups. `fontFeatures` allows you to manipulate meaning, not description.
 
-When completed, fontFeatures will comprise translators between the Adobe feature file format, the OTF internal representation and our own machine-manipulable representation.
+## Components
 
-Currently, I have implemented an OTF-to-Adobe translator, which you can find as `otf2fea.py`
+fontFeatures consists of the following components:
+
+* `fontFeatures` itself, which is an abstract representation of the different layout operations inside a font. (Mostly implemented.)
+* `fontFeatures.feaLib` (included as a mixin) which translates between Adobe feature syntax and fontFeatures representation. (Currently only the `fontFeatures` -> FEA translation is mostly implemented; FEA -> `fontFeatures` not currently implemented.)
+* `fontFeatures.ttLib`, which translates between OpenType binary fonts and fontFeatures representation. (Currently only OTF -> `fontFeatures` is partially implemented; there is no `fontFeatures` -> OTF compiler yet.)
+* `fontFeatures.feeLib` which parses a new, extensible format called FEE for font engineering.
+* `fontFeatures.fontDame2fee` which, despite the name, currently does not use the fontFeatures representation but directly translates FontDame `.txt` feature files into the FEE syntax.
+
+And the following utilities:
+
+* `fee2fea`: translates a FEE file into Adobe feature syntax.
+* `otf2fea`: translates an OTF file into Adobe features syntax.
+* `txt2fee`: translates a FontDame txt file into FEE syntax.

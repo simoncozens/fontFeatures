@@ -118,3 +118,17 @@ class FeeParser:
         return ("mark",mclass)
     if classdefs[glyphname] == 4: return ("component",None)
     raise ValueError
+
+  def get_glyph_metrics(self, glyphname):
+    metrics = {
+      "width":   self.font["hmtx"][glyphname][0],
+      "lsb":     self.font["hmtx"][glyphname][1],
+    }
+    if "glyf" in self.font:
+      glyf = self.font["glyf"][glyphname]
+      metrics["xMin"], metrics["xMax"], metrics["yMin"], metrics["yMax"] = glyf.xMin, glyf.xMax, glyf.yMin, glyf.yMax
+    else:
+      bounds = self.font.getGlyphSet()[glyphname]._glyph.calcBounds(self.font.getGlyphSet())
+      metrics["xMin"], metrics["yMin"], metrics["xMax"], metrics["yMax"] = bounds
+    metrics["rsb"] = metrics["width"] - metrics["xMax"]
+    return metrics

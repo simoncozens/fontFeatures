@@ -1,0 +1,12 @@
+      Anchors A { top <679 1600> bottom <691 0> };
+      Anchors B { top <611 1612> };
+      Anchors E { top <619 1612> };
+      Anchors F { top <619 1612> };
+
+      Anchors acutecomb { _top <-570 1290> top <-570 1650> };
+      Anchors tildecomb { _top <-542 1256> top <-542 1606> };
+      Anchors gravecomb { _top <-528 1290> top <-528 1650> };
+
+      Feature mark { Attach &top &_top bases; };
+      Feature mkmk { Attach &top &_top marks; };
+

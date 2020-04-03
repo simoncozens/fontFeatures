@@ -1,0 +1,7 @@
+DefineClass @matras = /dvmI\.a.*/;
+DefineClass @bases  = /dv.*A$/;
+
+LoadPlugin IMatra;
+Feature abvm {
+	IMatra dvmI @matras @bases;
+};
