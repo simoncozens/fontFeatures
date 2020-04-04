@@ -102,33 +102,3 @@ class FeeParser:
     token = token[1:-1]
     scriptlangs = token.split(",")
     return [ tuple(l.split("/")) for l in scriptlangs ]
-
-  def categorize_glyph(self, glyphname):
-    classdefs = self.font["GDEF"].table.GlyphClassDef.classDefs
-    assert(glyphname in classdefs)
-    if classdefs[glyphname] == 1: return ("base",None)
-    if classdefs[glyphname] == 2: return ("ligature",None)
-    if classdefs[glyphname] == 3:
-        # Now find attachment class
-        if self.font["GDEF"].table.MarkAttachClassDef:
-          markAttachClassDef = self.font["GDEF"].table.MarkAttachClassDef.classDefs
-          mclass = markAttachClassDef[glyphname]
-        else:
-          mclass = None
-        return ("mark",mclass)
-    if classdefs[glyphname] == 4: return ("component",None)
-    raise ValueError
-
-  def get_glyph_metrics(self, glyphname):
-    metrics = {
-      "width":   self.font["hmtx"][glyphname][0],
-      "lsb":     self.font["hmtx"][glyphname][1],
-    }
-    if "glyf" in self.font:
-      glyf = self.font["glyf"][glyphname]
-      metrics["xMin"], metrics["xMax"], metrics["yMin"], metrics["yMax"] = glyf.xMin, glyf.xMax, glyf.yMin, glyf.yMax
-    else:
-      bounds = self.font.getGlyphSet()[glyphname]._glyph.calcBounds(self.font.getGlyphSet())
-      metrics["xMin"], metrics["yMin"], metrics["xMax"], metrics["yMax"] = bounds
-    metrics["rsb"] = metrics["width"] - metrics["xMax"]
-    return metrics

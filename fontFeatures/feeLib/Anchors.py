@@ -60,6 +60,7 @@ class Attach:
 
   @classmethod
   def store(self, parser, tokens, doFilter = None):
+    from fontFeatures.ftUtils import categorize_glyph
     import fontFeatures
     aFrom = tokens[0].token[1:]
     aTo = tokens[1].token[1:]
@@ -70,8 +71,8 @@ class Attach:
       if aTo in v:   marks.append( (k, v[aTo]) )
     if len(tokens) == 3:
       if tokens[2].token == "bases":
-        bases = list(filter(lambda k: parser.categorize_glyph(k[0])[0] == "base", bases))
+        bases = list(filter(lambda k: categorize_glyph(parser.font,k[0])[0] == "base", bases))
       else:
-        bases = list(filter(lambda k: parser.categorize_glyph(k[0])[0] == "mark", bases))
-      marks = list(filter(lambda k: parser.categorize_glyph(k[0])[0] == "mark", marks))
+        bases = list(filter(lambda k: categorize_glyph(parser.font,k[0])[0] == "mark", bases))
+      marks = list(filter(lambda k: categorize_glyph(parser.font,k[0])[0] == "mark", marks))
     return [ fontFeatures.Attachment(aFrom, aTo, bases, marks) ]

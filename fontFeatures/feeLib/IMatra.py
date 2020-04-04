@@ -11,14 +11,15 @@ class IMatra:
   @classmethod
   def store(self, parser, tokens, doFilter = None):
     import fontFeatures
+    from fontFeatures.ftUtils import get_glyph_metrics
     matra = parser.expandGlyphOrClassName(tokens[0].token)
     matras = parser.expandGlyphOrClassName(tokens[1].token)
     bases = parser.expandGlyphOrClassName(tokens[2].token)
     # Organise matras into overhang widths
     matras2bases = {}
-    matrasAndOverhangs = [ (m, -parser.get_glyph_metrics(m)["rsb"]) for m in matras]
+    matrasAndOverhangs = [ (m, -get_glyph_metrics(parser.font,m)["rsb"]) for m in matras]
     for b in bases:
-    	w = parser.get_glyph_metrics(b)["width"]
+    	w = get_glyph_metrics(parser.font,b)["width"]
     	bestMatra = min(matrasAndOverhangs, key = lambda s:abs(s[1]-w))
     	if not bestMatra in matras2bases:
     		matras2bases[bestMatra] = []
