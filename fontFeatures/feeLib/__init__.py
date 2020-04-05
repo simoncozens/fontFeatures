@@ -61,7 +61,7 @@ class FeeParser:
       pc.skipWhitespaceAndComments()
     return returns
 
-  def expandGlyphOrClassName(self, s):
+  def expandGlyphOrClassName(self, s, mustExist = True):
     """Returns a list of glyphs expanded from a name. e.g.
         space    -> space
         @foo     -> contents of class foo
@@ -70,7 +70,7 @@ class FeeParser:
     """
     if not s.startswith("@"):
       m = re.match("(.*)([\.~])(.*)$", s)
-      if not s in self.glyphs:
+      if not s in self.glyphs and mustExist:
         warnings.warn("Couldn't find glyph '%s' in font" % s)
       return [ s ]
     s = s[1:]
@@ -90,7 +90,7 @@ class FeeParser:
         else:
           newglyph = g
           if newglyph.endswith("."+suffix): newglyph = newglyph[:-(len(suffix)+1)]
-        if not newglyph in self.glyphs:
+        if not newglyph in self.glyphs and mustExist:
           op = operation == "." and "" or "de-"
           warnings.warn("# Couldn't find glyph '%s' in font during %ssuffixing operation @%s" % (newglyph,op, s))
         expanded.append(newglyph)
