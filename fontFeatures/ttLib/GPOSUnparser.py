@@ -100,16 +100,18 @@ class GPOSUnparser (GTableUnparser):
 
     def unparseCursiveAttachment(self, lookup):
         b = fontFeatures.Routine(name='CursiveAttachment'+self.gensym())
+        entries = {}
+        exits = {}
         for s in lookup.SubTable:
             assert s.Format == 1
             for glyph, record in zip(s.Coverage.glyphs, s.EntryExitRecord):
                 entryanchor = None
                 exitanchor = None
                 if record.EntryAnchor:
-                    entryanchor = Anchor(record.EntryAnchor.XCoordinate, record.EntryAnchor.YCoordinate)
+                    entries[glyph] = (record.EntryAnchor.XCoordinate, record.EntryAnchor.YCoordinate)
                 if record.ExitAnchor:
-                    exitanchor = Anchor(record.ExitAnchor.XCoordinate, record.ExitAnchor.YCoordinate)
-                b.statements.append(CursivePosStatement(GlyphName(glyph), entryanchor, exitanchor))
+                    exits[glyph] = (record.ExitAnchor.XCoordinate, record.ExitAnchor.YCoordinate)
+        b.addRule(fontFeatures.Attachment("cursive_exit", "cursive_entry", exits, entries))
         return b, []
 
     def unparseMarkToBase(self, lookup):
@@ -136,6 +138,7 @@ class GPOSUnparser (GTableUnparser):
         bases = {}
         for i, baseRecord in enumerate(baseArray.BaseRecord):
             for classId, anchor in enumerate(baseRecord.BaseAnchor):
+                if not anchor: continue
                 bases[id2Name[i]]= (anchor.XCoordinate, anchor.YCoordinate) # ClassId?
         return bases
 

@@ -22,6 +22,7 @@ def sortByAnchor(self):
   self.baseslist =  [ (v, k) for k, v in anchors.items() ]
 
 def feaPreamble(self, ff):
+  if self.is_cursive: return []
   sortByAnchor(self)
   if not "mark_classes_done" in ff.scratch:
     ff.scratch["mark_classes_done"] = {}
@@ -37,16 +38,25 @@ def feaPreamble(self, ff):
   return [b]
 
 def asFeaAST(self):
-  if not hasattr(self, "baseslist"): sortByAnchor(self) # e.g. when testing
   b = feaast.Block()
-  for base in self.baseslist:
-    b.statements.append(feaast.MarkBasePosStatement(
-      glyphref(base[0]),
-      [[
-        feaast.Anchor(*base[1]),
-        feaast.MarkClass(self.base_name)
-      ]]
-    ))
+  if self.is_cursive:
+    allglyphs = set(self.bases.keys()) | set(self.marks.keys())
+    for g in allglyphs:
+      b.statements.append(feaast.CursivePosStatement(
+        glyphref([g]),
+        g in self.marks and feaast.Anchor(*self.marks[g]),
+        g in self.bases and feaast.Anchor(*self.bases[g])
+      ))
+  else:
+    if not hasattr(self, "baseslist"): sortByAnchor(self) # e.g. when testing
+    for base in self.baseslist:
+      b.statements.append(feaast.MarkBasePosStatement(
+        glyphref(base[0]),
+        [[
+          feaast.Anchor(*base[1]),
+          feaast.MarkClass(self.base_name)
+        ]]
+      ))
 
   return b
 
