@@ -44,8 +44,8 @@ def asFeaAST(self):
     for g in allglyphs:
       b.statements.append(feaast.CursivePosStatement(
         glyphref([g]),
-        g in self.marks and feaast.Anchor(*self.marks[g]),
-        g in self.bases and feaast.Anchor(*self.bases[g])
+        g in self.bases and feaast.Anchor(*self.bases[g]),
+        g in self.marks and feaast.Anchor(*self.marks[g])
       ))
   else:
     if not hasattr(self, "baseslist"): sortByAnchor(self) # e.g. when testing

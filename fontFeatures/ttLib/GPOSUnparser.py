@@ -111,7 +111,7 @@ class GPOSUnparser (GTableUnparser):
                     entries[glyph] = (record.EntryAnchor.XCoordinate, record.EntryAnchor.YCoordinate)
                 if record.ExitAnchor:
                     exits[glyph] = (record.ExitAnchor.XCoordinate, record.ExitAnchor.YCoordinate)
-        b.addRule(fontFeatures.Attachment("cursive_exit", "cursive_entry", exits, entries))
+        b.addRule(fontFeatures.Attachment("cursive_entry", "cursive_exit", entries, exits))
         return b, []
 
     def unparseMarkToBase(self, lookup):
