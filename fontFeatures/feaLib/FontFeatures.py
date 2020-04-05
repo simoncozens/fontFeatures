@@ -29,7 +29,7 @@ def asFeaAST(self):
 
   for k in self.routines:
     assert(isinstance(k, Routine))
-    pre = r.feaPreamble(self)
+    pre = k.feaPreamble(self)
     for s in pre: ff.statements.append(s)
   for k,v in self.features.items():
     for r in v:

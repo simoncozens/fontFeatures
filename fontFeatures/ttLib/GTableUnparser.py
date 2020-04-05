@@ -176,11 +176,12 @@ class GTableUnparser:
         out = writer.file.getvalue().decode("utf-8")
         return out
 
-    # def unparsable(self, b, e, sub):
-    #     b.statements.append(Comment("# XXX Unparsable rule: "+str(e)))
-    #     b.statements.append(Comment("# ----"))
-    #     out = self.asXML(sub).splitlines()
-    #     for ln in out:
-    #         b.statements.append(Comment("# "+ln))
-    #     b.statements.append(Comment("# ----\n"))
+    def unparsable(self, b, e, sub):
+        import warnings
+        warnings.warn("# XXX Unparsable rule: "+str(e))
+        # b.statements.append(Comment("# ----"))
+        # out = self.asXML(sub).splitlines()
+        # for ln in out:
+        #     b.statements.append(Comment("# "+ln))
+        # b.statements.append(Comment("# ----\n"))
 

@@ -114,51 +114,30 @@ class GPOSUnparser (GTableUnparser):
 
     def unparseMarkToBase(self, lookup):
         b = fontFeatures.Routine(name='MarkToBase'+self.gensym())
-        # self.unparsable(b, "Mark to base pos", lookup)
         for subtable in lookup.SubTable: # fontTools.ttLib.tables.otTables.MarkBasePos
             assert subtable.Format == 1
             anchorClassPrefix = 'Anchor'+self.gensym()
-            definitions = self.formatMarkArray(subtable.MarkArray, subtable.MarkCoverage, anchorClassPrefix)
+            marks = self.formatMarkArray(subtable.MarkArray, subtable.MarkCoverage, anchorClassPrefix)
             bases = self.formatBaseArray(subtable.BaseArray, subtable.BaseCoverage, anchorClassPrefix)
-        for d in definitions:
-            b.statements.append(d)
-        for d in bases:
-            b.statements.append(d)
-
+            b.addRule(
+                fontFeatures.Attachment(anchorClassPrefix, anchorClassPrefix+"_", bases, marks)
+            )
         return b, []
 
     def formatMarkArray(self, markArray, markCoverage, anchorClassPrefix):
         id2Name = markCoverage.glyphs
-        markClasses = {}
+        marks = {}
         for i, markRecord in enumerate(markArray.MarkRecord):
-            anchorclass = anchorClassPrefix + "_" + str(markRecord.Class)
-            thisAnchor = (anchorclass,markRecord.MarkAnchor.XCoordinate, markRecord.MarkAnchor.YCoordinate)
-            anchor = Anchor(thisAnchor[1],thisAnchor[2])
-            # XXX I removed  contourpoint=hasattr(markRecord.MarkAnchor, "AnchorPoint") and markRecord.MarkAnchor.AnchorPoint or None)
-            if not thisAnchor in markClasses:
-                markClasses[thisAnchor] = { "class": MarkClass(anchorclass), "anchor": anchor, "glyphs": [] }
-
-            markClasses[thisAnchor]["glyphs"].append(id2Name[i])
-
-        for k,v in markClasses.items():
-            definition = MarkClassDefinition(v["class"], v["anchor"], self.makeGlyphClass(v["glyphs"]))
-            v["class"].addDefinition(definition)
-        return [v["class"] for v in markClasses.values()]
+            marks[id2Name[i]] = (markRecord.MarkAnchor.XCoordinate, markRecord.MarkAnchor.YCoordinate)
+        return marks
 
     def formatBaseArray(self, baseArray, baseCoverage, anchorClassPrefix):
         id2Name = baseCoverage.glyphs
         bases = {}
         for i, baseRecord in enumerate(baseArray.BaseRecord):
-            anchors = []
             for classId, anchor in enumerate(baseRecord.BaseAnchor):
-                anchors.append((Anchor(anchor.XCoordinate, anchor.YCoordinate),GlyphClassDefinition(anchorClassPrefix + "_" + str(classId),[])))
-            if not tuple(anchors) in bases:
-                bases[tuple(anchors)] = []
-            bases[tuple(anchors)].append(id2Name[i])
-        markbasepos = []
-        for k,v in bases.items():
-            markbasepos.append(MarkBasePosStatement(self.makeGlyphClass(v), list(k)))
-        return markbasepos
+                bases[id2Name[i]]= (anchor.XCoordinate, anchor.YCoordinate) # ClassId?
+        return bases
 
     def unparseMarkToLigature(self, lookup):
         b = fontFeatures.Routine(name='MarkToLigature'+self.gensym())

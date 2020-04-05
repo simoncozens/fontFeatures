@@ -64,15 +64,15 @@ class Attach:
     import fontFeatures
     aFrom = tokens[0].token[1:]
     aTo = tokens[1].token[1:]
-    bases = []
-    marks = []
+    bases = {}
+    marks = {}
     for k,v in parser.fea.anchors.items():
-      if aFrom in v: bases.append( (k, v[aFrom]) )
-      if aTo in v:   marks.append( (k, v[aTo]) )
+      if aFrom in v: bases[k] = v[aFrom]
+      if aTo in v:   marks[k] = v[aTo]
     if len(tokens) == 3:
       if tokens[2].token == "bases":
-        bases = list(filter(lambda k: categorize_glyph(parser.font,k[0])[0] == "base", bases))
+        bases = {k:v for k,v in bases.items() if categorize_glyph(parser.font,k)[0] == "base"}
       else:
-        bases = list(filter(lambda k: categorize_glyph(parser.font,k[0])[0] == "mark", bases))
-      marks = list(filter(lambda k: categorize_glyph(parser.font,k[0])[0] == "mark", marks))
+        bases = {k:v for k,v in bases.items() if categorize_glyph(parser.font,k)[0] == "mark"}
+      marks = {k:v for k,v in marks.items() if categorize_glyph(parser.font,k)[0] == "mark"}
     return [ fontFeatures.Attachment(aFrom, aTo, bases, marks) ]

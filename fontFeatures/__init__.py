@@ -157,7 +157,7 @@ class Attachment(Rule):
 
   @property
   def is_cursive(self):
-    return not(not(self.marks))
+    return not(self.marks)
 
   from .feaLib.Attachment import asFeaAST, feaPreamble
 

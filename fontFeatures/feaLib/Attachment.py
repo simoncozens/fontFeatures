@@ -8,25 +8,25 @@ def glyphref(g):
 
 def sortByAnchor(self):
   anchors = {}
-  for mark in self.marks:
-    if not mark[1] in anchors:
-      anchors[mark[1]] = []
-    anchors[mark[1]].append(mark[0])
-  self.marks =  [ (v, k) for k, v in anchors.items()]
+  for name, pos in self.marks.items():
+    if not pos in anchors:
+      anchors[pos] = []
+    anchors[pos].append(name)
+  self.markslist =  [ (v, k) for k, v in anchors.items()]
 
   anchors = {}
-  for base in self.bases:
-    if not base[1] in anchors:
-      anchors[base[1]] = []
-    anchors[base[1]].append(base[0])
-  self.bases =  [ (v, k) for k, v in anchors.items() ]
+  for name, pos in self.bases.items():
+    if not pos in anchors:
+      anchors[pos] = []
+    anchors[pos].append(name)
+  self.baseslist =  [ (v, k) for k, v in anchors.items() ]
 
 def feaPreamble(self, ff):
   sortByAnchor(self)
   if not "mark_classes_done" in ff.scratch:
     ff.scratch["mark_classes_done"] = {}
   b = feaast.Block()
-  for mark in self.marks:
+  for mark in self.markslist:
     if not (self.base_name, tuple(mark[0])) in ff.scratch["mark_classes_done"]:
       b.statements.append(feaast.MarkClassDefinition(
         feaast.MarkClass(self.base_name),
@@ -37,8 +37,9 @@ def feaPreamble(self, ff):
   return [b]
 
 def asFeaAST(self):
+  if not hasattr(self, "baseslist"): sortByAnchor(self) # e.g. when testing
   b = feaast.Block()
-  for base in self.bases:
+  for base in self.baseslist:
     b.statements.append(feaast.MarkBasePosStatement(
       glyphref(base[0]),
       [[
