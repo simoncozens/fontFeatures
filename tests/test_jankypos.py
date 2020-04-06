@@ -17,12 +17,12 @@ class TestPositioning(unittest.TestCase):
     self.assertEqual(buf[2][0], "Z")
     self.assertEqual(buf[2][1], ValueRecord(xAdvance=618))
 
-  def test_buffer_rtl(self):
-    buf = self.janky.positioning_buffer(["uni0633.init","uni0646.fina"], direction="RTL")
-    self.assertEqual(buf[0][0], "uni0646.fina")
-    self.assertEqual(buf[0][1], ValueRecord(xAdvance=615))
-    self.assertEqual(buf[1][0], "uni0633.init")
-    self.assertEqual(buf[1][1], ValueRecord(xAdvance=568))
+  # def test_buffer_rtl(self):
+  #   buf = self.janky.positioning_buffer(["uni0633.init","uni0646.fina"], direction="RTL")
+  #   self.assertEqual(buf[0][0], "uni0646.fina")
+  #   self.assertEqual(buf[0][1], ValueRecord(xAdvance=615))
+  #   self.assertEqual(buf[1][0], "uni0633.init")
+  #   self.assertEqual(buf[1][1], ValueRecord(xAdvance=568))
 
   def test_single(self):
     buf = self.janky.positioning_buffer(["H","A","Z"])
@@ -56,9 +56,11 @@ class TestPositioning(unittest.TestCase):
     font = TTFont("fonts/NotoNastaliqUrdu-Dummy.ttf")
     janky = JankyPos(font)
     ff = unparse(font)
-    buf = janky.positioning_buffer(["NoonxFin", "SeenIni"])
-    buf = janky.process_rules(buf,ff.features["curs"][0].rules)
+    buf = janky.positioning_buffer(["NoonxFin", "SeenMed", "SeenIni"])
+    buf = janky.process_fontfeatures(buf,ff)
     self.assertEqual(buf[0][0], "NoonxFin")
     self.assertEqual(buf[0][1].asFea(), ValueRecord(xAdvance=1535).asFea())
-    self.assertEqual(buf[1][0], "SeenIni")
-    self.assertEqual(buf[1][1].asFea(), ValueRecord(xAdvance=1244, xPlacement = 0, yPlacement = 688).asFea())
+    self.assertEqual(buf[1][0], "SeenMed")
+    self.assertEqual(buf[1][1].asFea(), ValueRecord(xAdvance=1103, xPlacement = 0, yPlacement = 688).asFea())
+    self.assertEqual(buf[2][0], "SeenIni")
+    self.assertEqual(buf[2][1].asFea(), ValueRecord(xAdvance=1244, xPlacement = 0, yPlacement = 1145).asFea())
