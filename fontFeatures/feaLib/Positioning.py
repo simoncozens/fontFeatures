@@ -10,11 +10,11 @@ def asFeaAST(self):
   lut = lookup_type(self)
   glyphs = [glyphref(x) for x in self.glyphs]
   positionings = list(zip(glyphs, self.valuerecords))
-  if lut == 1:
+  if len(self.glyphs) == 1:
     return feaast.SinglePosStatement(
       positionings,
-      [],
-      [],
+      [glyphref(x) for x in self.precontext],
+      [glyphref(x) for x in self.postcontext],
       False
     )
   if lut == 2:
