@@ -70,7 +70,7 @@ class FontFeatures:
     self.scripts_and_languages = scripts
 
 class Routine:
-  def __init__(self, name = "", rules = None, address = None, inlined = False, languages = None, parent = None):
+  def __init__(self, name = "", rules = None, address = None, inlined = False, languages = None, parent = None, flags = 0):
     self.name  = name
     if rules:
       self.rules = rules
@@ -81,6 +81,7 @@ class Routine:
     self.inlined = inlined
     self.languages = languages
     self.parent = parent
+    self.flags = flags
 
   def addRule(self, rule):
     assert(isinstance(rule, Rule))
@@ -106,7 +107,7 @@ class Substitution(Rule):
   def __init__(self, input_, replacement,
                precontext = [], postcontext = [],
                address = None, languages = None,
-               lookups = []):
+               lookups = [], flags = 0):
     self.precontext = precontext
     self.postcontext = postcontext
     self.input = input_
@@ -114,6 +115,7 @@ class Substitution(Rule):
     self.address = address
     self.lookups = lookups
     self.languages = languages
+    self.flags = flags
 
   from .feaLib.Substitution import asFeaAST
 
@@ -122,13 +124,14 @@ class Chaining(Rule):
   def __init__(self, input_,
                precontext = [], postcontext = [],
                address = None, languages = None,
-               lookups = []):
+               lookups = [], flags = 0):
     self.precontext = precontext
     self.postcontext = postcontext
     self.input = input_
     self.address = address
     self.lookups = lookups
     self.languages = languages
+    self.flags = flags
 
   from .feaLib.Chaining import asFeaAST
 
@@ -136,7 +139,7 @@ class Positioning(Rule):
   def __init__(self, glyphs, valuerecords,
              precontext = [], postcontext = [],
              address = None, languages = None,
-             lookups = []):
+             lookups = [], flags = 0):
     self.precontext = precontext
     self.postcontext = postcontext
     assert(len(glyphs) == len(valuerecords))
@@ -145,15 +148,17 @@ class Positioning(Rule):
     self.address = address
     self.lookups = lookups
     self.languages = languages
+    self.flags = flags
 
   from .feaLib.Positioning import asFeaAST
 
 class Attachment(Rule):
-  def __init__(self, base_name, mark_name, bases, marks):
+  def __init__(self, base_name, mark_name, bases, marks, flags = 0):
     self.base_name = base_name
     self.mark_name = mark_name
     self.bases = bases
     self.marks = marks
+    self.flags = flags
 
   @property
   def is_cursive(self):

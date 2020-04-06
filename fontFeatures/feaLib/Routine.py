@@ -43,6 +43,23 @@ def arrange_by_lookup_type(self):
     routines.append(r)
   return routines
 
+# A lookup in OpenType can only have one flag
+def arrange_by_flags(self):
+  from fontFeatures import Routine
+  flagTypes = {}
+  for r in self.rules:
+    if not r.flags in flagTypes: flagTypes[r.flags] = []
+    flagTypes[r.flags].append(r)
+  if len(flagTypes.keys()) == 1:
+    self.flags = list(flagTypes.keys())[0]
+    return
+  routines = []
+  for k,v in flagTypes.items():
+    r = Routine( rules = v, flags = k)
+    if self.name: r.name = self.name + "_" + str(k)
+    routines.append(r)
+  return routines
+
 def arrange_by_language(self):
   from fontFeatures import Routine
   if not self.languages: return
@@ -72,6 +89,8 @@ def arrange(self):
   if splitType: return splitType
   splitLang = arrange_by_language(self)
   if splitLang: return splitLang
+  splitFlags = arrange_by_flags(self)
+  if splitFlags: return splitFlags
   return None
 
 def feaPreamble(self, ff):
@@ -90,12 +109,17 @@ def asFeaAST(self):
   if arranged:
     for a in arranged: f.statements.append(asFeaAST(a))
     return f
+
   if self.languages and not (self.languages[0][0] == "DFLT" and self.languages[0][1] == "dflt"):
     s,l = self.languages[0]
     f.statements.append(feaast.ScriptStatement(s))
     if l != "*":
       l = "%4s" % l
       f.statements.append(feaast.LanguageStatement(l))
+
+  if hasattr(self,"flags") and self.flags > 0:
+    f.statements.append(feaast.LookupFlagStatement(self.flags))
+
   for x in self.comments:
     f.statements.append(Comment(x))
 
