@@ -27,3 +27,4 @@ And the following utilities:
 * `fee2fea`: translates a FEE file into Adobe feature syntax.
 * `otf2fea`: translates an OTF file into Adobe features syntax.
 * `txt2fee`: translates a FontDame txt file into FEE syntax.
+* `mergeFee`: takes an existing font, adds FEE rules to it, and writes it out again.
