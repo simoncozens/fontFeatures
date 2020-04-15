@@ -170,6 +170,7 @@ class GTableUnparser:
         for xt in lookup.SubTable:
             xt.SubTable = [ xt.ExtSubTable ]
             xt.LookupType = xt.ExtSubTable.LookupType
+            xt.LookupFlag = lookup.LookupFlag
             return self.unparseLookup(xt, self.currentLookup)
 
     def asXML(self, sub):

@@ -34,10 +34,9 @@ class GSUBUnparser (GTableUnparser):
 
     def unparseContextualSubstitution(self,lookup):
         b = fontFeatures.Routine(name='ContextualSubstitution'+self.gensym())
-
         for sub in lookup.SubTable:
             if sub.Format == 1:
-                self._unparse_contextual_sub_format1(sub, b)
+                self._unparse_contextual_sub_format1(sub, b, lookup)
             else:
                 self.unparsable(b, "Lookup type 5", sub)
 
@@ -47,15 +46,15 @@ class GSUBUnparser (GTableUnparser):
         b = fontFeatures.Routine(name='ChainingContextualSubstitution'+self.gensym())
         for sub in lookup.SubTable:
             if sub.Format == 1 or sub.Format == 3:
-                self._unparse_contextual_chain_format1(sub, b)
+                self._unparse_contextual_chain_format1(sub, b, lookup)
             elif sub.Format == 2:
-                self._unparse_contextual_format2(sub, b)
+                self._unparse_contextual_format2(sub, b, lookup)
             else:
                 raise ValueError
         return b, []
 
 
-    def _unparse_contextual_sub_format1(self, sub, b):
+    def _unparse_contextual_sub_format1(self, sub, b, lookup):
         prefix = []
         inputs = []
         lookups = []
@@ -81,9 +80,9 @@ class GSUBUnparser (GTableUnparser):
         if hasattr(sub, "LookAheadCoverage"):
             for i, coverage in enumerate(sub.LookAheadCoverage):
                 suffix.append(coverage.glyphs)
-        b.addRule(fontFeatures.Substitution(inputs,prefix,suffix,address = self.currentLookup))
+        b.addRule(fontFeatures.Substitution(inputs,prefix,suffix,address = self.currentLookup, flags = lookup.LookupFlag))
 
-    def _unparse_contextual_chain_format1(self, sub, b):
+    def _unparse_contextual_chain_format1(self, sub, b, lookup):
         prefix = []
         inputs = []
         lookups = []
@@ -111,15 +110,15 @@ class GSUBUnparser (GTableUnparser):
         if len(lookups) <= len(inputs):
             lookups.extend([None] * (1+len(inputs)-len(lookups)))
         if len(prefix) > 0 or len(suffix)>0 or any([x is not None for x in lookups]):
-            b.addRule(fontFeatures.Chaining(inputs,prefix,suffix,lookups = lookups, address = self.currentLookup))
+            b.addRule(fontFeatures.Chaining(inputs,prefix,suffix,lookups = lookups, address = self.currentLookup, flags = lookup.LookupFlag))
         elif len(inputs) > 0 and (len(lookups) == 0 or all([x is None for x in lookups])):
             # This is an Ignore
-            b.addRule(fontFeatures.Chaining(inputs,prefix,suffix,lookups = lookups, address = self.currentLookup))
+            b.addRule(fontFeatures.Chaining(inputs,prefix,suffix,lookups = lookups, address = self.currentLookup, flags = lookup.LookupFlag))
         else:
             # import code; code.interact(local=locals())
             b.addComment("# Another kind of contextual "+str(sub.Format))
 
-    def _unparse_contextual_format2(self, sub, b):
+    def _unparse_contextual_format2(self, sub, b, lookup):
         # Coverage table largely irrelevant
         # coverage = self.makeGlyphClass(sub.Coverage.glyphs)
         backtrack = {}
@@ -156,19 +155,17 @@ class GSUBUnparser (GTableUnparser):
                     lookups[sl.SequenceIndex] = self.lookups[sl.LookupListIndex]["lookup"]
                 if len(lookups) <= len(input_):
                     lookups.extend([None] * (1+len(input_)-len(lookups)))
-                b.addRule(fontFeatures.Chaining(input_,prefix,suffix,lookups=lookups, address = self.currentLookup))
+                b.addRule(fontFeatures.Chaining(input_,prefix,suffix,lookups=lookups, address = self.currentLookup, flags = lookup.LookupFlag))
 
     def unparseLigatureSubstitution(self,lookup):
         b = fontFeatures.Routine(name='LigatureSubstitution'+self.gensym())
-        # XXX Lookup flag
-
         for sub in lookup.SubTable:
             for first, ligatures in sub.ligatures.items():
                 for lig in ligatures:
                     substarray = [glyph(first)]
                     for x in lig.Component:
                         substarray.append(glyph(x))
-                    b.addRule(fontFeatures.Substitution(substarray, singleglyph(lig.LigGlyph), address = self.currentLookup))
+                    b.addRule(fontFeatures.Substitution(substarray, singleglyph(lig.LigGlyph), address = self.currentLookup, flags = lookup.LookupFlag))
         return b, []
 
     def unparseMultipleSubstitution(self,lookup):
@@ -176,28 +173,26 @@ class GSUBUnparser (GTableUnparser):
 
         for sub in lookup.SubTable:
             for in_glyph, out_glyphs in sub.mapping.items():
-                b.addRule(fontFeatures.Substitution(singleglyph(in_glyph), [glyph(x) for x in out_glyphs], address = self.currentLookup))
+                b.addRule(fontFeatures.Substitution(singleglyph(in_glyph), [glyph(x) for x in out_glyphs], address = self.currentLookup, flags = lookup.LookupFlag))
         return b, []
 
     def unparseAlternateSubstitution(self,lookup):
         b = fontFeatures.Routine(name='AlternateSubstitution'+self.gensym())
         for sub in lookup.SubTable:
             for in_glyph, out_glyphs in sub.alternates.items():
-                b.addRule(fontFeatures.Substitution(singleglyph(in_glyph), [out_glyphs], address = self.currentLookup))
+                b.addRule(fontFeatures.Substitution(singleglyph(in_glyph), [out_glyphs], address = self.currentLookup, flags = lookup.LookupFlag))
         return b, []
 
     def unparseSingleSubstitution(self,lookup):
         b = fontFeatures.Routine(name='SingleSubstitution'+self.gensym())
-        # XXX Lookup flag
-
         for sub in lookup.SubTable:
             if len(sub.mapping) > 5:
                 k =sub.mapping.keys()
                 v =sub.mapping.values()
-                b.addRule(fontFeatures.Substitution([k],[v], address = self.currentLookup))
+                b.addRule(fontFeatures.Substitution([k],[v], address = self.currentLookup, flags = lookup.LookupFlag))
             else:
                 for k,v in sub.mapping.items():
-                    b.addRule(fontFeatures.Substitution([[k]],[[v]], address = self.currentLookup))
+                    b.addRule(fontFeatures.Substitution([[k]],[[v]], address = self.currentLookup, flags = lookup.LookupFlag))
         return b, []
 
     def getDependencies(self, lookup):
