@@ -2,6 +2,7 @@ import fontTools
 from collections import OrderedDict
 from fontTools.misc.xmlWriter import XMLWriter
 import fontFeatures
+from io import BytesIO
 
 class GTableUnparser:
     def __init__(self, table, ff, languageSystems, font=None):
@@ -180,9 +181,9 @@ class GTableUnparser:
     def unparsable(self, b, e, sub):
         import warnings
         warnings.warn("# XXX Unparsable rule: "+str(e))
-        # b.statements.append(Comment("# ----"))
-        # out = self.asXML(sub).splitlines()
-        # for ln in out:
-        #     b.statements.append(Comment("# "+ln))
-        # b.statements.append(Comment("# ----\n"))
+        b.addComment("# ----")
+        out = self.asXML(sub).splitlines()
+        for ln in out:
+            b.addComment("# "+ln)
+        b.addComment("# ----\n")
 
