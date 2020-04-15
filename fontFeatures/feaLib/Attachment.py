@@ -48,6 +48,7 @@ def asFeaAST(self):
         g in self.marks and feaast.Anchor(*self.marks[g])
       ))
   else:
+    # XXX - if the "bases" are actually marks in GDEF, we're doing mark-to-mark
     if not hasattr(self, "baseslist"): sortByAnchor(self) # e.g. when testing
     for base in self.baseslist:
       b.statements.append(feaast.MarkBasePosStatement(
