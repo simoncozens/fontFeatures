@@ -152,7 +152,7 @@ class GTableUnparser:
 
         for lookupIdx in lookupOrder:
             lookup = self.table.LookupList.Lookup[lookupIdx]
-            res, dependencies = self.unparseLookup(lookup)
+            res, dependencies = self.unparseLookup(lookup, lookupIdx)
             self.lookups[lookupIdx] = {
                 "lookup": res,
                 "dependencies": dependencies,
@@ -160,7 +160,8 @@ class GTableUnparser:
                 "inline": True
             }
 
-    def unparseLookup(self, lookup):
+    def unparseLookup(self, lookup, lookupIdx):
+        self.currentLookup = lookupIdx
         unparser = getattr(self, "unparse"+self.lookupTypes[lookup.LookupType])
         return unparser(lookup)
 
@@ -168,7 +169,7 @@ class GTableUnparser:
         for xt in lookup.SubTable:
             xt.SubTable = [ xt.ExtSubTable ]
             xt.LookupType = xt.ExtSubTable.LookupType
-            return self.unparseLookup(xt)
+            return self.unparseLookup(xt, self.currentLookup)
 
     def asXML(self, sub):
         writer = XMLWriter(BytesIO())
