@@ -37,7 +37,7 @@ class GSUBUnparser (GTableUnparser):
 
         for sub in lookup.SubTable:
             if sub.Format == 1:
-                self._unparse_contextual_format1(sub, b)
+                self._unparse_contextual_sub_format1(sub, b)
             else:
                 self.unparsable(b, "Lookup type 5", sub)
 
@@ -47,18 +47,49 @@ class GSUBUnparser (GTableUnparser):
         b = fontFeatures.Routine(name='ChainingContextualSubstitution'+self.gensym())
         for sub in lookup.SubTable:
             if sub.Format == 1 or sub.Format == 3:
-                self._unparse_contextual_format1(sub, b)
+                self._unparse_contextual_chain_format1(sub, b)
             elif sub.Format == 2:
                 self._unparse_contextual_format2(sub, b)
             else:
                 raise ValueError
         return b, []
 
-    def _unparse_contextual_format1(self, sub, b):
+
+    def _unparse_contextual_sub_format1(self, sub, b):
         prefix = []
         inputs = []
         lookups = []
         suffix = []
+        if hasattr(sub, "SubRuleSet"):
+            self.unparsable(b, "Lookup type 5, format 1, with subrules", sub)
+            return
+        if hasattr(sub, "BacktrackCoverage"):
+            for coverage in reversed(sub.BacktrackCoverage):
+                prefix.append( coverage.glyphs )
+        if hasattr(sub, "SubstLookupRecord"):
+            for sl in sub.SubstLookupRecord:
+                self.lookups[sl.LookupListIndex]["inline"] = False
+                self.lookups[sl.LookupListIndex]["useCount"] = 999
+                self.sharedLookups.add(sl.LookupListIndex)
+                if len(lookups) <= sl.SequenceIndex:
+                    lookups.extend([None] * (1+sl.SequenceIndex-len(lookups)))
+
+                lookups[sl.SequenceIndex] = self.lookups[sl.LookupListIndex]["lookup"]
+        if hasattr(sub, "InputCoverage"):
+            for coverage in sub.InputCoverage:
+                inputs.append(coverage.glyphs)
+        if hasattr(sub, "LookAheadCoverage"):
+            for i, coverage in enumerate(sub.LookAheadCoverage):
+                suffix.append(coverage.glyphs)
+        b.addRule(fontFeatures.Substitution(inputs,prefix,suffix,address = self.currentLookup))
+
+    def _unparse_contextual_chain_format1(self, sub, b):
+        prefix = []
+        inputs = []
+        lookups = []
+        suffix = []
+        if hasattr(sub, "ChainSubRuleSet"):
+            raise ValueError
         if hasattr(sub, "BacktrackCoverage"):
             for coverage in reversed(sub.BacktrackCoverage):
                 prefix.append( coverage.glyphs )
