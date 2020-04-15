@@ -69,7 +69,7 @@ class GSUBUnparser (GTableUnparser):
             for sl in sub.SubstLookupRecord:
                 self.lookups[sl.LookupListIndex]["inline"] = False
                 self.lookups[sl.LookupListIndex]["useCount"] = 999
-                self.sharedLookups.add(sl.LookupListIndex)
+                self.sharedLookups[sl.LookupListIndex] = None
                 if len(lookups) <= sl.SequenceIndex:
                     lookups.extend([None] * (1+sl.SequenceIndex-len(lookups)))
 
@@ -96,7 +96,7 @@ class GSUBUnparser (GTableUnparser):
             for sl in sub.SubstLookupRecord:
                 self.lookups[sl.LookupListIndex]["inline"] = False
                 self.lookups[sl.LookupListIndex]["useCount"] = 999
-                self.sharedLookups.add(sl.LookupListIndex)
+                self.sharedLookups[sl.LookupListIndex] = None
                 if len(lookups) <= sl.SequenceIndex:
                     lookups.extend([None] * (1+sl.SequenceIndex-len(lookups)))
 
@@ -149,7 +149,7 @@ class GSUBUnparser (GTableUnparser):
                         continue
                     self.lookups[sl.LookupListIndex]["inline"] = False
                     self.lookups[sl.LookupListIndex]["useCount"] = 999
-                    self.sharedLookups.add(sl.LookupListIndex)
+                    self.sharedLookups[sl.LookupListIndex] = None
                     if len(lookups) <= sl.SequenceIndex:
                         lookups.extend([None] * (1+sl.SequenceIndex-len(lookups)))
                     lookups[sl.SequenceIndex] = self.lookups[sl.LookupListIndex]["lookup"]

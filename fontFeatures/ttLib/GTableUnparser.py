@@ -14,7 +14,7 @@ class GTableUnparser:
         self.lookups = {}
         self.sharedClasses = {}
         self.languageSystems = languageSystems
-        self.sharedLookups = set([])
+        self.sharedLookups = OrderedDict()
 
     def gensym(self):
         self.index = self.index + 1
@@ -98,19 +98,25 @@ class GTableUnparser:
 
     def inlineFeatures(self):
         # Check which can be inlined and which are shared
+        sharedAdded = set()
         for name, feature in self.features.items():
             for script in feature.values():
                 for langLookups in script.values():
                     for lookupIdx in langLookups:
                         self.lookups[lookupIdx]["useCount"] = self.lookups[lookupIdx]["useCount"]+1
                         if self.lookups[lookupIdx]["useCount"] > 1 and len(self.lookups[lookupIdx]["lookup"].rules) > 3:
-                            self.lookups[lookupIdx]["inline"] = False
-                            self.sharedLookups.add(lookupIdx)
+                            for l in self.lookups[lookupIdx]["dependencies"]:
+                                self.markAsSharedAndAdd(l)
+                            self.markAsSharedAndAdd(lookupIdx)
 
+
+    def markAsSharedAndAdd(self, lookupIdx):
+        self.lookups[lookupIdx]["inline"] = False
+        self.sharedLookups[lookupIdx] = None
 
     def addFeatures(self, doLookups = True):
         if doLookups:
-            for l in self.sharedLookups:
+            for l in self.sharedLookups.keys():
                 self.fontFeatures.addRoutine(self.lookups[l]["lookup"])
 
         for name, feature in self.features.items():
