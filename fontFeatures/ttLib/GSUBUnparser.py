@@ -103,28 +103,29 @@ class GSUBUnparser (GTableUnparser):
 
         rulesets = hasattr(sub, "ChainSubClassSet") and sub.ChainSubClassSet or sub.SubClassSet
 
-        try:
-            for classId, ruleset in enumerate(rulesets):
-                if not ruleset: continue
-                rules = hasattr(ruleset, "ChainSubClassRule") and ruleset.ChainSubClassRule or ruleset.SubClassRule
-                inputclass = inputs[classId]
-                for r in rules:
-                    prefix = [ backtrack[x] for x in r.Backtrack ]
-                    input_ = [ inputclass ] + [ inputs[x] for x in r.Input ]
-                    suffix = [ lookahead[x] for x in r.LookAhead ]
-                    lookups = []
-                    for sl in r.SubstLookupRecord:
-                        self.lookups[sl.LookupListIndex]["inline"] = False
-                        self.lookups[sl.LookupListIndex]["useCount"] = 999
-                        self.sharedLookups.add(sl.LookupListIndex)
-                        if len(lookups) <= sl.SequenceIndex:
-                            lookups.extend([None] * (1+sl.SequenceIndex-len(lookups)))
-                        lookups[sl.SequenceIndex] = self.lookups[sl.LookupListIndex]["lookup"]
-                    if len(lookups) <= len(input_):
-                        lookups.extend([None] * (1+len(input_)-len(lookups)))
-                    b.addRule(fontFeatures.Chaining(input_,input_,prefix,suffix,lookups=lookups))
-        except Exception as e:
-            self.unparsable(b, e, sub)
+        for classId, ruleset in enumerate(rulesets):
+            if not ruleset: continue
+            rules = hasattr(ruleset, "ChainSubClassRule") and ruleset.ChainSubClassRule or ruleset.SubClassRule
+            inputclass = inputs[classId]
+            for r in rules:
+                prefix = [ backtrack[x] for x in r.Backtrack ]
+                input_ = [ inputclass ] + [ inputs[x] for x in r.Input ]
+                suffix = [ lookahead[x] for x in r.LookAhead ]
+                lookups = []
+                for sl in r.SubstLookupRecord:
+                    if not sl.LookupListIndex in self.lookups:
+                        import warnings
+                        warnings.warn("Lookup %i not added to dependency list in lookup %i!" % (sl.LookupListIndex, self.currentLookup))
+                        continue
+                    self.lookups[sl.LookupListIndex]["inline"] = False
+                    self.lookups[sl.LookupListIndex]["useCount"] = 999
+                    self.sharedLookups.add(sl.LookupListIndex)
+                    if len(lookups) <= sl.SequenceIndex:
+                        lookups.extend([None] * (1+sl.SequenceIndex-len(lookups)))
+                    lookups[sl.SequenceIndex] = self.lookups[sl.LookupListIndex]["lookup"]
+                if len(lookups) <= len(input_):
+                    lookups.extend([None] * (1+len(input_)-len(lookups)))
+                b.addRule(fontFeatures.Chaining(input_,prefix,suffix,lookups=lookups, address = self.currentLookup))
 
     def unparseLigatureSubstitution(self,lookup):
         b = fontFeatures.Routine(name='LigatureSubstitution'+self.gensym())
@@ -178,15 +179,24 @@ class GSUBUnparser (GTableUnparser):
                 else:
                     return []
 
-        elif hasattr(lookup,"ChainSubClassSet"): # Format 2
-            for ruleset in lookup.ChainSubClassSet:
-                if ruleset is None: continue
-                for rule in ruleset.ChainSubClassRule:
-                    for sl in rule.SubstLookupRecord:
-                        deps.append(sl.LookupListIndex)
-        else:
+        elif hasattr(lookup, "SubTable"):
             for sub in lookup.SubTable:
-                if hasattr(sub, "SubstLookupRecord"):
-                    for sl in sub.SubstLookupRecord:
-                        deps.append(sl.LookupListIndex)
+                deps.extend(self.getChainingDeps(sub))
+        else:
+            deps.extend(self.getChainingDeps(lookup))
         return set(deps)
+
+    def getChainingDeps(self, sub):
+        deps = []
+        if hasattr(sub, "ChainSubClassSet") or hasattr(sub, "SubClassSet"):
+            rulesets = hasattr(sub, "ChainSubClassSet") and sub.ChainSubClassSet or sub.SubClassSet
+            for classId, ruleset in enumerate(rulesets):
+                if not ruleset: continue
+                rules = hasattr(ruleset, "ChainSubClassRule") and ruleset.ChainSubClassRule or ruleset.SubClassRule
+                for r in rules:
+                    for sl in r.SubstLookupRecord:
+                        deps.append(sl.LookupListIndex)
+        elif hasattr(sub, "SubstLookupRecord"):
+            for sl in sub.SubstLookupRecord:
+                deps.append(sl.LookupListIndex)
+        return deps
