@@ -1,8 +1,8 @@
 def lookup_type(self):
   if len(self.lookups) > 0 and any([x is not None for x in self.lookups]):
     return 6 # Chaining
-  if self.input == self.replacement: # It's an ignore
-    return 6
+  # if self.input == self.replacement: # It's an ignore
+    # return 6
   if len(self.input) == 1 and len(self.replacement) == 1:
     if len(self.input[0]) == 1 and len(self.replacement[0]) > 1:
       return 3 # Alternate
