@@ -135,6 +135,14 @@ class GPOSUnparser (GTableUnparser):
             marks[id2Name[i]] = (markRecord.MarkAnchor.XCoordinate, markRecord.MarkAnchor.YCoordinate)
         return marks
 
+    def formatMark2Array(self, markArray, markCoverage, anchorClassPrefix):
+        id2Name = markCoverage.glyphs
+        marks = {}
+        for i, markRecord in enumerate(markArray.Mark2Record):
+            assert(len(markRecord.Mark2Anchor) == 1)
+            marks[id2Name[i]] = (markRecord.Mark2Anchor[0].XCoordinate, markRecord.Mark2Anchor[0].YCoordinate)
+        return marks
+
     def formatBaseArray(self, baseArray, baseCoverage, anchorClassPrefix):
         id2Name = baseCoverage.glyphs
         bases = {}
@@ -151,7 +159,14 @@ class GPOSUnparser (GTableUnparser):
 
     def unparseMarkToMark(self, lookup):
         b = fontFeatures.Routine(name='MarkToMark'+self.gensym())
-        self.unparsable(b, "Mark to Mark pos", lookup)
+        for subtable in lookup.SubTable: # fontTools.ttLib.tables.otTables.MarkBasePos
+            assert subtable.Format == 1
+            anchorClassPrefix = 'Anchor'+self.gensym()
+            marks = self.formatMarkArray(subtable.Mark1Array, subtable.Mark1Coverage, anchorClassPrefix)
+            bases = self.formatMark2Array(subtable.Mark2Array, subtable.Mark2Coverage, anchorClassPrefix)
+            b.addRule(
+                fontFeatures.Attachment(anchorClassPrefix, anchorClassPrefix+"_", bases, marks)
+            )
         return b, []
 
     def unparseContextualPositioning(self, lookup):
