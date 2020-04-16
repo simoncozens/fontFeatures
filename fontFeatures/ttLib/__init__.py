@@ -38,8 +38,8 @@ def unparse(font, do_gdef = False, doLookups = True):
     #         ff.statements.append(table)
 
     if 'GSUB' in font:
-        GSUBUnparser(font["GSUB"], ff, languageSystems).unparse(doLookups=doLookups)
+        GSUBUnparser(font["GSUB"], ff, languageSystems, font=font).unparse(doLookups=doLookups)
 
     if 'GPOS' in font:
-        GPOSUnparser(font['GPOS'], ff, languageSystems).unparse(doLookups=doLookups)
+        GPOSUnparser(font['GPOS'], ff, languageSystems, font=font).unparse(doLookups=doLookups)
     return ff

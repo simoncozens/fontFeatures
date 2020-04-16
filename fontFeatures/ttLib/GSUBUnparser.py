@@ -5,8 +5,11 @@ from .GTableUnparser import GTableUnparser
 from itertools import groupby
 import fontFeatures
 
-def _invertClassDef(a):
-    return {k: [j for j, _ in list(v)] for k, v in groupby(a.items(), lambda x: x[1])}
+def _invertClassDef(a, font):
+    classes = {k: [j for j, _ in list(v)] for k, v in groupby(a.items(), lambda x: x[1])}
+    glyphset = set(font.getGlyphOrder())
+    classes[0] = glyphset - set(a.keys())
+    return classes
 
 # These are silly little functions which help to document the intent
 
@@ -30,7 +33,7 @@ class GSUBUnparser (GTableUnparser):
     }
 
     def isChaining(self, lookupType):
-        return lookupType >= 6
+        return lookupType >= 5
 
     def unparseContextualSubstitution(self,lookup):
         b = fontFeatures.Routine(name='ContextualSubstitution'+self.gensym())
@@ -38,7 +41,33 @@ class GSUBUnparser (GTableUnparser):
             if sub.Format == 1:
                 self._unparse_contextual_sub_format1(sub, b, lookup)
             else:
-                self.unparsable(b, "Lookup type 5", sub)
+                try:
+                    inputs = _invertClassDef(sub.ClassDef.classDefs, self.font)
+                    for classId, ruleset in enumerate(sub.SubClassSet):
+                        if not ruleset: continue
+                        rules = ruleset.SubClassRule
+                        inputclass = inputs[classId]
+                        for r in rules:
+                            input_ = [ inputclass ] + [ inputs[x] for x in r.Class ]
+                            lookups = []
+                            for sl in r.SubstLookupRecord:
+                                if not sl.LookupListIndex in self.lookups:
+                                    import warnings
+                                    warnings.warn("Lookup %i not added to dependency list in lookup %i!" % (sl.LookupListIndex, self.currentLookup))
+                                    continue
+                                self.lookups[sl.LookupListIndex]["inline"] = False
+                                self.lookups[sl.LookupListIndex]["useCount"] = 999
+                                self.sharedLookups[sl.LookupListIndex] = None
+                                if len(lookups) <= sl.SequenceIndex:
+                                    lookups.extend([None] * (1+sl.SequenceIndex-len(lookups)))
+                                lookups[sl.SequenceIndex] = self.lookups[sl.LookupListIndex]["lookup"]
+                            if len(lookups) <= len(input_):
+                                lookups.extend([None] * (1+len(input_)-len(lookups)))
+                            if len(input_) == 0:
+                                raise ValueError
+                            b.addRule(fontFeatures.Chaining(input_,[],[],lookups=lookups, address = self.currentLookup, flags = lookup.LookupFlag))
+                except Exception as e:
+                    self.unparsable(b, "Lookup type 5 ("+str(e)+")", sub)
 
         return b, []
 
@@ -60,7 +89,19 @@ class GSUBUnparser (GTableUnparser):
         lookups = []
         suffix = []
         if hasattr(sub, "SubRuleSet"):
-            self.unparsable(b, "Lookup type 5, format 1, with subrules", sub)
+            for subrulesets, input_ in zip(sub.SubRuleSet, sub.Coverage.glyphs):
+                for subrule in subrulesets.SubRule:
+                    allinput = [input_] + subrule.Input
+                    for sl in subrule.SubstLookupRecord:
+                        self.lookups[sl.LookupListIndex]["inline"] = False
+                        self.lookups[sl.LookupListIndex]["useCount"] = 999
+                        self.sharedLookups[sl.LookupListIndex] = None
+                        if len(lookups) <= sl.SequenceIndex:
+                            lookups.extend([None] * (1+sl.SequenceIndex-len(lookups)))
+
+                        lookups[sl.SequenceIndex] = self.lookups[sl.LookupListIndex]["lookup"]
+
+                b.addRule(fontFeatures.Chaining(inputs,prefix,suffix,lookups = lookups, address = self.currentLookup, flags = lookup.LookupFlag))
             return
         if hasattr(sub, "BacktrackCoverage"):
             for coverage in reversed(sub.BacktrackCoverage):
@@ -122,20 +163,20 @@ class GSUBUnparser (GTableUnparser):
         # Coverage table largely irrelevant
         # coverage = self.makeGlyphClass(sub.Coverage.glyphs)
         backtrack = {}
-        if hasattr(sub, "BacktrackClassDef") and sub.BacktrackClassDef:
-            backtrack = _invertClassDef(sub.BacktrackClassDef.classDefs)
+        if sub.BacktrackClassDef:
+            backtrack = _invertClassDef(sub.BacktrackClassDef.classDefs, self.font)
         lookahead = {}
-        if hasattr(sub, "LookAheadClassDef") and sub.LookAheadClassDef:
-            lookahead = _invertClassDef(sub.LookAheadClassDef.classDefs)
+        if sub.LookAheadClassDef:
+            lookahead = _invertClassDef(sub.LookAheadClassDef.classDefs, self.font)
         inputs = {}
-        if hasattr(sub, "InputClassDef") and sub.InputClassDef:
-            inputs = _invertClassDef(sub.InputClassDef.classDefs)
+        if sub.InputClassDef:
+            inputs = _invertClassDef(sub.InputClassDef.classDefs, self.font)
 
-        rulesets = hasattr(sub, "ChainSubClassSet") and sub.ChainSubClassSet or sub.SubClassSet
+        rulesets = sub.ChainSubClassSet
 
         for classId, ruleset in enumerate(rulesets):
             if not ruleset: continue
-            rules = hasattr(ruleset, "ChainSubClassRule") and ruleset.ChainSubClassRule or ruleset.SubClassRule
+            rules = ruleset.ChainSubClassRule
             inputclass = inputs[classId]
             for r in rules:
                 prefix = [ backtrack[x] for x in r.Backtrack ]
@@ -222,6 +263,12 @@ class GSUBUnparser (GTableUnparser):
                 for r in rules:
                     for sl in r.SubstLookupRecord:
                         deps.append(sl.LookupListIndex)
+        elif hasattr(sub, "SubRuleSet"):
+            for subrulesets, input_ in zip(sub.SubRuleSet, sub.Coverage.glyphs):
+                for subrule in subrulesets.SubRule:
+                    for sl in subrule.SubstLookupRecord:
+                        deps.append(sl.LookupListIndex)
+
         elif hasattr(sub, "SubstLookupRecord"):
             for sl in sub.SubstLookupRecord:
                 deps.append(sl.LookupListIndex)
