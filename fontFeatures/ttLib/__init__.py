@@ -26,7 +26,7 @@ def unparseLanguageSystems(tables):
 
     return scripts
 
-def unparse(font, do_gdef = False, doLookups = True):
+def unparse(font, do_gdef = False, doLookups = True, config={}):
     gsub_gpos = [font[tableTag] for tableTag in ('GSUB', 'GPOS') if tableTag in font]
     ff = FontFeatures()
 
@@ -38,8 +38,8 @@ def unparse(font, do_gdef = False, doLookups = True):
     #         ff.statements.append(table)
 
     if 'GSUB' in font:
-        GSUBUnparser(font["GSUB"], ff, languageSystems, font=font).unparse(doLookups=doLookups)
+        GSUBUnparser(font["GSUB"], ff, languageSystems, font=font, config=config).unparse(doLookups=doLookups)
 
     if 'GPOS' in font:
-        GPOSUnparser(font['GPOS'], ff, languageSystems, font=font).unparse(doLookups=doLookups)
+        GPOSUnparser(font['GPOS'], ff, languageSystems, font=font, config=config).unparse(doLookups=doLookups)
     return ff

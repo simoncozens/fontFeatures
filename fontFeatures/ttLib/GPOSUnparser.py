@@ -5,12 +5,6 @@ from .GTableUnparser import GTableUnparser
 import fontFeatures
 from itertools import groupby
 
-def _invertClassDef(a, coverage = None):
-    defs = {k: sorted([j for j, _ in list(v)]) for k, v in groupby(a.items(), lambda x: x[1])}
-    if coverage:
-        defs[0] = set(coverage) - set(a.keys())
-    return defs
-
 class GPOSUnparser (GTableUnparser):
     lookupTypes = {
         1: "SinglePositioning",
@@ -44,13 +38,48 @@ class GPOSUnparser (GTableUnparser):
         return fontFeatures.ValueRecord(*values)
 
     def isChaining(self, lookupType):
-        return lookupType == 7 or lookupType == 8
+        return lookupType >= 7
 
     def getDependencies(self, lookup):
-        return []
+        deps = []
+        if lookup.LookupType == 9:
+            for xt in lookup.SubTable:
+                subLookupType = xt.ExtSubTable.LookupType
+                if self.isChaining(subLookupType):
+                    deps.extend(self.getDependencies(xt.ExtSubTable))
+                else:
+                    return []
+
+        elif hasattr(lookup, "SubTable"):
+            for sub in lookup.SubTable:
+                deps.extend(self.getChainingDeps(sub))
+        else:
+            deps.extend(self.getChainingDeps(lookup))
+        return set(deps)
+
+    def getChainingDeps(self, sub):
+        deps = []
+        if hasattr(sub, "ChainPosClassSet") or hasattr(sub, "PosClassSet"):
+            rulesets = hasattr(sub, "ChainPosClassSet") and sub.ChainPosClassSet or sub.PosClassSet
+            for classId, ruleset in enumerate(rulesets):
+                if not ruleset: continue
+                rules = hasattr(ruleset, "ChainPosClassRule") and ruleset.ChainPosClassRule or ruleset.PosClassRule
+                for r in rules:
+                    for sl in r.PosLookupRecord:
+                        deps.append(sl.LookupListIndex)
+        elif hasattr(sub, "PosRuleSet"):
+            for subrulesets, input_ in zip(sub.PosRuleSet, sub.Coverage.glyphs):
+                for subrule in subrulesets.PosRule:
+                    for sl in subrule.PosLookupRecord:
+                        deps.append(sl.LookupListIndex)
+
+        elif hasattr(sub, "PosLookupRecord"):
+            for sl in sub.PosLookupRecord:
+                deps.append(sl.LookupListIndex)
+        return deps
 
     def unparseSinglePositioning(self, lookup):
-        b = fontFeatures.Routine(name='SinglePositioning'+self.gensym())
+        b = fontFeatures.Routine(name=self.getname('SinglePositioning'+self.gensym()))
 
         for subtable in lookup.SubTable:
             if subtable.Format == 1:
@@ -70,7 +99,7 @@ class GPOSUnparser (GTableUnparser):
         return b, []
 
     def unparsePairPositioning(self, lookup):
-        b = fontFeatures.Routine(name='PairPositioning'+self.gensym())
+        b = fontFeatures.Routine(name=self.getname('PairPositioning'+self.gensym()))
         for subtable in lookup.SubTable:
             if subtable.Format == 1:
                 for g, pair in zip(subtable.Coverage.glyphs, subtable.PairSet):
@@ -82,8 +111,8 @@ class GPOSUnparser (GTableUnparser):
                         )
                         b.addRule(spos)
             else:
-                class1 = _invertClassDef(subtable.ClassDef1.classDefs, subtable.Coverage.glyphs)
-                class2 = _invertClassDef(subtable.ClassDef2.classDefs)
+                class1 = self._invertClassDef(subtable.ClassDef1.classDefs, subtable.Coverage.glyphs)
+                class2 = self._invertClassDef(subtable.ClassDef2.classDefs)
                 for ix1, c1 in enumerate(subtable.Class1Record):
                     if not ix1 in class1: continue # XXX
                     for ix2, c2 in enumerate(c1.Class2Record):
@@ -99,7 +128,7 @@ class GPOSUnparser (GTableUnparser):
         return b, []
 
     def unparseCursiveAttachment(self, lookup):
-        b = fontFeatures.Routine(name='CursiveAttachment'+self.gensym())
+        b = fontFeatures.Routine(name=self.getname('CursiveAttachment'+self.gensym()))
         entries = {}
         exits = {}
         for s in lookup.SubTable:
@@ -117,7 +146,7 @@ class GPOSUnparser (GTableUnparser):
         return b, []
 
     def unparseMarkToBase(self, lookup):
-        b = fontFeatures.Routine(name='MarkToBase'+self.gensym())
+        b = fontFeatures.Routine(name=self.getname('MarkToBase'+self.gensym()))
         for subtable in lookup.SubTable: # fontTools.ttLib.tables.otTables.MarkBasePos
             assert subtable.Format == 1
             anchorClassPrefix = 'Anchor'+self.gensym()
@@ -153,12 +182,12 @@ class GPOSUnparser (GTableUnparser):
         return bases
 
     def unparseMarkToLigature(self, lookup):
-        b = fontFeatures.Routine(name='MarkToLigature'+self.gensym())
+        b = fontFeatures.Routine(name=self.getname('MarkToLigature'+self.gensym()))
         self.unparsable(b, "Mark to lig pos", lookup)
         return b, []
 
     def unparseMarkToMark(self, lookup):
-        b = fontFeatures.Routine(name='MarkToMark'+self.gensym())
+        b = fontFeatures.Routine(name=self.getname('MarkToMark'+self.gensym()))
         for subtable in lookup.SubTable: # fontTools.ttLib.tables.otTables.MarkBasePos
             assert subtable.Format == 1
             anchorClassPrefix = 'Anchor'+self.gensym()
@@ -169,12 +198,85 @@ class GPOSUnparser (GTableUnparser):
             )
         return b, []
 
-    def unparseContextualPositioning(self, lookup):
-        b = fontFeatures.Routine(name='ContextualPositioning'+self.gensym())
-        self.unparsable(b, "Contextual pos", lookup)
+    def unparseContextualPositioning(self,lookup):
+        b = fontFeatures.Routine(name=self.getname('ContextualPositioning'+self.gensym()))
+        for sub in lookup.SubTable:
+            if sub.Format == 1:
+                self._unparse_contextual_pos_format1(sub, b, lookup)
+            else:
+                try:
+                    inputs = self._invertClassDef(sub.ClassDef.classDefs, self.font)
+                    for classId, ruleset in enumerate(sub.PosClassSet):
+                        if not ruleset: continue
+                        rules = ruleset.PosClassRule
+                        inputclass = inputs[classId]
+                        for r in rules:
+                            input_ = [ inputclass ] + [ inputs[x] for x in r.Class ]
+                            lookups = []
+                            for sl in r.PosLookupRecord:
+                                if not sl.LookupListIndex in self.lookups:
+                                    import warnings
+                                    warnings.warn("Lookup %i not added to dependency list in lookup %i!" % (sl.LookupListIndex, self.currentLookup))
+                                    continue
+                                self.lookups[sl.LookupListIndex]["inline"] = False
+                                self.lookups[sl.LookupListIndex]["useCount"] = 999
+                                self.sharedLookups[sl.LookupListIndex] = None
+                                if len(lookups) <= sl.SequenceIndex:
+                                    lookups.extend([None] * (1+sl.SequenceIndex-len(lookups)))
+                                lookups[sl.SequenceIndex] = self.lookups[sl.LookupListIndex]["lookup"]
+                            if len(lookups) <= len(input_):
+                                lookups.extend([None] * (1+len(input_)-len(lookups)))
+                            if len(input_) == 0:
+                                raise ValueError
+                            b.addRule(fontFeatures.Chaining(input_,[],[],lookups=lookups, address = self.currentLookup, flags = lookup.LookupFlag))
+                except Exception as e:
+                    import code; code.interact(local=locals())
+                    self.unparsable(b, "Lookup type 5 ("+str(e)+")", sub)
+
         return b, []
 
+
+    def _unparse_contextual_pos_format1(self, sub, b, lookup):
+        prefix = []
+        inputs = []
+        lookups = []
+        suffix = []
+        if hasattr(sub, "PosRuleSet"):
+            for subrulesets, input_ in zip(sub.PosRuleSet, sub.Coverage.glyphs):
+                for subrule in subrulesets.PosRule:
+                    allinput = [input_] + subrule.Input
+                    for sl in subrule.PosLookupRecord:
+                        self.lookups[sl.LookupListIndex]["inline"] = False
+                        self.lookups[sl.LookupListIndex]["useCount"] = 999
+                        self.sharedLookups[sl.LookupListIndex] = None
+                        if len(lookups) <= sl.SequenceIndex:
+                            lookups.extend([None] * (1+sl.SequenceIndex-len(lookups)))
+
+                        lookups[sl.SequenceIndex] = self.lookups[sl.LookupListIndex]["lookup"]
+
+                b.addRule(fontFeatures.Chaining(inputs,prefix,suffix,lookups = lookups, address = self.currentLookup, flags = lookup.LookupFlag))
+            return
+        if hasattr(sub, "BacktrackCoverage"):
+            for coverage in reversed(sub.BacktrackCoverage):
+                prefix.append( coverage.glyphs )
+        if hasattr(sub, "PosLookupRecord"):
+            for sl in sub.PosLookupRecord:
+                self.lookups[sl.LookupListIndex]["inline"] = False
+                self.lookups[sl.LookupListIndex]["useCount"] = 999
+                self.sharedLookups[sl.LookupListIndex] = None
+                if len(lookups) <= sl.SequenceIndex:
+                    lookups.extend([None] * (1+sl.SequenceIndex-len(lookups)))
+
+                lookups[sl.SequenceIndex] = self.lookups[sl.LookupListIndex]["lookup"]
+        if hasattr(sub, "InputCoverage"):
+            for coverage in sub.InputCoverage:
+                inputs.append(coverage.glyphs)
+        if hasattr(sub, "LookAheadCoverage"):
+            for i, coverage in enumerate(sub.LookAheadCoverage):
+                suffix.append(coverage.glyphs)
+        b.addRule(fontFeatures.Positioning(inputs,prefix,suffix,address = self.currentLookup, flags = lookup.LookupFlag))
+
     def unparseChainedContextualPositioning(self, lookup):
-        b = fontFeatures.Routine(name='ChainedContextualPositioning'+self.gensym())
-        # self.unparsable(b, "Chained Contextual pos", lookup)
+        b = fontFeatures.Routine(name=self.getname('ChainedContextualPositioning'+self.gensym()))
+        self.unparsable(b, "Chained Contextual pos", lookup)
         return b, []

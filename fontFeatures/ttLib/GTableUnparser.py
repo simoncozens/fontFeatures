@@ -5,16 +5,32 @@ import fontFeatures
 from io import BytesIO
 
 class GTableUnparser:
-    def __init__(self, table, ff, languageSystems, font=None):
+    def __init__(self, table, ff, languageSystems, font=None, config ={}):
         self.table = table.table
         self.font = font
         self.fontFeatures = ff
         self.lookupNames = []
+        self.config = config
         self.index = 0
         self.lookups = {}
         self.sharedClasses = {}
         self.languageSystems = languageSystems
         self.sharedLookups = OrderedDict()
+
+
+    def _invertClassDef(self, a, font):
+        classes = {}
+        for glyph,klass in a.items():
+            if not klass in classes: classes[klass] = []
+            classes[klass].append(glyph)
+        glyphset = set(font.getGlyphOrder())
+        classes[0] = glyphset - set(a.keys())
+        return classes
+
+
+    def getname(self, n):
+        if n in self.config: return self.config[n]
+        return n
 
     def gensym(self):
         self.index = self.index + 1
@@ -187,7 +203,7 @@ class GTableUnparser:
 
     def unparsable(self, b, e, sub):
         import warnings
-        warnings.warn("# XXX Unparsable rule: "+str(e))
+        warnings.warn("# XXX Unparsable rule: "+str(e) + " in "+str(self.currentLookup))
         b.addComment("# ----")
         out = self.asXML(sub).splitlines()
         for ln in out:
