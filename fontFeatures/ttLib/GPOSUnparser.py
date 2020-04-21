@@ -111,8 +111,8 @@ class GPOSUnparser (GTableUnparser):
                         )
                         b.addRule(spos)
             else:
-                class1 = self._invertClassDef(subtable.ClassDef1.classDefs, subtable.Coverage.glyphs)
-                class2 = self._invertClassDef(subtable.ClassDef2.classDefs)
+                class1 = self._invertClassDef(subtable.ClassDef1.classDefs, self.font)
+                class2 = self._invertClassDef(subtable.ClassDef2.classDefs, self.font)
                 for ix1, c1 in enumerate(subtable.Class1Record):
                     if not ix1 in class1: continue # XXX
                     for ix2, c2 in enumerate(c1.Class2Record):
