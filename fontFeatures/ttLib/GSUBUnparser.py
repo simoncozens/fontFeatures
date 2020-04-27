@@ -72,11 +72,9 @@ class GSUBUnparser (GTableUnparser):
             self.sharedLookups[sl.LookupListIndex] = None
             if len(lookups) <= sl.SequenceIndex:
                 lookups.extend([None] * (1+sl.SequenceIndex-len(lookups)))
-            elif lookups[sl.SequenceIndex]:
-                import warnings
-                warnings.warn("Multiple lookups at same point currently unsupported in lookup %i" % (self.currentLookup))
-
-            lookups[sl.SequenceIndex] = self.lookups[sl.LookupListIndex]["lookup"]
+            if not lookups[sl.SequenceIndex]:
+                lookups[sl.SequenceIndex] = []
+            lookups[sl.SequenceIndex].append( self.lookups[sl.LookupListIndex]["lookup"] )
         return lookups
 
 
