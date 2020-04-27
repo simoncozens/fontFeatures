@@ -42,20 +42,7 @@ class GSUBUnparser (GTableUnparser):
                         inputclass = inputs[classId]
                         for r in rules:
                             input_ = [ inputclass ] + [ inputs[x] for x in r.Class ]
-                            lookups = []
-                            for sl in r.SubstLookupRecord:
-                                if not sl.LookupListIndex in self.lookups:
-                                    import warnings
-                                    warnings.warn("Lookup %i not added to dependency list in lookup %i!" % (sl.LookupListIndex, self.currentLookup))
-                                    continue
-                                self.lookups[sl.LookupListIndex]["inline"] = False
-                                self.lookups[sl.LookupListIndex]["useCount"] = 999
-                                self.sharedLookups[sl.LookupListIndex] = None
-                                if len(lookups) <= sl.SequenceIndex:
-                                    lookups.extend([None] * (1+sl.SequenceIndex-len(lookups)))
-                                elif lookups[sl.SequenceIndex]:
-                                    warnings.warn("Multiple lookups at same point currently unsupported")
-                                lookups[sl.SequenceIndex] = self.lookups[sl.LookupListIndex]["lookup"]
+                            lookups = self._unparse_lookups(r.SubstLookupRecord)
                             if len(lookups) <= len(input_):
                                 lookups.extend([None] * (1+len(input_)-len(lookups)))
                             if len(input_) == 0:
@@ -77,6 +64,21 @@ class GSUBUnparser (GTableUnparser):
                 raise ValueError
         return b, []
 
+    def _unparse_lookups(self, slr):
+        lookups = []
+        for sl in slr:
+            self.lookups[sl.LookupListIndex]["inline"] = False
+            self.lookups[sl.LookupListIndex]["useCount"] = 999
+            self.sharedLookups[sl.LookupListIndex] = None
+            if len(lookups) <= sl.SequenceIndex:
+                lookups.extend([None] * (1+sl.SequenceIndex-len(lookups)))
+            elif lookups[sl.SequenceIndex]:
+                import warnings
+                warnings.warn("Multiple lookups at same point currently unsupported in lookup %i" % (self.currentLookup))
+
+            lookups[sl.SequenceIndex] = self.lookups[sl.LookupListIndex]["lookup"]
+        return lookups
+
 
     def _unparse_contextual_sub_format1(self, sub, b, lookup):
         prefix = []
@@ -89,14 +91,7 @@ class GSUBUnparser (GTableUnparser):
                 for subrule in subrulesets.SubRule:
                     lookups = []
                     allinput = [ glyph(x) for x in ([input_] + subrule.Input)]
-                    for sl in subrule.SubstLookupRecord:
-                        self.lookups[sl.LookupListIndex]["inline"] = False
-                        self.lookups[sl.LookupListIndex]["useCount"] = 999
-                        self.sharedLookups[sl.LookupListIndex] = None
-                        if len(lookups) <= sl.SequenceIndex:
-                            lookups.extend([None] * (1+sl.SequenceIndex-len(lookups)))
-
-                        lookups[sl.SequenceIndex] = self.lookups[sl.LookupListIndex]["lookup"]
+                    lookups = self._unparse_lookups(subrule.SubstLookupRecord)
                     if len(lookups) <= len(allinput):
                         lookups.extend([None] * (1+len(allinput)-len(lookups)))
                     b.addRule(fontFeatures.Chaining(allinput,prefix,suffix,lookups = lookups, address = self.currentLookup, flags = lookup.LookupFlag))
@@ -104,15 +99,7 @@ class GSUBUnparser (GTableUnparser):
         if hasattr(sub, "BacktrackCoverage"):
             for coverage in reversed(sub.BacktrackCoverage):
                 prefix.append( coverage.glyphs )
-        if hasattr(sub, "SubstLookupRecord"):
-            for sl in sub.SubstLookupRecord:
-                self.lookups[sl.LookupListIndex]["inline"] = False
-                self.lookups[sl.LookupListIndex]["useCount"] = 999
-                self.sharedLookups[sl.LookupListIndex] = None
-                if len(lookups) <= sl.SequenceIndex:
-                    lookups.extend([None] * (1+sl.SequenceIndex-len(lookups)))
-
-                lookups[sl.SequenceIndex] = self.lookups[sl.LookupListIndex]["lookup"]
+        assert(not hasattr(sub, "SubstLookupRecord"))
         if hasattr(sub, "InputCoverage"):
             for coverage in sub.InputCoverage:
                 inputs.append(coverage.glyphs)
@@ -132,14 +119,7 @@ class GSUBUnparser (GTableUnparser):
             for coverage in reversed(sub.BacktrackCoverage):
                 prefix.append( coverage.glyphs )
         if hasattr(sub, "SubstLookupRecord"):
-            for sl in sub.SubstLookupRecord:
-                self.lookups[sl.LookupListIndex]["inline"] = False
-                self.lookups[sl.LookupListIndex]["useCount"] = 999
-                self.sharedLookups[sl.LookupListIndex] = None
-                if len(lookups) <= sl.SequenceIndex:
-                    lookups.extend([None] * (1+sl.SequenceIndex-len(lookups)))
-
-                lookups[sl.SequenceIndex] = self.lookups[sl.LookupListIndex]["lookup"]
+            lookups = self._unparse_lookups(sub.SubstLookupRecord)
         if hasattr(sub, "InputCoverage"):
             for coverage in sub.InputCoverage:
                 inputs.append(coverage.glyphs)
@@ -172,7 +152,6 @@ class GSUBUnparser (GTableUnparser):
             inputs = self._invertClassDef(sub.InputClassDef.classDefs, self.font)
 
         rulesets = sub.ChainSubClassSet
-
         for classId, ruleset in enumerate(rulesets):
             if not ruleset: continue
             rules = ruleset.ChainSubClassRule
@@ -181,18 +160,7 @@ class GSUBUnparser (GTableUnparser):
                 prefix = [ backtrack[x] for x in r.Backtrack ]
                 input_ = [ inputclass ] + [ inputs[x] for x in r.Input ]
                 suffix = [ lookahead[x] for x in r.LookAhead ]
-                lookups = []
-                for sl in r.SubstLookupRecord:
-                    if not sl.LookupListIndex in self.lookups:
-                        import warnings
-                        warnings.warn("Lookup %i not added to dependency list in lookup %i!" % (sl.LookupListIndex, self.currentLookup))
-                        continue
-                    self.lookups[sl.LookupListIndex]["inline"] = False
-                    self.lookups[sl.LookupListIndex]["useCount"] = 999
-                    self.sharedLookups[sl.LookupListIndex] = None
-                    if len(lookups) <= sl.SequenceIndex:
-                        lookups.extend([None] * (1+sl.SequenceIndex-len(lookups)))
-                    lookups[sl.SequenceIndex] = self.lookups[sl.LookupListIndex]["lookup"]
+                lookups = self._unparse_lookups(r.SubstLookupRecord)
                 if len(lookups) <= len(input_):
                     lookups.extend([None] * (1+len(input_)-len(lookups)))
                 b.addRule(fontFeatures.Chaining(input_,prefix,suffix,lookups=lookups, address = self.currentLookup, flags = lookup.LookupFlag))
