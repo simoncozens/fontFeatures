@@ -1,4 +1,5 @@
 from fontFeatures import Substitution
+import logging
 
 class MergeMultipleSingleSubstitutions:
 	def apply(self, routine):
@@ -32,7 +33,14 @@ class MergeMultipleSingleSubstitutions:
 			if r in secondmapping: firstmapping[l] = secondmapping[r]
 		for l,r in secondmapping.items():
 			if not (l in firstmapping): firstmapping[l] = r
+		logger = logging.getLogger("fontFeatures")
+		logger.info("Merging two adjacent single subs")
+		if logger.isEnabledFor(logging.DEBUG):
+			logger.debug(first.asFea())
+			logger.debug(second.asFea())
+		address = first.address or second.address
 		return Substitution([firstmapping.keys()], [firstmapping.values()],
+			address = address,
 			precontext  = first.precontext,
 			postcontext = first.postcontext
 		)
