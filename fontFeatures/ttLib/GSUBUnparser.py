@@ -64,20 +64,6 @@ class GSUBUnparser (GTableUnparser):
                 raise ValueError
         return b, []
 
-    def _unparse_lookups(self, slr):
-        lookups = []
-        for sl in slr:
-            self.lookups[sl.LookupListIndex]["inline"] = False
-            self.lookups[sl.LookupListIndex]["useCount"] = 999
-            self.sharedLookups[sl.LookupListIndex] = None
-            if len(lookups) <= sl.SequenceIndex:
-                lookups.extend([None] * (1+sl.SequenceIndex-len(lookups)))
-            if not lookups[sl.SequenceIndex]:
-                lookups[sl.SequenceIndex] = []
-            lookups[sl.SequenceIndex].append( self.lookups[sl.LookupListIndex]["lookup"] )
-        return lookups
-
-
     def _unparse_contextual_sub_format1(self, sub, b, lookup):
         prefix = []
         inputs = []

@@ -213,18 +213,7 @@ class GPOSUnparser (GTableUnparser):
                         inputclass = inputs[classId]
                         for r in rules:
                             input_ = [ inputclass ] + [ inputs[x] for x in r.Class ]
-                            lookups = []
-                            for sl in r.PosLookupRecord:
-                                if not sl.LookupListIndex in self.lookups:
-                                    import warnings
-                                    warnings.warn("Lookup %i not added to dependency list in lookup %i!" % (sl.LookupListIndex, self.currentLookup))
-                                    continue
-                                self.lookups[sl.LookupListIndex]["inline"] = False
-                                self.lookups[sl.LookupListIndex]["useCount"] = 999
-                                self.sharedLookups[sl.LookupListIndex] = None
-                                if len(lookups) <= sl.SequenceIndex:
-                                    lookups.extend([None] * (1+sl.SequenceIndex-len(lookups)))
-                                lookups[sl.SequenceIndex] = self.lookups[sl.LookupListIndex]["lookup"]
+                            lookups = self._unparse_lookups(r.PosLookupRecord)
                             if len(lookups) <= len(input_):
                                 lookups.extend([None] * (1+len(input_)-len(lookups)))
                             if len(input_) == 0:
@@ -246,29 +235,14 @@ class GPOSUnparser (GTableUnparser):
             for subrulesets, input_ in zip(sub.PosRuleSet, sub.Coverage.glyphs):
                 for subrule in subrulesets.PosRule:
                     allinput = [input_] + subrule.Input
-                    for sl in subrule.PosLookupRecord:
-                        self.lookups[sl.LookupListIndex]["inline"] = False
-                        self.lookups[sl.LookupListIndex]["useCount"] = 999
-                        self.sharedLookups[sl.LookupListIndex] = None
-                        if len(lookups) <= sl.SequenceIndex:
-                            lookups.extend([None] * (1+sl.SequenceIndex-len(lookups)))
-
-                        lookups[sl.SequenceIndex] = self.lookups[sl.LookupListIndex]["lookup"]
-
+                    lookups = self._unparse_lookups(subrule.PosLookupRecord, lookups)
                 b.addRule(fontFeatures.Chaining(inputs,prefix,suffix,lookups = lookups, address = self.currentLookup, flags = lookup.LookupFlag))
             return
         if hasattr(sub, "BacktrackCoverage"):
             for coverage in reversed(sub.BacktrackCoverage):
                 prefix.append( coverage.glyphs )
         if hasattr(sub, "PosLookupRecord"):
-            for sl in sub.PosLookupRecord:
-                self.lookups[sl.LookupListIndex]["inline"] = False
-                self.lookups[sl.LookupListIndex]["useCount"] = 999
-                self.sharedLookups[sl.LookupListIndex] = None
-                if len(lookups) <= sl.SequenceIndex:
-                    lookups.extend([None] * (1+sl.SequenceIndex-len(lookups)))
-
-                lookups[sl.SequenceIndex] = self.lookups[sl.LookupListIndex]["lookup"]
+            lookups = self._unparse_lookups(subrule.PosLookupRecord, lookups)
         if hasattr(sub, "InputCoverage"):
             for coverage in sub.InputCoverage:
                 inputs.append(coverage.glyphs)

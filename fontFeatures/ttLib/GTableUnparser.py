@@ -17,6 +17,20 @@ class GTableUnparser:
         self.languageSystems = languageSystems
         self.sharedLookups = OrderedDict()
 
+    def _unparse_lookups(self, slr, in_lookups = None):
+        lookups = []
+        if in_lookups:
+            lookups = in_lookups
+        for sl in slr:
+            self.lookups[sl.LookupListIndex]["inline"] = False
+            self.lookups[sl.LookupListIndex]["useCount"] = 999
+            self.sharedLookups[sl.LookupListIndex] = None
+            if len(lookups) <= sl.SequenceIndex:
+                lookups.extend([None] * (1+sl.SequenceIndex-len(lookups)))
+            if not lookups[sl.SequenceIndex]:
+                lookups[sl.SequenceIndex] = []
+            lookups[sl.SequenceIndex].append( self.lookups[sl.LookupListIndex]["lookup"] )
+        return lookups
 
     def _invertClassDef(self, a, font):
         classes = {}
