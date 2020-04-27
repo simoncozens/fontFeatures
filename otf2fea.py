@@ -2,7 +2,14 @@
 import sys
 from fontTools.ttLib import TTFont
 from fontFeatures.ttLib import unparse
+from fontFeatures.optimizer import Optimizer
 from argparse import ArgumentParser
+
+import logging
+import os
+LOGLEVEL = os.environ.get('LOGLEVEL', 'WARNING').upper()
+logging.basicConfig(level=LOGLEVEL)
+
 import warnings
 def warning_on_one_line(message, category, filename, lineno, file=None, line=None):
         return '# [warning] %s\n' % ( message)
@@ -29,4 +36,5 @@ if args.config:
 
 font = TTFont(args.input)
 ff = unparse(font, do_gdef = args.gdef, doLookups = (not args.nolookups), config = config)
+Optimizer().optimize(ff)
 print(ff.asFea())
