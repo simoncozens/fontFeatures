@@ -3,6 +3,11 @@ import sys
 from fontTools.ttLib import TTFont
 from fontFeatures.ttLib import unparse
 from argparse import ArgumentParser
+import warnings
+def warning_on_one_line(message, category, filename, lineno, file=None, line=None):
+        return '# [warning] %s\n' % ( message)
+
+warnings.formatwarning = warning_on_one_line
 
 parser = ArgumentParser()
 parser.add_argument("input",
