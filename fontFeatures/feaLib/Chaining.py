@@ -14,7 +14,7 @@ def suborpos(lookups):
         for r in aLookup.rules:
           if isinstance(r, fontFeatures.Substitution): return "sub"
           if isinstance(r, fontFeatures.Positioning): return "pos"
-          if isinstance(r, fontFeatures.Anchor): return "pos"
+          if isinstance(r, fontFeatures.Attachment): return "pos"
 
 def _complex(self):
   import warnings
