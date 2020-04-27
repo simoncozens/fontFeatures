@@ -120,8 +120,9 @@ class GPOSUnparser (GTableUnparser):
                         vr1 = self.makeValueRecord(c2.Value1, subtable.ValueFormat1)
                         vr2 = self.makeValueRecord(c2.Value2, subtable.ValueFormat2)
                         if not vr1 and not vr2: continue
+                        firstClass = list(set(class1[ix1]) & set(subtable.Coverage.glyphs))
                         spos = fontFeatures.Positioning(
-                            [class1[ix1], class2[ix2]],
+                            [firstClass, class2[ix2]],
                             [vr1,vr2]
                         )
                         b.addRule(spos)
