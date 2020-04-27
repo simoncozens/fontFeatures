@@ -69,13 +69,13 @@ class FeeParser:
         @foo~sc  -> contents of class foo, with .sc removed
     """
     if not s.startswith("@"):
-      m = re.match("(.*)([\.~])(.*)$", s)
+      m = re.match("(.*)([\\.~])(.*)$", s)
       if not s in self.glyphs and mustExist:
         warnings.warn("Couldn't find glyph '%s' in font" % s)
       return [ s ]
     s = s[1:]
     if s in self.fea.namedClasses: return self.fea.namedClasses[s]
-    m = re.match("(.*)([\.~])(.*)$", s)
+    m = re.match("(.*)([\\.~])(.*)$", s)
     if m:
       origclass = m[1]
       operation = m[2]

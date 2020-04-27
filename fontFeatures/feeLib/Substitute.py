@@ -32,7 +32,7 @@ class Substitute:
       languages = parser.parse_languages(outputs[-1])
       outputs = outputs[:-1]
     for ix, o in enumerate(outputs):
-      m = re.match("^\$(\d+)(?:([\.~])(.*))?$", o)
+      m = re.match("^\\$(\\d+)(?:([\\.~])(.*))?$", o)
       if m:
         outputs[ix] = list(inputs[int(m[1])-1])
         if m[2] == ".":
