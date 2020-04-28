@@ -7,6 +7,7 @@ class FeaUnparser():
         self.ff = fontFeatures.FontFeatures()
         self.markclasses = {}
         self.currentFeature = None
+        self.language_systems = []
         glyphmap = ()
         if font:
             glyphmap = font.getReverseGlyphMap()
@@ -164,6 +165,18 @@ class FeaUnparser():
             self.ff.addFeature(self.currentFeature, [self.currentRoutine])
 
         self.currentRoutineFlag = value
+
+    def add_language_system(self, location, script, language):
+        self.language_systems.append((script, language))
+
+    def add_lookup_call(self, lookup_name):
+        routine = self.find_named_routine(lookup_name)
+        if self.currentFeature:
+            self.ff.addFeature(self.currentFeature, [routine])
+            self._start_routine((None,0,0),None)
+            self.ff.addFeature(self.currentFeature, [self.currentRoutine])
+        else:
+            raise ValueError("Huh?")
 
     def end_lookup_block(self):
         for rule in self.currentRoutine.rules:

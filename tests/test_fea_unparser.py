@@ -134,6 +134,7 @@ class TestFeaUnparser(unittest.TestCase):
     for s in tests:
       self.assertSufficientlyEqual(FeaUnparser(s).ff.asFea(), s)
 
+  # Chained contextual positioning
   def test_pos_chained(self):
     pytest.skip("Known bad test")
     tests = [
@@ -145,9 +146,18 @@ class TestFeaUnparser(unittest.TestCase):
 
   # Mark to mark
   # Mark to lig
-  # Chained contextual positioning
   # Ignore pos
   # Languages
+
+  def test_lookupreference(self):
+    tests = [
+      "lookup dummy { sub a b by c; } dummy; feature calt { lookup dummy; } calt;",
+    ]
+
+    for s in tests:
+      self.assertSufficientlyEqual(FeaUnparser(s).ff.asFea(), s)
+
+
 
   def test_lookupflag(self):
     tests = [
