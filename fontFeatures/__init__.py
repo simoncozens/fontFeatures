@@ -1,6 +1,7 @@
 from fontTools.ttLib import TTFont
 from collections import OrderedDict
 from fontTools.feaLib.ast import ValueRecord
+from itertools import chain
 
 class FontFeatures:
   """The FontFeatures class is a way of representing the transformations -
