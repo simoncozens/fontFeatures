@@ -25,6 +25,7 @@ class FontFeatures:
     self.features = OrderedDict()
     self.anchors = {}
     self.scratch = {} # Space for items to communicate context to each other. :(
+    self.doneUsageMarking = False
 
   def addRoutine(self, r):
     assert(isinstance(r,Routine))
@@ -36,6 +37,39 @@ class FontFeatures:
     for r in rs:
       r.parent = self
       self.features[name].append(r)
+
+  def allRoutines(self):
+    routines = set(self.routines)
+    for k,v in self.features.items():
+      for n in v:
+        if isinstance(n, Routine):
+          routines.add(n)
+    return list(routines)
+
+  def allRules(self, ruletype=None):
+    rules = [ ]
+    for r in self.allRoutines():
+      rules.extend(r.rules)
+    for k,v in self.features.items():
+      for n in v:
+        if not isinstance(n, Routine):
+          rules.extend(n.rules)
+
+    if ruletype:
+      rules = filter(lambda x: isinstance(x, ruletype), rules)
+    return rules
+
+  def markRoutineUseInChains(self):
+    if self.doneUsageMarking: return
+    for r in self.allRoutines():
+      r.usedin = set()
+    for chain in self.allRules(Chaining):
+      for routinelist in chain.lookups:
+        if not routinelist: continue
+        for routine in routinelist:
+          # Using a set here so it is safe to call more than once
+          routine.usedin.add(chain)
+    self.doneUsageMarking = True
 
   from .feaLib.FontFeatures import asFea, asFeaAST
 
@@ -90,6 +124,10 @@ class Routine:
   def addComment(self, comment):
     self.comments.append(comment)
 
+  @property
+  def involved_glyphs(self):
+    return set.union(*[r.involved_glyphs for r in self.rules])
+
   from .feaLib.Routine import asFea, asFeaAST, feaPreamble
 
 class Rule:
@@ -117,6 +155,14 @@ class Substitution(Rule):
     self.languages = languages
     self.flags = flags
 
+  @property
+  def involved_glyphs(self):
+    i = set(chain.from_iterable(self.input))
+    o = set(chain.from_iterable(self.replacement))
+    b = set(chain.from_iterable(self.precontext))
+    a = set(chain.from_iterable(self.postcontext))
+    return i | o | b | a
+
   from .feaLib.Substitution import asFeaAST
 
 class Chaining(Rule):
@@ -135,6 +181,13 @@ class Chaining(Rule):
 
   from .feaLib.Chaining import asFeaAST
 
+  @property
+  def involved_glyphs(self):
+    i = set(chain.from_iterable(self.input))
+    b = set(chain.from_iterable(self.precontext))
+    a = set(chain.from_iterable(self.postcontext))
+    return i | b | a
+
 class Positioning(Rule):
   def __init__(self, glyphs, valuerecords,
              precontext = [], postcontext = [],
@@ -149,6 +202,13 @@ class Positioning(Rule):
     self.lookups = lookups
     self.languages = languages
     self.flags = flags
+
+  @property
+  def involved_glyphs(self):
+    i = set(chain.from_iterable(self.glyphs))
+    b = set(chain.from_iterable(self.precontext))
+    a = set(chain.from_iterable(self.postcontext))
+    return i | b | a
 
   from .feaLib.Positioning import asFeaAST
 
@@ -166,4 +226,9 @@ class Attachment(Rule):
     return self.base_name == "cursive_entry" # XXX
 
   from .feaLib.Attachment import asFeaAST, feaPreamble
+  @property
+  def involved_glyphs(self):
+    b = set(self.bases.keys())
+    m = set(self.marks.keys())
+    return b | m
 
