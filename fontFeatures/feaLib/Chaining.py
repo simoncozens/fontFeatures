@@ -18,20 +18,34 @@ def suborpos(lookups):
         if isinstance(r, fontFeatures.Chaining): return suborpos(r.lookups)
 
 def feaPreamble(self, ff):
+  from fontFeatures.optimizer.FontFeatures import MergeNonOverlappingRoutines
+
   ff.markRoutineUseInChains()
   rv = []
+  if not "synthesised_lookups" in ff.scratch:
+    ff.scratch["synthesised_lookups"] = {}
   for ix,lookuplist in enumerate(self.lookups):
     if not lookuplist: continue
+
     if len(lookuplist) == 2: # Test purposes
-      from fontFeatures.optimizer.FontFeatures import MergeNonOverlappingRoutines
-      o = MergeNonOverlappingRoutines()
-      if o.compatibleRules(lookuplist[0], lookuplist[1]):
-        synthesised = fontFeatures.Routine()
-        synthesised.rules.extend(lookuplist[0].rules)
-        synthesised.rules.extend(lookuplist[1].rules)
-        synthesised.name = lookuplist[0].name + "_" + lookuplist[1].name
-        self.lookups[ix] = [ synthesised ]
-        rv.append(synthesised.asFeaAST())
+      synthname = lookuplist[0].name + "_" + lookuplist[1].name
+      synthname2 = lookuplist[1].name + "_" + lookuplist[0].name
+      if synthname in ff.scratch["synthesised_lookups"]:
+        self.lookups[ix] = [ ff.scratch["synthesised_lookups"][synthname] ]
+      elif synthname2 in ff.scratch["synthesised_lookups"]:
+        self.lookups[ix] = [ ff.scratch["synthesised_lookups"][synthname2] ]
+      else:
+        o = MergeNonOverlappingRoutines()
+        if o.compatibleRules(lookuplist[0], lookuplist[1]):
+          synthesised = fontFeatures.Routine()
+          synthesised.rules.extend(lookuplist[0].rules)
+          synthesised.rules.extend(lookuplist[1].rules)
+          synthesised.name = synthname
+          from fontFeatures.optimizer import Optimizer
+          Optimizer().optimize_routine(synthesised)
+          self.lookups[ix] = [ synthesised ]
+          ff.scratch["synthesised_lookups"][synthname] = synthesised
+          rv.append(synthesised.asFeaAST())
   return rv
 
 def _complex(self):
