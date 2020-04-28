@@ -2,6 +2,8 @@ from fontFeatures import Substitution
 from fontFeatures.feaLib import FeaUnparser
 
 import unittest
+import pytest
+
 import re
 class TestFeaUnparser(unittest.TestCase):
 
@@ -84,6 +86,74 @@ class TestFeaUnparser(unittest.TestCase):
   def test_feature(self):
     tests = [
       "feature calt { sub a by b; sub c by d; } calt; ",
+    ]
+
+    for s in tests:
+      self.assertSufficientlyEqual(FeaUnparser(s).ff.asFea(), s)
+
+  def test_pos_one(self):
+    tests = [
+      "lookup dummy { pos one <-80 0 -160 0>; } dummy;",
+      "lookup dummy { pos [one two] <-80 0 -160 0>; } dummy;",
+      "lookup dummy { pos a [one two]' <-80 0 -160 0>; } dummy;",
+      "lookup dummy { pos s f' 10 t; } dummy;",
+    ]
+
+    for s in tests:
+      self.assertSufficientlyEqual(FeaUnparser(s).ff.asFea(), s)
+
+  def test_pos_pair(self):
+    tests = [
+      "lookup dummy { pos T -60 a <-40 0 -40 0>; } dummy;",
+      "lookup dummy { pos [X Y] -60 a <-40 0 -40 0>; } dummy;",
+      "lookup dummy { pos T a -100; } dummy;",
+    ]
+
+    for s in tests:
+      self.assertSufficientlyEqual(FeaUnparser(s).ff.asFea(), s)
+
+  def test_pos_cursive(self):
+    tests = [
+      "lookup dummy { pos cursive meem.medial <anchor 500 20> <anchor 0 -20>; } dummy;",
+      "lookup dummy { pos cursive meem.init <anchor NULL> <anchor 0 -20>; } dummy;",
+      # Classes will be rewritten as multiple pos cursive rules. I'm OK with that.
+    ]
+
+    for s in tests:
+      self.assertSufficientlyEqual(FeaUnparser(s).ff.asFea(), s)
+
+  def test_pos_mark_base(self):
+    tests = [
+      """markClass [acute grave] <anchor 150 -10> @TOP_MARKS;
+      lookup dummy {
+      pos base [a e o u] <anchor 250 450> mark @TOP_MARKS;
+      } dummy;
+      """
+    ]
+
+    for s in tests:
+      self.assertSufficientlyEqual(FeaUnparser(s).ff.asFea(), s)
+
+  def test_pos_chained(self):
+    pytest.skip("Known bad test")
+    tests = [
+      "lookup dummy { pos X [A B]' -40 B' -40 A' -40 Y; } dummy;"
+    ]
+
+    for s in tests:
+      self.assertSufficientlyEqual(FeaUnparser(s).ff.asFea(), s)
+
+  # Mark to mark
+  # Mark to lig
+  # Chained contextual positioning
+  # Ignore pos
+  # Languages
+
+  def test_lookupflag(self):
+    tests = [
+      "lookup dummy { lookupflag IgnoreMarks; sub a b by c; } dummy;",
+      "feature calt { lookupflag IgnoreMarks; sub a b by c; } calt;",
+      "feature calt { sub x by y; lookupflag IgnoreMarks; sub a b by c; } calt;",
     ]
 
     for s in tests:
