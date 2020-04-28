@@ -25,6 +25,8 @@ parser.add_argument("--no-lookups", dest="nolookups", action='store_true',
                     help="Just list languages and features, don't unparse lookups")
 parser.add_argument("--config",default=None,
                     help="config file to process", metavar="CONFIG")
+parser.add_argument("--optimize", dest="optimize", action='store_true',
+                    help="Run optimizer")
 
 args = parser.parse_args()
 
@@ -36,5 +38,6 @@ if args.config:
 
 font = TTFont(args.input)
 ff = unparse(font, do_gdef = args.gdef, doLookups = (not args.nolookups), config = config)
-Optimizer().optimize(ff)
+if args.optimize:
+	Optimizer().optimize(ff)
 print(ff.asFea())
