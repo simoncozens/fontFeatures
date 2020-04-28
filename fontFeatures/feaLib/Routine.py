@@ -22,7 +22,7 @@ def arrange_by_type(self):
   routines = []
   for k,v in ruleTypes.items():
     r = Routine( rules = v)
-    if self.name: r.name = self.name + "_" + k
+    if self.name: r.name = self.name + "_" + str(k)
   return routines
 
 # A lookup in OpenType can only contain rules of the same lookup type
