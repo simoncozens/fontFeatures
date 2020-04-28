@@ -179,7 +179,7 @@ class Chaining(Rule):
     self.languages = languages
     self.flags = flags
 
-  from .feaLib.Chaining import asFeaAST
+  from .feaLib.Chaining import asFeaAST, feaPreamble
 
   @property
   def involved_glyphs(self):
