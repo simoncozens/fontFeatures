@@ -8,13 +8,14 @@ def glyphref(g):
   return feaast.GlyphClass([feaast.GlyphName(x) for x in g])
 
 def suborpos(lookups):
-    for l in lookups:
-      for aLookup in l:
-        if not aLookup: continue
-        for r in aLookup.rules:
-          if isinstance(r, fontFeatures.Substitution): return "sub"
-          if isinstance(r, fontFeatures.Positioning): return "pos"
-          if isinstance(r, fontFeatures.Attachment): return "pos"
+  for l in lookups:
+    for aLookup in l:
+      if not aLookup: continue
+      for r in aLookup.rules:
+        if isinstance(r, fontFeatures.Substitution): return "sub"
+        if isinstance(r, fontFeatures.Positioning): return "pos"
+        if isinstance(r, fontFeatures.Attachment): return "pos"
+        if isinstance(r, fontFeatures.Chaining): return suborpos(r.lookups)
 
 def feaPreamble(self, ff):
   ff.markRoutineUseInChains()
