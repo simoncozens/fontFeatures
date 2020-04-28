@@ -179,8 +179,8 @@ class GSUBUnparser (GTableUnparser):
         b = fontFeatures.Routine(name=self.getname('SingleSubstitution'+self.gensym()))
         for sub in lookup.SubTable:
             if len(sub.mapping) > 5:
-                k =sub.mapping.keys()
-                v =sub.mapping.values()
+                k = list(sub.mapping.keys())
+                v = list(sub.mapping.values())
                 b.addRule(fontFeatures.Substitution([k],[v], address = self.currentLookup, flags = lookup.LookupFlag))
             else:
                 for k,v in sub.mapping.items():

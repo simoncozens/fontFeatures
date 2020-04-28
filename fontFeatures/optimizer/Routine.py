@@ -39,7 +39,7 @@ class MergeMultipleSingleSubstitutions:
 			logger.debug(first.asFea())
 			logger.debug(second.asFea())
 		address = first.address or second.address
-		return Substitution([firstmapping.keys()], [firstmapping.values()],
+		return Substitution([list(firstmapping.keys())], [list(firstmapping.values())],
 			address = address,
 			precontext  = first.precontext,
 			postcontext = first.postcontext
