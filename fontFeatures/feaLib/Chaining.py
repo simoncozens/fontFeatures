@@ -2,7 +2,7 @@
 import fontTools.feaLib.ast as feaast
 import fontFeatures
 
-EXPERIMENTAL_FONTTOOLS = True
+EXPERIMENTAL_FONTTOOLS = False
 
 def glyphref(g):
   if len(g) == 1:
@@ -11,6 +11,7 @@ def glyphref(g):
 
 def suborpos(lookups):
   for l in lookups:
+    if not l: continue
     for aLookup in l:
       if not aLookup: continue
       for r in aLookup.rules:
@@ -106,7 +107,6 @@ def _complex(self):
 def asFeaAST(self):
   if len(self.lookups) > 0 and any([x is not None for x in self.lookups]):
     # Fill in the blanks
-    self.lookups = [ x or [None] for x in self.lookups ]
     if suborpos(self.lookups) == "sub":
       routine = feaast.ChainContextSubstStatement
     else:
@@ -117,6 +117,7 @@ def asFeaAST(self):
     if EXPERIMENTAL_FONTTOOLS:
       lookups = self.lookups
     else:
+      self.lookups = [ x or [None] for x in self.lookups ]
       lookups = [ l[0] for l in self.lookups]
     return routine(
       [glyphref(x) for x in self.precontext],
