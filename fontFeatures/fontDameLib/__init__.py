@@ -10,6 +10,7 @@ class FontDameUnparser():
     self.script_applications = {}
     self.features = {}
     self.lookups = {}
+    self.dependencies = {}
     self.classes = []
     self.config = config
     self.glyphset = glyphset
@@ -33,12 +34,15 @@ class FontDameUnparser():
       for rule in lu.rules:
         if not isinstance(rule, Chaining): continue
         pretendlookups = rule.lookups
-        reallookups = [ [] ] * len(rule.input)
+        reallookups = [ None ] * len(rule.input)
         for i in pretendlookups:
           m = re.match("(\\d+),\\s*(\\d+)", i)
+          if not lid in self.dependencies: self.dependencies[lid] = []
+          self.dependencies[lid].append(m[2])
+          if not reallookups[int(m[1])-1]:
+            reallookups[int(m[1])-1] = []
           reallookups[int(m[1])-1].append( self.lookups[m[2]] )
         rule.lookups = reallookups
-
     # Rearrange into FF
 
   def parse_line(self, line):
@@ -91,8 +95,6 @@ class FontDameUnparser():
     elif self.state == "reading_lookaheadclass_definition":
       self.add_to_class_definition("lookaheadclass", line)
 
-    else:
-      print("Unparsable line '%s'" % line)
 
 
   def add_to_script_table(self, line):
@@ -171,7 +173,7 @@ class FontDameUnparser():
 
     elif self.current_lookup_type == "ligature":
       m = re.match("([\w\.]+)\s(.*)\n", line)
-      self.add_subst([m[1].split("\t")],[[m[2]]])
+      self.add_subst([[m[2]]],[m[1].split("\t")])
 
     elif self.current_lookup_type == "context":
       if line.startswith("glyph"):
@@ -184,14 +186,14 @@ class FontDameUnparser():
         self.add_chain_simple(context, m[2:])
     elif self.current_lookup_type == "chained":
       if line.startswith("class-chain"):
-        m = re.match("class-chain\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)", line)
+        m = re.match("class-chain\t([^\t]*)\t([^\t]*)\t([^\t]*)\t(.*)$", line)
         precontext = []
         if m[1]: precontext = self.make_context(m[1].split(", "), self.backtrackclassContexts)
         context = self.make_context(m[2].split(", "), self.classContexts)
         postcontext = []
         if m[3]:
           postcontext = self.make_context(m[3].split(", "), self.lookaheadclassContexts)
-        lookups = [m[4]]
+        lookups = m[4].rstrip().split("\t")
         # print("Lookup %s, lookups = %s" % (self.current_lookup.name, lookups))
         self.current_lookup.addRule(Chaining(context,
           precontext = precontext,
@@ -276,5 +278,16 @@ def unparse(filename, config={}, font=None):
   with open(filename) as file_in:
     parser = FontDameUnparser(file_in,config, glyphset)
     parser.unparse()
-  return "\n".join([x.asFea() for x in parser.lookups.values()])
+  output = ""
+  done = {}
+  def dolookup(lid):
+    if lid in done: return ""
+    if lid in parser.dependencies:
+      out = "\n".join([dolookup(x) for x in parser.dependencies[lid]]) + parser.lookups[lid].asFea()
+    else:
+      out = parser.lookups[lid].asFea()
+    done[lid] = True
+    return out
+
+  return "\n".join([dolookup(x) for x in parser.lookups.keys()])
   # return parser.ff
