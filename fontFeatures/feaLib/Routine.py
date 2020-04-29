@@ -35,7 +35,7 @@ def arrange_by_lookup_type(self):
   if len(ruleTypes.keys()) == 1: return
   # Special case the fact that a single sub can be expressed as part of a
   # multiple sub if needed
-  if tuple(ruleTypes.keys()) == (1,2): return
+  if tuple(sorted(ruleTypes.keys())) == (1,2): return
   routines = []
   for k,v in ruleTypes.items():
     r = Routine( rules = v)
