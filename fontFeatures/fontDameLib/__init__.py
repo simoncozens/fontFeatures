@@ -43,7 +43,46 @@ class FontDameUnparser():
             reallookups[int(m[1])-1] = []
           reallookups[int(m[1])-1].append( self.lookups[m[2]] )
         rule.lookups = reallookups
-    # Rearrange into FF
+
+    # Rearrange into features
+    self.base_lu_for_feature = {}
+    self.toplevel_lookups = set()
+    for i in sorted(self.features.keys()):
+      feat = self.features[i]
+      tag = feat["tag"]
+      if "DFLT/default" in feat["languages_and_scripts"]:
+        self.base_lu_for_feature[tag] = set(feat["lookups"])
+        lookups = [self.lookups[x] for x in feat["lookups"]]
+      else:
+        # Set difference
+        feat["lookups"] = [item for item in feat["lookups"] if item not in self.base_lu_for_feature[tag]]
+        lookups = [self.lookups[x] for x in feat["lookups"]]
+        langcode = [ tuple(x.split("/")) for x in feat["languages_and_scripts"] ]
+        # Clone the routines just in case
+        lookups = [
+          Routine(languages=langcode, rules=lu.rules) for lu in lookups
+        ]
+
+      self.ff.addFeature(tag, lookups)
+      for lu in feat["lookups"]:
+        self.toplevel_lookups.add(lu)
+
+    # Delete toplevel lookups from lookup table
+    for l in self.toplevel_lookups:
+      del self.lookups[l]
+
+    # Rearrange lookups into dependency order
+    done = {}
+    def dolookup(lid):
+      if lid in done: return
+      if lid in self.dependencies:
+        for x in self.dependencies[lid]:
+          dolookup(x)
+      self.ff.routines.append(self.lookups[lid])
+      done[lid] = True
+
+    for i in self.lookups.keys():
+      dolookup(i)
 
   def parse_line(self, line):
     if line == "\n": return
@@ -102,15 +141,17 @@ class FontDameUnparser():
     lang = m[1]+"/"+m[2]
     self.all_languages.append(lang)
     for f in m[3].split(", "):
+      f = int(f)
       if not (f in self.script_applications):
         self.script_applications[f] = []
       self.script_applications[f].append( lang )
 
   def add_to_feature_table(self, line):
     m = re.match("^(\w+)\s+(\w+)\s+(.*)$", line)
-    self.features[m[1]] = {
+    self.features[int(m[1])] = {
       "tag": m[2],
-      "lookups": m[3].split(", ")
+      "lookups": m[3].split(", "),
+      "languages_and_scripts": self.script_applications[int(m[1])]
     }
 
   def end_feature_table(self):
@@ -280,14 +321,5 @@ def unparse(filename, config={}, font=None):
     parser.unparse()
   output = ""
   done = {}
-  def dolookup(lid):
-    if lid in done: return ""
-    if lid in parser.dependencies:
-      out = "\n".join([dolookup(x) for x in parser.dependencies[lid]]) + parser.lookups[lid].asFea()
-    else:
-      out = parser.lookups[lid].asFea()
-    done[lid] = True
-    return out
 
-  return "\n".join([dolookup(x) for x in parser.lookups.keys()])
-  # return parser.ff
+  return parser.ff
