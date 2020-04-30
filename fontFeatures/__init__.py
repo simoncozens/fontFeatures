@@ -214,7 +214,7 @@ class Positioning(Rule):
   from .feaLib.Positioning import asFeaAST
 
 class Attachment(Rule):
-  def __init__(self, base_name, mark_name, bases, marks, flags = 0, address = None):
+  def __init__(self, base_name, mark_name, bases = {}, marks = {}, flags = 0, address = None):
     self.base_name = base_name
     self.mark_name = mark_name
     self.bases = bases

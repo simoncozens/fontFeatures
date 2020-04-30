@@ -1,8 +1,10 @@
 import re
-from fontFeatures import FontFeatures, Routine, Substitution, Chaining
+from fontFeatures import *
 from fontFeatures.optimizer import Optimizer
 from fontTools.ttLib import TTFont
 from collections import OrderedDict
+from fontTools.feaLib.ast import ValueRecord
+import warnings
 
 class FontDameUnparser():
   def __init__(self, lines, config = {}, glyphset = ()):
@@ -212,6 +214,27 @@ class FontDameUnparser():
   def add_chain_simple(self, context, lookups):
     self.current_lookup.addRule(Chaining(context,lookups=lookups))
 
+  def add_cursive(self, entryexit, glyph, pos):
+    if len(self.current_lookup.rules) == 0:
+      self.current_lookup.addRule(Attachment("cursive_entry", ""))
+    rule = self.current_lookup.rules[-1]
+    if entryexit == "entry":
+      rule.bases[glyph] = pos
+    else:
+      rule.marks[glyph] = pos
+
+  def add_single_pos_x(self, glyph, xa):
+    self.current_lookup.addRule(Positioning([[glyph]],[ValueRecord(xAdvance=xa)]))
+
+  def add_attach(self, entryexit, glyph, pos):
+    if len(self.current_lookup.rules) == 0:
+      self.current_lookup.addRule(Attachment(self.current_lookup.name+"_BS", self.current_lookup.name+"_MK"))
+    rule = self.current_lookup.rules[-1]
+    if entryexit == "base":
+      rule.bases[glyph] = pos
+    else:
+      rule.marks[glyph] = pos
+
   def add_to_lookup(self, line):
     m = re.match("(\w+)\s+(yes|no)", line)
     if m:
@@ -224,7 +247,13 @@ class FontDameUnparser():
       return
 
     if self.current_lookup_type == "single":
+      m = re.match(r'x advance\s+([\w\.-]+)\s+(-?\d+)\n', line)
+      if m:
+        self.add_single_pos_x(m[1], int(m[2]))
+        return
       m = re.match("([\\w\\.-]+)\s+([\\w\\.-]+)\n", line)
+      if not m:
+        import code; code.interact(local=locals())
       self.add_subst([[m[1]]], [[m[2]]])
 
     elif self.current_lookup_type == "multiple":
@@ -235,6 +264,20 @@ class FontDameUnparser():
       m = re.match("([\\w\\.-]+)\s(.*)\n", line)
       if not m: raise ValueError("Unparsable line '%s'" % line)
       self.add_subst([[m[2]]],[m[1].split("\t")])
+
+    elif self.current_lookup_type == "cursive":
+      m = re.match(r'(entry|exit)\s+(\S+)\s+(-?\d+),(-?\d+).*\n', line)
+      if not m: raise ValueError("Unparsable cursive '%s'" % line)
+      self.add_cursive(m[1], m[2], (int(m[3]),int(m[4])))
+
+    elif self.current_lookup_type == "mark to base" or \
+      self.current_lookup_type == "mark to mark":
+      m = re.match(r'(mark|base)\s+(\S+)\s+\S+\s+(-?\d+),(-?\d+).*\n', line)
+      if not m: raise ValueError("Unparsable mark '%s'" % line)
+      self.add_attach(m[1], m[2], (int(m[3]),int(m[4])))
+
+    elif self.current_lookup_type == "mark to ligature":
+      warnings.warn("Mark to ligature not yet supported")
 
     elif self.current_lookup_type == "context":
       if line.startswith("glyph"):
@@ -263,11 +306,9 @@ class FontDameUnparser():
           lookups=lookups))
       elif line.startswith("glyph"):
         raise ValueError("GSUB6.1 not supported yet")
-      else:
-        print(line)
-        raise ValueError("Unsupported lookup type |%s|" % self.current_lookup_type)
-
-      pass
+    else:
+      print(line)
+      raise ValueError("Unsupported lookup type |%s|" % self.current_lookup_type)
 
   def make_context(self, classlist, which):
     context = []
