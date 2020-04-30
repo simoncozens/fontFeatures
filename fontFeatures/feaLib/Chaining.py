@@ -2,7 +2,16 @@
 import fontTools.feaLib.ast as feaast
 import fontFeatures
 
-EXPERIMENTAL_FONTTOOLS = False
+
+# Can we chain multiple lookups?
+from fontTools.feaLib.parser import Parser
+import io
+teststring = "lookup l1 { } l1; lookup l2 { } l2; lookup a { sub a' lookup l1 lookup l2; } a;"
+parsetree = Parser(io.StringIO(teststring), ()).parse()
+if "\\" in parsetree.asFea():
+  EXPERIMENTAL_FONTTOOLS = False
+else:
+  EXPERIMENTAL_FONTTOOLS = True
 
 def glyphref(g):
   if len(g) == 1:
