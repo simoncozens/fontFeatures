@@ -2,6 +2,7 @@ import re
 from fontFeatures import FontFeatures, Routine, Substitution, Chaining
 from fontFeatures.optimizer import Optimizer
 from fontTools.ttLib import TTFont
+from collections import OrderedDict
 
 class FontDameUnparser():
   def __init__(self, lines, config = {}, glyphset = ()):
@@ -9,7 +10,7 @@ class FontDameUnparser():
     self.lines = lines
     self.script_applications = {}
     self.features = {}
-    self.lookups = {}
+    self.lookups = OrderedDict()
     self.dependencies = {}
     self.classes = []
     self.config = config
