@@ -297,37 +297,6 @@ class FontDameUnparser():
     if not m[2] in which: which[m[2]] = []
     which[m[2]].append(m[1])
 
-def apply_transformations(rule,parsed):
-  context = list(rule["context"])
-  transformations = {}
-  for pos,lid in [ t.split(", ") for t in rule["transformations"] ]:
-    transformations[int(pos)-1] = self.lookups[lid]
-
-  for ix,c in reversed(list(enumerate(context))):
-    if ix in transformations:
-      # We have a transformation for this context
-      lookup = transformations[ix]
-      if self.current_lookup_type == "single"  and isinstance(context[ix],str) and not(context[ix].startswith("@")):
-        for r in lookup["rules"]:
-          if context[ix] == r[0]: context[ix] = r[1]
-      elif self.current_lookup_type == "multiple" and isinstance(context[ix],str)  and not(context[ix].startswith("@")):
-        for r in lookup["rules"]:
-          if context[ix] == r[0]:
-            if ix < len(context):
-              context = context[:ix] + r[1] + context[ix+1:]
-            else:
-              context = context[:ix] + r[1]
-      else:
-        lookupname = "Lookup" + str(lid)
-        if lookupname in self.config: lookupname = self.config[lookupname]
-        context[ix] = "%s($%i)" % (lookupname,ix+1)
-
-    else:
-      context[ix] = "$%i" % (ix+1)
-    if isinstance(context[ix], list):
-      context[ix] = "[%s]" % ' '.join(context[ix])
-  return context
-
 def unparse(filename, config={}, font=None):
   if config:
     import json
