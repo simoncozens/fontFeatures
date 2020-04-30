@@ -107,9 +107,7 @@ def asFeaAST(self):
   else:
     f = feaast.Block()
 
-  before = self.flags
   arranged = arrange(self)
-  assert(before == self.flags)
 
   if arranged:
     for a in arranged: f.statements.append(asFeaAST(a))
@@ -123,7 +121,12 @@ def asFeaAST(self):
       f.statements.append(feaast.LanguageStatement(l))
 
   if hasattr(self,"flags") and self.flags > 0:
-    f.statements.append(feaast.LookupFlagStatement(self.flags))
+    if self.flags & 0xff00:
+      # This is dirty and wrong and I feel bad.
+      f.statements.append(feaast.LookupFlagStatement(self.flags, \
+        markAttachment=feaast.Comment("@MarkClass%i" % (self.flags>>8))))
+    else:
+      f.statements.append(feaast.LookupFlagStatement(self.flags))
 
   for x in self.comments:
     f.statements.append(Comment(x))
