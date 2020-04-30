@@ -91,18 +91,7 @@ def _complex(self):
     )
   else:
     warnings.warn("Can't currently express multiple lookups per position in AFDKO")
-    lu = self.lookups
-    self.lookups = []
-    for ix,lul in enumerate(lu):
-      lu[ix] = [ x and x.name for x in lul ]
     return feaast.Comment("# Unparsing failed")
-#   return feaast.Comment("""
-# # Unparsing failed
-# # Rule involved following sequence:
-# # %s
-# # And following lookups:
-# # %s
-# """ % (self.asFea(), lu))
 
 def asFeaAST(self):
   if len(self.lookups) > 0 and any([x is not None for x in self.lookups]):
