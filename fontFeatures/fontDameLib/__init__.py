@@ -49,6 +49,10 @@ class FontDameUnparser():
           reallookups[int(m[1])-1].append( self.lookups[m[2]] )
         rule.lookups = reallookups
 
+    # Tie features to languages
+    for k,v in self.features.items():
+      v["languages_and_scripts"] = self.script_applications[int(k)]
+
     # Rearrange into features
     self.base_lu_for_feature = {}
     self.toplevel_lookups = set()
@@ -118,7 +122,6 @@ class FontDameUnparser():
       self.state = "parsing_lookup"
       return
     elif line == "feature table end\n":
-      self.end_feature_table()
       self.state = "doing_nothing"
       return
     elif line.startswith("lookup end"):
@@ -165,11 +168,7 @@ class FontDameUnparser():
     self.features[int(m[1])] = {
       "tag": m[2],
       "lookups": re.split(r',\s*',m[3]),
-      "languages_and_scripts": self.script_applications[int(m[1])]
     }
-
-  def end_feature_table(self):
-    pass
 
   def end_lookup(self):
     # print("Parsed lookup %s" % self.current_lookup.name)
