@@ -45,10 +45,10 @@ def feaPreamble(self, ff):
   replaceLongWithClasses(self.postcontext, ff)
 
   from fontFeatures.optimizer.FontFeatures import MergeNonOverlappingRoutines
+  rv = []
 
   if EXPERIMENTAL_FONTTOOLS == False:
     ff.markRoutineUseInChains()
-    rv = []
     if not "synthesised_lookups" in ff.scratch:
       ff.scratch["synthesised_lookups"] = {}
     for ix,lookuplist in enumerate(self.lookups):
