@@ -36,7 +36,9 @@ class FontDameUnparser():
         pretendlookups = rule.lookups
         reallookups = [ None ] * len(rule.input)
         for i in pretendlookups:
-          m = re.match("(\\d+),\\s*(\\d+)", i)
+          m = re.match("\\s*(\\S+),\\s*(\\S+)", i)
+          if not m:
+            raise ValueError("Unparsable lookup chain %s" % i)
           if not lid in self.dependencies: self.dependencies[lid] = []
           self.dependencies[lid].append(m[2])
           if not reallookups[int(m[1])-1]:
@@ -55,9 +57,11 @@ class FontDameUnparser():
         lookups = [self.lookups[x] for x in feat["lookups"]]
       else:
         # Set difference
-        feat["lookups"] = [item for item in feat["lookups"] if item not in self.base_lu_for_feature[tag]]
+        if tag in self.base_lu_for_feature:
+          feat["lookups"] = [item for item in feat["lookups"] if item not in self.base_lu_for_feature[tag]]
         lookups = [self.lookups[x] for x in feat["lookups"]]
-        langcode = [ tuple(x.split("/")) for x in feat["languages_and_scripts"] ]
+        langcode = [ self.format_langcode(x.split("/")) \
+          for x in feat["languages_and_scripts"] ]
         # Clone the routines just in case
         lookups = [
           Routine(languages=langcode, rules=lu.rules) for lu in lookups
@@ -83,6 +87,11 @@ class FontDameUnparser():
 
     for i in self.lookups.keys():
       dolookup(i)
+
+  def format_langcode(self, code):
+    script, lang = code
+    if lang == "default": return (script, "dflt")
+    return (script, lang)
 
   def parse_line(self, line):
     if line == "\n": return
@@ -120,6 +129,8 @@ class FontDameUnparser():
       self.parse_lookup_header(line)
       self.state = "parsing_lookup"
       return
+    if line.startswith("#") or line.startswith("%"):
+      return
 
     if self.state == "reading_script_table":
       self.add_to_script_table(line)
@@ -150,7 +161,7 @@ class FontDameUnparser():
     m = re.match("^(\w+)\s+(\w+)\s+(.*)$", line)
     self.features[int(m[1])] = {
       "tag": m[2],
-      "lookups": m[3].split(", "),
+      "lookups": re.split(r',\s*',m[3]),
       "languages_and_scripts": self.script_applications[int(m[1])]
     }
 
@@ -164,7 +175,9 @@ class FontDameUnparser():
     self.resetContexts()
 
   def parse_lookup_header(self, line):
-    m = re.match("^lookup\s+(\w+)\s+(.*)$", line)
+    m = re.match("^lookup\s+([\\w-]+)\s+(.*)$", line)
+    if not m:
+      raise ValueError("Unparsable lookup header: %s" % line)
     self.current_lookup = Routine(name="lookup_%s"%m[1])
     self.lookups[m[1]] = self.current_lookup
     self.current_lookup_type = m[2]
@@ -199,41 +212,43 @@ class FontDameUnparser():
       if m[2] == "yes":
         self.append_lookup_flag(m[1])
       return
-    m = re.match("MarkAttachmentType\s+(\d+)", line)
+    m = re.match("MarkAttachmentType\s+(\d+)", line, flags=re.IGNORECASE)
     if m:
       self.append_lookup_flag(m[1]) # XXX
       return
 
     if self.current_lookup_type == "single":
-      m = re.match("([\w\.]+)\s+([\w\.]+)\n", line)
+      m = re.match("([\\w\\.-]+)\s+([\\w\\.-]+)\n", line)
       self.add_subst([[m[1]]], [[m[2]]])
 
     elif self.current_lookup_type == "multiple":
-      m = re.match("([\w\.]+)\s+(.*)\n", line)
+      m = re.match("([\\w\\.-]+)\s+(.*)\n", line)
       self.add_subst([[m[1]]], [ [x] for x in m[2].split("\t")])
 
     elif self.current_lookup_type == "ligature":
-      m = re.match("([\w\.]+)\s(.*)\n", line)
+      m = re.match("([\\w\\.-]+)\s(.*)\n", line)
+      if not m: raise ValueError("Unparsable line '%s'" % line)
       self.add_subst([[m[2]]],[m[1].split("\t")])
 
     elif self.current_lookup_type == "context":
       if line.startswith("glyph"):
         m = line.rstrip().split("\t")
-        context = [ [x] for x in m[1].split(", ") ]
+        context = [ [x] for x in re.split(r',\s*',m[1]) ]
         self.add_chain_simple(context, m[2:])
       elif line.startswith("class"):
         m = line.rstrip().split("\t")
-        context = self.make_context(m[1].split(", "), self.classContexts)
+        m[1] = m[1].replace(" ","")
+        context = self.make_context(re.split(r',\s*',m[1]), self.classContexts)
         self.add_chain_simple(context, m[2:])
     elif self.current_lookup_type == "chained":
       if line.startswith("class-chain"):
         m = re.match("class-chain\t([^\t]*)\t([^\t]*)\t([^\t]*)\t(.*)$", line)
         precontext = []
-        if m[1]: precontext = self.make_context(m[1].split(", "), self.backtrackclassContexts)
-        context = self.make_context(m[2].split(", "), self.classContexts)
+        if m[1]: precontext = self.make_context(re.split(r',\s*',m[1]), self.backtrackclassContexts)
+        context = self.make_context(re.split(r',\s*',m[2]), self.classContexts)
         postcontext = []
         if m[3]:
-          postcontext = self.make_context(m[3].split(", "), self.lookaheadclassContexts)
+          postcontext = self.make_context(re.split(r',\s*',m[3]), self.lookaheadclassContexts)
         lookups = m[4].rstrip().split("\t")
         # print("Lookup %s, lookups = %s" % (self.current_lookup.name, lookups))
         self.current_lookup.addRule(Chaining(context,
@@ -242,28 +257,33 @@ class FontDameUnparser():
           lookups=lookups))
       else:
         print(line)
-        raise ValueError("Unsupported lookup type %s" % self.current_lookup_type)
+        raise ValueError("Unsupported lookup type |%s|" % self.current_lookup_type)
 
       pass
 
   def make_context(self, classlist, which):
     context = []
     for x in classlist:
+      x = x.strip()
       if x == "0":
         if not self.glyphset:
-          raise ValueError("Class 0 in contextual but I don't know the glyphset")
+          raise ValueError("Class 0 in contextual (%s) but I don't know the glyphset" % self.current_lookup.name)
         else:
           # Class 0 is everything that's not mentioned elsewhere
           members = set(self.glyphset)
           for c in which.values():
             members = members - set(c)
       else:
+        if not x in which:
+          print("Couldn't find a class definition for class %s in lookup %s" % (x, self.current_lookup.name))
         members = which[x]
       context.append(members)
     return context
 
   def add_to_class_definition(self, which, line):
     m = re.match("([\w\.]+)\s+(\d+)", line)
+    if not m:
+      raise ValueError("Unparsable line '%s'" % line)
     if which == "class":
       which = self.classContexts
     elif which == "backtrackclass":
