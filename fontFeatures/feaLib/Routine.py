@@ -21,7 +21,7 @@ def arrange_by_type(self):
   if len(ruleTypes.keys()) == 1: return
   routines = []
   for k,v in ruleTypes.items():
-    r = Routine( rules = v)
+    r = Routine( rules = v, flags = self.flags)
     if self.name: r.name = self.name + "_" + str(k)
   return routines
 
@@ -38,7 +38,7 @@ def arrange_by_lookup_type(self):
   if tuple(sorted(ruleTypes.keys())) == (1,2): return
   routines = []
   for k,v in ruleTypes.items():
-    r = Routine( rules = v)
+    r = Routine( rules = v, flags=self.flags)
     if self.name: r.name = self.name + "_" + str(k)
     routines.append(r)
   return routines
@@ -51,7 +51,9 @@ def arrange_by_flags(self):
     if not r.flags in flagTypes: flagTypes[r.flags] = []
     flagTypes[r.flags].append(r)
   if len(flagTypes.keys()) == 1:
-    self.flags = list(flagTypes.keys())[0]
+    if not self.flags:
+      self.flags = 0
+    self.flags = self.flags | list(flagTypes.keys())[0]
     return
   routines = []
   for k,v in flagTypes.items():
@@ -77,7 +79,7 @@ def arrange_by_language(self):
   if len(languages.keys()) < 2: return
   routines = []
   for k,v in languages.items():
-    r = Routine(rules = v, languages = [k])
+    r = Routine(rules = v, languages = [k], flags=self.flags)
     if self.name: r.name = self.name + "_" + k[0] + "_" + k[1]
     routines.append(r)
   return routines
@@ -105,7 +107,10 @@ def asFeaAST(self):
   else:
     f = feaast.Block()
 
+  before = self.flags
   arranged = arrange(self)
+  assert(before == self.flags)
+
   if arranged:
     for a in arranged: f.statements.append(asFeaAST(a))
     return f
