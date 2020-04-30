@@ -119,7 +119,7 @@ class FontDameUnparser():
       self.end_feature_table()
       self.state = "doing_nothing"
       return
-    elif line == "lookup end\n":
+    elif line.startswith("lookup end"):
       self.end_lookup()
       self.state = "doing_nothing"
       return
@@ -178,7 +178,7 @@ class FontDameUnparser():
   def parse_lookup_header(self, line):
     m = re.match("^lookup\s+([\\w-]+)\s+(.*)$", line)
     if not m:
-      raise ValueError("Unparsable lookup header: %s" % line)
+      raise ValueError("Unparsable lookup header: |%s|" % line)
     self.current_lookup = Routine(name="lookup_%s"%m[1])
     self.lookups[m[1]] = self.current_lookup
     self.current_lookup_type = m[2]
