@@ -65,7 +65,7 @@ class FontDameUnparser():
           for x in feat["languages_and_scripts"] ]
         # Clone the routines just in case
         lookups = [
-          Routine(languages=langcode, rules=lu.rules) for lu in lookups
+          Routine(languages=langcode, rules=lu.rules,flags=lu.flags) for lu in lookups
         ]
 
       self.ff.addFeature(tag, lookups)
@@ -196,15 +196,20 @@ class FontDameUnparser():
     return res
 
   def append_lookup_flag(self, flag):
-    # XXX
-    pass
+    if flag == "IgnoreMarks": parsedflag = 8
+    elif flag == "IgnoreLigatures": parsedflag = 4
+    elif flag == "IgnoreBaseGlyphs": parsedflag = 2
+    elif flag == "RightToLeft": parsedflag = 1
+    elif re.match("^mat(\\d+)$", flag):
+      parsedflag = int(flag[3:]) << 8
+    else:
+      print("Unknown flag %s" % flag)
+    self.current_lookup.flags = self.current_lookup.flags | parsedflag
 
   def add_subst(self, in_, out_):
     self.current_lookup.addRule(Substitution(in_,out_))
 
   def add_chain_simple(self, context, lookups):
-    # XXX Lookups
-    # print("Simple chaining %s, lookups = %s" % (self.current_lookup.name,lookups))
     self.current_lookup.addRule(Chaining(context,lookups=lookups))
 
   def add_to_lookup(self, line):
@@ -215,7 +220,7 @@ class FontDameUnparser():
       return
     m = re.match("MarkAttachmentType\s+(\d+)", line, flags=re.IGNORECASE)
     if m:
-      self.append_lookup_flag(m[1]) # XXX
+      self.append_lookup_flag("mat"+m[1])
       return
 
     if self.current_lookup_type == "single":
