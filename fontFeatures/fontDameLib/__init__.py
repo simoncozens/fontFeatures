@@ -152,7 +152,7 @@ class FontDameUnparser():
     m = re.match("^(\\w+)\\s+(\\w+)\\s+(.*)$", line)
     lang = m[1]+"/"+m[2]
     self.all_languages.append(lang)
-    for f in m[3].split(", "):
+    for f in re.split(r',\s*',m[3]):
       f = int(f)
       if not (f in self.script_applications):
         self.script_applications[f] = []
@@ -256,6 +256,8 @@ class FontDameUnparser():
           precontext = precontext,
           postcontext = postcontext,
           lookups=lookups))
+      elif line.startswith("glyph"):
+        raise ValueError("GSUB6.1 not supported yet")
       else:
         print(line)
         raise ValueError("Unsupported lookup type |%s|" % self.current_lookup_type)
