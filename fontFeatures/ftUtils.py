@@ -1,4 +1,6 @@
 # Useful routines to get what we need from fontTools
+import math
+import statistics
 
 def categorize_glyph(font, glyphname):
   classdefs = font["GDEF"].table.GlyphClassDef.classDefs
@@ -29,3 +31,14 @@ def get_glyph_metrics(font, glyphname):
     metrics["xMin"], metrics["yMin"], metrics["xMax"], metrics["yMax"] = bounds
   metrics["rsb"] = metrics["width"] - metrics["xMax"]
   return metrics
+
+def bin_glyphs_by_metric(font, glyphs, category, bincount = 5):
+  metrics = [ (g, get_glyph_metrics(font, g)[category]) for g in glyphs ]
+  metrics = sorted(metrics, key= lambda x:x[1])
+  perbin = math.ceil(len(glyphs) / bincount)
+  binned = []
+  while metrics:
+    thisbin = metrics[:min(perbin,len(metrics))]
+    del metrics[:min(perbin,len(metrics))]
+    binned.append( ([x[0] for x in thisbin], int(statistics.mean([x[1] for x in thisbin])) ))
+  return binned
