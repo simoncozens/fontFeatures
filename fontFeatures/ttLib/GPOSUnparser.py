@@ -220,7 +220,6 @@ class GPOSUnparser (GTableUnparser):
                                 raise ValueError
                             b.addRule(fontFeatures.Chaining(input_,[],[],lookups=lookups, address = self.currentLookup, flags = lookup.LookupFlag))
                 except Exception as e:
-                    import code; code.interact(local=locals())
                     self.unparsable(b, "Lookup type 5 ("+str(e)+")", sub)
 
         return b, []
