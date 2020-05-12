@@ -1,4 +1,3 @@
-import fontTools
 from collections import OrderedDict
 from fontTools.misc.xmlWriter import XMLWriter
 import fontFeatures
@@ -36,7 +35,7 @@ class GTableUnparser:
     def _invertClassDef(self, a, font):
         classes = {}
         for glyph, klass in a.items():
-            if not klass in classes:
+            if klass not in classes:
                 classes[klass] = []
             classes[klass].append(glyph)
         glyphset = set(font.getGlyphOrder())
@@ -47,23 +46,6 @@ class GTableUnparser:
         if n in self.config:
             return self.config[n]
         return n
-
-    def gensym(self):
-        self.index = self.index + 1
-        return str(self.index)
-
-    def makeGlyphClass(self, glyphnames):
-        if len(glyphnames) == 1:
-            return GlyphName(glyphnames[0])
-        asclass = GlyphClass([GlyphName(x) for x in glyphnames])
-        if len(glyphnames) < 10:
-            return asclass
-        # Share it
-        if not tuple(glyphnames) in self.sharedClasses:
-            self.sharedClasses[tuple(sorted(glyphnames))] = GlyphClassDefinition(
-                "GlyphClass" + self.gensym(), asclass
-            )
-        return GlyphClassName(self.sharedClasses[tuple(sorted(glyphnames))])
 
     def unparse(self, doLookups=True):
         if doLookups:
@@ -153,7 +135,6 @@ class GTableUnparser:
 
     def inlineFeatures(self):
         # Check which can be inlined and which are shared
-        sharedAdded = set()
         for name, feature in self.features.items():
             for script in feature.values():
                 for langLookups in script.values():
@@ -209,10 +190,10 @@ class GTableUnparser:
                 if self.isChaining(lookup.LookupType):
                     dependencies = self.getDependencies(lookup)
                     for l in dependencies:
-                        if not l in newOrder:
+                        if l not in newOrder:
                             newOrder.append(l)
                             changed = True
-                if not lookupIdx in newOrder:
+                if lookupIdx not in newOrder:
                     newOrder.append(lookupIdx)
             lookupOrder = newOrder
             if not changed:

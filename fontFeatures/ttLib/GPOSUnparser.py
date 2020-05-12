@@ -1,9 +1,5 @@
-from fontTools.misc.py23 import *
-import fontTools
-from collections import OrderedDict
 from .GTableUnparser import GTableUnparser
 import fontFeatures
-from itertools import groupby
 
 
 class GPOSUnparser(GTableUnparser):
@@ -125,10 +121,10 @@ class GPOSUnparser(GTableUnparser):
                 class1 = self._invertClassDef(subtable.ClassDef1.classDefs, self.font)
                 class2 = self._invertClassDef(subtable.ClassDef2.classDefs, self.font)
                 for ix1, c1 in enumerate(subtable.Class1Record):
-                    if not ix1 in class1:
+                    if ix1 not in class1:
                         continue  # XXX
                     for ix2, c2 in enumerate(c1.Class2Record):
-                        if not ix2 in class2:
+                        if ix2 not in class2:
                             continue  # XXX
                         vr1 = self.makeValueRecord(c2.Value1, subtable.ValueFormat1)
                         vr2 = self.makeValueRecord(c2.Value2, subtable.ValueFormat2)
@@ -150,8 +146,6 @@ class GPOSUnparser(GTableUnparser):
         for s in lookup.SubTable:
             assert s.Format == 1
             for glyph, record in zip(s.Coverage.glyphs, s.EntryExitRecord):
-                entryanchor = None
-                exitanchor = None
                 if record.EntryAnchor:
                     entries[glyph] = (
                         record.EntryAnchor.XCoordinate,
@@ -288,7 +282,6 @@ class GPOSUnparser(GTableUnparser):
         if hasattr(sub, "PosRuleSet"):
             for subrulesets, input_ in zip(sub.PosRuleSet, sub.Coverage.glyphs):
                 for subrule in subrulesets.PosRule:
-                    allinput = [input_] + subrule.Input
                     lookups = self._unparse_lookups(subrule.PosLookupRecord, lookups)
                 b.addRule(
                     fontFeatures.Chaining(

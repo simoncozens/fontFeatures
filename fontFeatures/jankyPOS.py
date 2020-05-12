@@ -40,7 +40,7 @@ class JankyPos:
             features.extend(["vert"])
 
         for f in features:
-            if not f in ff.features:
+            if f not in ff.features:
                 continue
             for r in ff.features[f]:
                 if isinstance(r, Routine):
@@ -72,16 +72,13 @@ class JankyPos:
         for i in applicable_range:
             g, vr = buf[i]
             if rule.precontext or rule.postcontext:
-                pre = [x[0] for x in buf[i - len(precontext) + 1 : i]]
-                post = [x[0] for x in buf[i + 1 : i + len(postcontext) + 1]]
-                import code
-
-                code.interact(local=locals())
+                pre = [x[0] for x in buf[i - len(rule.precontext) + 1 : i]]
+                post = [x[0] for x in buf[i + 1 : i + len(rule.postcontext) + 1]]
                 if tuple(pre) != tuple(rule.precontext) or tuple(post) != tuple(
                     rule.postcontext
                 ):
                     continue
-            if not g in rule.glyphs[0]:
+            if g not in rule.glyphs[0]:
                 continue
             add_value_records(vr, rule.valuerecords[0])
         return buf
