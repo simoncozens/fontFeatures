@@ -7,33 +7,6 @@ def glyphref(g):
     return feaast.GlyphName(g[0])
   return feaast.GlyphClass([feaast.GlyphName(x) for x in g])
 
-def gensym(ff):
-  if not "index" in ff.scratch:
-    ff.scratch["index"] = 0
-  ff.scratch["index"] = ff.scratch["index"] + 1
-  return str(ff.scratch["index"])
-
-def replaceLongWithClasses(i, ff):
-  for ix,gc in enumerate(i):
-    if len(gc) > 5:
-      if not tuple(sorted(gc)) in ff.scratch["glyphclasses"]:
-        classname = "class"+gensym(ff)
-        ff.namedClasses[classname] = gc
-        ff.scratch["glyphclasses"][tuple(sorted(gc))] = classname
-      else:
-        classname = ff.scratch["glyphclasses"][tuple(sorted(gc))]
-      i[ix] = ["@"+classname]
-
-def feaPreamble(self, ff):
-  if not "glyphclasses" in ff.scratch:
-    ff.scratch["glyphclasses"] = {}
-  replaceLongWithClasses(self.input, ff)
-  replaceLongWithClasses(self.precontext, ff)
-  replaceLongWithClasses(self.postcontext, ff)
-  replaceLongWithClasses(self.replacement, ff)
-
-  return []
-
 def asFeaAST(self):
   lut = lookup_type(self)
   if lut == 3:

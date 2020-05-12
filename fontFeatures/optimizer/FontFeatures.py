@@ -2,6 +2,8 @@ from fontFeatures import Substitution, Chaining, Routine
 import logging
 
 class MergeNonOverlappingRoutines:
+  level = 2
+
   def apply(self, ff):
     logger = logging.getLogger("fontFeatures")
     deadRoutine = Routine(name="dead")

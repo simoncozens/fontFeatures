@@ -164,7 +164,7 @@ class Substitution(Rule):
     a = set(chain.from_iterable(self.postcontext))
     return i | o | b | a
 
-  from .feaLib.Substitution import asFeaAST, feaPreamble
+  from .feaLib.Substitution import asFeaAST
 
 class Chaining(Rule):
   # For now

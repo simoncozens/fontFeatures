@@ -3,16 +3,30 @@ from .FontFeatures import optimizations as overall_optimizations
 import fontFeatures
 
 class Optimizer:
-  def optimize(self, ff):
-    for r in ff.routines:
-      self.optimize_routine(r)
-      for k,v in ff.features.items():
+  def __init__(self, ff):
+    self.ff = ff
+
+  def optimize(self, level=1):
+    for r in self.ff.routines:
+      self.optimize_routine(r, level)
+      for k,v in self.ff.features.items():
         for n in v:
           if isinstance(n, fontFeatures.Routine):
-            self.optimize_routine(n)
-    for optimization in overall_optimizations:
-      optimization().apply(ff)
+            self.optimize_routine(n,level)
 
-  def optimize_routine(self, r):
+    for routinelist in self.ff.features.values():
+      for r in routinelist:
+        self.optimize_routine(r, level)
+        for k,v in self.ff.features.items():
+          for n in v:
+            if isinstance(n, fontFeatures.Routine):
+              self.optimize_routine(n,level)
+
+    for optimization in overall_optimizations:
+      if level >= optimization.level:
+        optimization().apply(self.ff)
+
+  def optimize_routine(self, r, level):
     for optimization in routine_optimizations:
-      optimization().apply(r)
+      if level >= optimization.level:
+        optimization().apply(r, self.ff)
