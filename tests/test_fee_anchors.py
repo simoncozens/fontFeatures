@@ -2,8 +2,15 @@ from fontFeatures.feeLib import FeeParser
 from fontTools.ttLib import TTFont
 
 import unittest
+import re
 
 class TestFeeAnchors(unittest.TestCase):
+  def assertSufficientlyEqual(self, s1, s2):
+    def alltrim(a):
+      a = re.sub("#.*","",a)
+      a = re.sub("\\s+"," ",a)
+      return a.strip()
+    self.assertEqual(alltrim(s1), alltrim(s2))
 
   def test_parse_to_ff(self):
     p = FeeParser(TTFont("fonts/Roboto-Regular.ttf"))
@@ -24,9 +31,9 @@ class TestFeeAnchors(unittest.TestCase):
 """)
 
     self.assertEqual(p.fea.anchors["A"]["top"], (679,1600))
-    self.assertEqual(p.fea.asFea(),"""
-    markClass acutecomb <anchor -570 1290> @top;
+    self.assertSufficientlyEqual(p.fea.asFea(),"""    markClass acutecomb <anchor -570 1290> @top;
     markClass tildecomb <anchor -542 1256> @top;
+
 
 feature mark {
                         pos base A <anchor 679 1600> mark @top;
