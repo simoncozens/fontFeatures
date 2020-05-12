@@ -170,19 +170,19 @@ class Substitution(Rule):
         self,
         input_,
         replacement,
-        precontext=[],
-        postcontext=[],
+        precontext=None,
+        postcontext=None,
         address=None,
         languages=None,
-        lookups=[],
+        lookups=None,
         flags=0,
     ):
-        self.precontext = precontext
-        self.postcontext = postcontext
+        self.precontext = precontext or []
+        self.postcontext = postcontext or []
         self.input = input_
         self.replacement = replacement
         self.address = address
-        self.lookups = lookups
+        self.lookups = lookups or []
         self.languages = languages
         self.flags = flags
 
@@ -202,18 +202,18 @@ class Chaining(Rule):
     def __init__(
         self,
         input_,
-        precontext=[],
-        postcontext=[],
+        precontext=None,
+        postcontext=None,
         address=None,
         languages=None,
-        lookups=[],
+        lookups=None,
         flags=0,
     ):
-        self.precontext = precontext
-        self.postcontext = postcontext
+        self.precontext = precontext or []
+        self.postcontext = postcontext or []
         self.input = input_
         self.address = address
-        self.lookups = lookups
+        self.lookups = lookups or []
         self.languages = languages
         self.flags = flags
 
@@ -232,20 +232,18 @@ class Positioning(Rule):
         self,
         glyphs,
         valuerecords,
-        precontext=[],
-        postcontext=[],
+        precontext=None,
+        postcontext=None,
         address=None,
         languages=None,
-        lookups=[],
         flags=0,
     ):
-        self.precontext = precontext
-        self.postcontext = postcontext
+        self.precontext = precontext or []
+        self.postcontext = postcontext or []
         assert len(glyphs) == len(valuerecords)
         self.glyphs = glyphs
         self.valuerecords = valuerecords
         self.address = address
-        self.lookups = lookups
         self.languages = languages
         self.flags = flags
 
