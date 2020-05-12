@@ -1,9 +1,11 @@
 import io
 import fontFeatures
 
-class FeaUnparser():
-    def __init__(self, featurefile, font = None):
+
+class FeaUnparser:
+    def __init__(self, featurefile, font=None):
         from fontTools.feaLib.parser import Parser
+
         self.ff = fontFeatures.FontFeatures()
         self.markclasses = {}
         self.currentFeature = None
@@ -18,9 +20,9 @@ class FeaUnparser():
         parsetree.build(self)
 
     def find_named_routine(self, name):
-        candidates = list(filter(lambda x:x.name==name, self.ff.routines))
+        candidates = list(filter(lambda x: x.name == name, self.ff.routines))
         if not candidates:
-            raise ValueError("Reference to undefined routine "+name)
+            raise ValueError("Reference to undefined routine " + name)
         if len(candidates) > 1:
             raise ValueError("This can't happen")
         return candidates[0]
@@ -42,88 +44,88 @@ class FeaUnparser():
     def add_single_subst(self, location, prefix, suffix, mapping, forceChain):
         location = "%s:%i:%i" % (location)
         s = fontFeatures.Substitution(
-            input_ = [ list(mapping.keys()) ],
-            replacement = [ list(mapping.values()) ],
-            precontext = prefix,
-            postcontext = suffix,
-            address = location
+            input_=[list(mapping.keys())],
+            replacement=[list(mapping.values())],
+            precontext=prefix,
+            postcontext=suffix,
+            address=location,
         )
         self.currentRoutine.addRule(s)
 
-    def add_multiple_subst(self, location, prefix, glyph, suffix, replacements, forceChain):
+    def add_multiple_subst(
+        self, location, prefix, glyph, suffix, replacements, forceChain
+    ):
         location = "%s:%i:%i" % (location)
         s = fontFeatures.Substitution(
-            input_ = [ [glyph] ],
-            replacement = [ [g] for g in replacements ],
-            precontext = prefix,
-            postcontext = suffix,
-            address = location
+            input_=[[glyph]],
+            replacement=[[g] for g in replacements],
+            precontext=prefix,
+            postcontext=suffix,
+            address=location,
         )
         self.currentRoutine.addRule(s)
 
-    def add_alternate_subst(self, location,
-                            prefix, glyph, suffix, replacement):
+    def add_alternate_subst(self, location, prefix, glyph, suffix, replacement):
         location = "%s:%i:%i" % (location)
         s = fontFeatures.Substitution(
-            input_ = [ [glyph] ],
-            replacement = [ replacement ],
-            precontext = prefix,
-            postcontext = suffix,
-            address = location
+            input_=[[glyph]],
+            replacement=[replacement],
+            precontext=prefix,
+            postcontext=suffix,
+            address=location,
         )
         self.currentRoutine.addRule(s)
 
-    def add_ligature_subst(self, location,
-                           prefix, glyphs, suffix, replacement, forceChain):
+    def add_ligature_subst(
+        self, location, prefix, glyphs, suffix, replacement, forceChain
+    ):
         location = "%s:%i:%i" % (location)
         s = fontFeatures.Substitution(
-            input_ = [list(x) for x in glyphs],
-            replacement = [[ replacement ]],
-            precontext = prefix,
-            postcontext = suffix,
-            address = location
+            input_=[list(x) for x in glyphs],
+            replacement=[[replacement]],
+            precontext=prefix,
+            postcontext=suffix,
+            address=location,
         )
         self.currentRoutine.addRule(s)
 
     def add_chain_context_subst(self, location, prefix, glyphs, suffix, lookups):
         location = "%s:%i:%i" % (location)
         # Find named feature
-        lookups = [ [self.find_named_routine(x.name)] for x in lookups]
+        lookups = [[self.find_named_routine(x.name)] for x in lookups]
         s = fontFeatures.Chaining(
-            input_ = [list(x) for x in glyphs],
-            precontext = prefix,
-            postcontext = suffix,
-            lookups = lookups,
-            address = location
+            input_=[list(x) for x in glyphs],
+            precontext=prefix,
+            postcontext=suffix,
+            lookups=lookups,
+            address=location,
         )
         self.currentRoutine.addRule(s)
 
     def add_single_pos(self, location, prefix, suffix, pos, forceChain):
         location = "%s:%i:%i" % (location)
         s = fontFeatures.Positioning(
-            glyphs = [ p[0] for p in pos ],
-            valuerecords = [ p[1] for p in pos ],
-            precontext = prefix,
-            postcontext = suffix,
-            address = location
+            glyphs=[p[0] for p in pos],
+            valuerecords=[p[1] for p in pos],
+            precontext=prefix,
+            postcontext=suffix,
+            address=location,
         )
         self.currentRoutine.addRule(s)
 
     def add_specific_pair_pos(self, location, glyph1, value1, glyph2, value2):
         location = "%s:%i:%i" % (location)
         s = fontFeatures.Positioning(
-            glyphs = [ [glyph1],[glyph2] ],
-            valuerecords = [ value1, value2 ],
-            address = location
+            glyphs=[[glyph1], [glyph2]], valuerecords=[value1, value2], address=location
         )
         self.currentRoutine.addRule(s)
 
     def add_class_pair_pos(self, location, glyphclass1, value1, glyphclass2, value2):
         location = "%s:%i:%i" % (location)
         s = fontFeatures.Positioning(
-            glyphs = [ glyphclass1, glyphclass2 ],
-            valuerecords = [ value1, value2 ],
-            address = location
+            glyphs=[glyphclass1, glyphclass2],
+            valuerecords=[value1, value2],
+            address=location,
         )
         self.currentRoutine.addRule(s)
 
@@ -135,25 +137,27 @@ class FeaUnparser():
         if exitAnchor:
             markdict = {g: (exitAnchor.x, exitAnchor.y) for g in glyphclass}
         s = fontFeatures.Attachment(
-            base_name = "cursive_entry",
-            mark_name = "cursive_exit",
-            bases = basedict,
-            marks = markdict,
-            address = location
+            base_name="cursive_entry",
+            mark_name="cursive_exit",
+            bases=basedict,
+            marks=markdict,
+            address=location,
         )
         self.currentRoutine.addRule(s)
 
     def add_mark_base_pos(self, location, bases, marks):
         location = "%s:%i:%i" % (location)
         for baseanchor, markclass in marks:
-            assert(len(markclass.definitions)==1)
+            assert len(markclass.definitions) == 1
             markanchor = markclass.definitions[0].anchor
             s = fontFeatures.Attachment(
-                base_name = markclass.name,
-                mark_name = markclass.name,
-                bases = {g: (baseanchor.x, baseanchor.y) for g in bases},
-                marks = {g: (markanchor.x, markanchor.y) for g in markclass.glyphs.keys()},
-                address = location
+                base_name=markclass.name,
+                mark_name=markclass.name,
+                bases={g: (baseanchor.x, baseanchor.y) for g in bases},
+                marks={
+                    g: (markanchor.x, markanchor.y) for g in markclass.glyphs.keys()
+                },
+                address=location,
             )
         self.currentRoutine.addRule(s)
 
@@ -161,7 +165,7 @@ class FeaUnparser():
         # If we're mid-feature, start a new routine here
         if self.currentFeature and len(self.currentRoutine.rules):
             self.end_lookup_block()
-            self._start_routine(location,None)
+            self._start_routine(location, None)
             self.ff.addFeature(self.currentFeature, [self.currentRoutine])
 
         self.currentRoutineFlag = value
@@ -173,7 +177,7 @@ class FeaUnparser():
         routine = self.find_named_routine(lookup_name)
         if self.currentFeature:
             self.ff.addFeature(self.currentFeature, [routine])
-            self._start_routine((None,0,0),None)
+            self._start_routine((None, 0, 0), None)
             self.ff.addFeature(self.currentFeature, [self.currentRoutine])
         else:
             raise ValueError("Huh?")

@@ -3,6 +3,7 @@ import fontTools
 from fontTools.feaLib.ast import *
 from collections import OrderedDict
 
+
 class GDEFUnparser:
     def __init__(self, table):
         self.table = table.table
@@ -12,8 +13,10 @@ class GDEFUnparser:
         if self.table.MarkAttachClassDef is not None:
             self.unparseMarkAttachClassDefinitions()
 
-        if hasattr(self.table, 'MarkGlyphSetsDef') \
-                        and self.table.MarkGlyphSetsDef is not None:
+        if (
+            hasattr(self.table, "MarkGlyphSetsDef")
+            and self.table.MarkGlyphSetsDef is not None
+        ):
             self.unparseMarkGlyphSetDefinitions()
 
         if self.table.GlyphClassDef is not None:
@@ -39,7 +42,9 @@ class GDEFUnparser:
             attachClasses[val].append(key)
 
         for key, val in attachClasses.items():
-            self.feature.statements.append(GlyphClassDefinition("markClass_"+str(key), val))
+            self.feature.statements.append(
+                GlyphClassDefinition("markClass_" + str(key), val)
+            )
 
     def unparseMarkGlyphSetDefinitions(self):
         lines = []
@@ -48,43 +53,49 @@ class GDEFUnparser:
             glyphclass = GlyphClass()
             for g in coverage.glyphs:
                 glyphclass.append(g)
-            self.feature.statements.append(GlyphClassDefinition("markGlyphSet_"+str(idx), glyphclass))
+            self.feature.statements.append(
+                GlyphClassDefinition("markGlyphSet_" + str(idx), glyphclass)
+            )
 
     def unparseGlyphClassDefinitions(self):
         classDefs = self.table.GlyphClassDef.classDefs
         classNames = {
-            1: 'GDEF_Base', # Base glyph (single character, spacing glyph)
-            2: 'GDEF_Ligature', # Ligature glyph (multiple character, spacing glyph)
-            3: 'GDEF_Mark', # Mark glyph (non-spacing combining glyph)
-            4: 'GDEF_Component' # Component glyph (part of single character, spacing glyph)
+            1: "GDEF_Base",  # Base glyph (single character, spacing glyph)
+            2: "GDEF_Ligature",  # Ligature glyph (multiple character, spacing glyph)
+            3: "GDEF_Mark",  # Mark glyph (non-spacing combining glyph)
+            4: "GDEF_Component",  # Component glyph (part of single character, spacing glyph)
         }
 
         glyphClasses = {}
-        for k,v in classNames.items():
+        for k, v in classNames.items():
             glyphClasses[v] = GlyphClass()
 
         for key, val in classDefs.items():
             glyphClasses[classNames[val]].append(key)
 
         # Use named classes for everything
-        for k,v in glyphClasses.items():
+        for k, v in glyphClasses.items():
             definition = GlyphClassDefinition(k, v)
             self.feature.statements.append(definition)
             glyphClasses[k] = GlyphClassName(definition)
 
-        self.feature.statements.append(GlyphClassDefStatement(
-            glyphClasses["GDEF_Base"],
-            # Next two classes in funny order because ast.GlyphClassDefStatement
-            # definition has them the wrong way around.
-            glyphClasses["GDEF_Mark"],
-            glyphClasses["GDEF_Ligature"],
-            glyphClasses["GDEF_Component"]
-        ))
+        self.feature.statements.append(
+            GlyphClassDefStatement(
+                glyphClasses["GDEF_Base"],
+                # Next two classes in funny order because ast.GlyphClassDefStatement
+                # definition has them the wrong way around.
+                glyphClasses["GDEF_Mark"],
+                glyphClasses["GDEF_Ligature"],
+                glyphClasses["GDEF_Component"],
+            )
+        )
 
     def unparseAttachList(self):
         for idx, glyph in enumerate(self.table.AttachList.Coverage.glyphs):
             attachmentPoints = self.table.AttachList.AttachPoint[idx]
-            self.feature.statements.append(AttachStatement(GlyphName(glyph), attachmentPoints.PointIndex))
+            self.feature.statements.append(
+                AttachStatement(GlyphName(glyph), attachmentPoints.PointIndex)
+            )
 
     def unparseLigCaretList(self):
         ligCaretList = self.table.LigCaretList
@@ -92,7 +103,9 @@ class GDEFUnparser:
             glyph = GlyphName(glyph)
             ligGlyph = ligCaretList.LigGlyph[idx]
             formats = list({cv.Format for cv in ligGlyph.CaretValue})
-            assert len(formats) == 1, 'Can\'t use different CaretValue formats in one LigatureCaret entry'
+            assert (
+                len(formats) == 1
+            ), "Can't use different CaretValue formats in one LigatureCaret entry"
             caretsFormat = formats[0]
             if caretsFormat == 1:
                 # Format == 1: Design units only
