@@ -47,6 +47,10 @@ class GTableUnparser:
             return self.config[n]
         return n
 
+    def gensym(self):
+        self.index = self.index + 1
+        return str(self.index)
+
     def unparse(self, doLookups=True):
         if doLookups:
             self.unparseLookups()
