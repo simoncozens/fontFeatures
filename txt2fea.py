@@ -17,7 +17,9 @@ parser.add_argument("--optimize", dest="optimize", action='store_true',
 args = parser.parse_args()
 
 parsed = unparse(args.input, args.config, font= args.font)
+optlevel = 1
 if args.optimize:
-	Optimizer().optimize(parsed)
+	optlevel = 2
+Optimizer(parsed).optimize(level=optlevel)
 
 print(parsed.asFea())
