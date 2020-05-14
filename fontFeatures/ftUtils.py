@@ -1,6 +1,7 @@
 # Useful routines to get what we need from fontTools
 import math
 import statistics
+from fontFeatures.ckmeans import ckmeans
 
 
 def categorize_glyph(font, glyphname):
@@ -46,31 +47,43 @@ def get_glyph_metrics(font, glyphname):
 
 def get_rise(font, glyphname):
     # Find a cursive positioning feature or it's game over
-    if "GPOS" not in font: return 0
+    if "GPOS" not in font:
+        return 0
     t = font["GPOS"].table
-    cursives = filter(lambda x: x.LookupType==3, font["GPOS"].table.LookupList.Lookup)
+    cursives = filter(lambda x: x.LookupType == 3, font["GPOS"].table.LookupList.Lookup)
     anchors = {}
     for c in cursives:
         for s in c.SubTable:
             for glyph, record in zip(s.Coverage.glyphs, s.EntryExitRecord):
                 anchors[glyph] = []
                 if record.EntryAnchor:
-                    anchors[glyph].append( (record.EntryAnchor.XCoordinate, record.EntryAnchor.YCoordinate) )
+                    anchors[glyph].append(
+                        (record.EntryAnchor.XCoordinate, record.EntryAnchor.YCoordinate)
+                    )
                 if record.ExitAnchor:
-                    anchors[glyph].append( (record.ExitAnchor.XCoordinate, record.ExitAnchor.YCoordinate) )
-    if glyphname not in anchors: return 0
-    if len(anchors[glyphname]) == 1: return anchors[glyphname][0][1]
+                    anchors[glyph].append(
+                        (record.ExitAnchor.XCoordinate, record.ExitAnchor.YCoordinate)
+                    )
+    if glyphname not in anchors:
+        return 0
+    if len(anchors[glyphname]) == 1:
+        return anchors[glyphname][0][1]
     return anchors[glyphname][0][1] - anchors[glyphname][1][1]
+
 
 def bin_glyphs_by_metric(font, glyphs, category, bincount=5):
     metrics = [(g, get_glyph_metrics(font, g)[category]) for g in glyphs]
-    metrics = sorted(metrics, key=lambda x: x[1])
-    perbin = math.ceil(len(glyphs) / bincount)
+    justmetrics = [x[1] for x in metrics]
+    clusters = ckmeans(justmetrics, bincount)
     binned = []
-    while metrics:
-        thisbin = metrics[: min(perbin, len(metrics))]
-        del metrics[: min(perbin, len(metrics))]
-        binned.append(
-            ([x[0] for x in thisbin], int(statistics.mean([x[1] for x in thisbin])))
+    for c in clusters:
+        thiscluster = []
+        for m in metrics:
+            if m[1] in c:
+                thiscluster.append(m)
+        thiscluster = (
+            [x[0] for x in thiscluster],
+            int(statistics.mean([x[1] for x in thiscluster])),
         )
+        binned.append(thiscluster)
     return binned
