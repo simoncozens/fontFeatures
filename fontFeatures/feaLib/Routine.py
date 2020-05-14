@@ -162,14 +162,15 @@ def asFeaAST(self):
     if hasattr(self, "flags") and self.flags > 0:
         if self.flags & 0xFF00:
             # This is dirty and wrong and I feel bad.
-            f.statements.append(
-                feaast.LookupFlagStatement(
+            flags = feaast.LookupFlagStatement(
                     self.flags,
                     markAttachment=feaast.Comment("@MarkClass%i" % (self.flags >> 8)),
                 )
-            )
         else:
-            f.statements.append(feaast.LookupFlagStatement(self.flags))
+            flags = feaast.LookupFlagStatement(self.flags)
+        if hasattr(self, "markFilteringSet"):
+            flags.markFilteringSet = feaast.GlyphClass([feaast.GlyphName(x) for x in self.markFilteringSet])
+        f.statements.append(flags)
 
     for x in self.comments:
         f.statements.append(Comment(x))
