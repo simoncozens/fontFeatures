@@ -103,24 +103,27 @@ class YBDropDots:
     yehbarrees = parser.expandGlyphOrClassName(tokens[0].token)
     medis = parser.expandGlyphOrClassName(tokens[1].token)
     dots = parser.expandGlyphOrClassName(tokens[2].token)
+    parser.fea.namedClasses["YBDots"] = dots
     # XXX check anchors
     binned_medis = bin_glyphs_by_metric(parser.font, medis, "rise", bincount = int(settings["DropDotsBinCount"]))
     rules = []
-    for i in range(0,int(settings["MaxChainLength"])):
-      #XXX This isn't creating all combinations
-      for bases in itertools.combinations_with_replacement(binned_medis, i):
-        for marks in itertools.combinations_with_replacement([dots,None], i):
+    for i in range(1,int(settings["MaxChainLength"])+1):
+      for bases in itertools.product(binned_medis, repeat=i):
+        for marks in itertools.product([dots,None], repeat=i):
           totalrise = sum([ x[1] for x in bases])
-          justbases = [ x[0] for x in bases ]
+          precontext = [ bases[0][0] ]
+          newbases = bases[1:]
+          justbases = [ x[0] for x in newbases ]
           string = [val for pair in zip(justbases, marks) for val in pair]
           postcontext = [i for i in string if i] + [ yehbarrees ]
           rules.append(
             fontFeatures.Positioning(
               [dots],
               [fontFeatures.ValueRecord(yPlacement=-(totalrise+int(settings["DropDotsDepth"])))],
+              precontext = precontext,
               postcontext = postcontext
               )
           )
     r = fontFeatures.Routine(rules=list(reversed(rules)),flags=0x10 )
-    r.markFilteringSet=dots
+    r.markFilteringSet="YBDots"
     return [r]
