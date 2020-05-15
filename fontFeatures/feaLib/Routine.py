@@ -169,7 +169,8 @@ def asFeaAST(self):
         else:
             flags = feaast.LookupFlagStatement(self.flags)
         if hasattr(self, "markFilteringSet"):
-            flags.markFilteringSet = feaast.GlyphClass([feaast.GlyphName(x) for x in self.markFilteringSet])
+            dummydef = feaast.GlyphClassDefinition(self.markFilteringSet, [])
+            flags.markFilteringSet = feaast.GlyphClassName(dummydef)
         f.statements.append(flags)
 
     for x in self.comments:
