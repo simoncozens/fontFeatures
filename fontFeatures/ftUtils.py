@@ -87,3 +87,41 @@ def bin_glyphs_by_metric(font, glyphs, category, bincount=5):
         )
         binned.append(thiscluster)
     return binned
+
+
+def determine_kern(
+    font, glyph1, glyph2, targetdistance, offset1=(0, 0), offset2=(0, 0)
+):
+    from beziers.path import BezierPath
+    from beziers.point import Point
+
+    paths1 = BezierPath.fromFonttoolsGlyph(font, glyph1)
+    paths2 = BezierPath.fromFonttoolsGlyph(font, glyph2)
+    offset1 = Point(*offset1)
+    offset2 = Point(offset2[0] + font["hmtx"][glyph1][0], offset2[1])
+    kern = 0
+    lastBest = None
+
+    iterations = 0
+    while True:
+        # Compute min distance
+        minDistance = None
+        closestpaths = None
+        for p1 in paths1:
+            p1 = p1.clone().translate(offset1)
+            for p2 in paths2:
+                p2 = p2.clone().translate(Point(offset2.x + kern, offset2.y))
+                d = p1.distanceToPath(p2, samples=3)
+                if not minDistance or d[0] < minDistance:
+                    minDistance = d[0]
+                    closestsegs = (d[3], d[4])
+        if not lastBest or minDistance < lastBest:
+            lastBest = minDistance
+        else:
+            break  # Nothing helped
+        if abs(minDistance - targetdistance) < 1 or iterations > 10:
+            break
+        iterations = iterations + 1
+        kern = kern + (targetdistance - minDistance)
+
+    return int(kern)
