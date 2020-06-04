@@ -127,6 +127,7 @@ class Routine:
         flags=0,
     ):
         self.name = name
+        self.usedin = set()
         if rules:
             self.rules = rules
         else:
