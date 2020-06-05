@@ -74,6 +74,7 @@ def get_rise(font, glyphname):
 def bin_glyphs_by_metric(font, glyphs, category, bincount=5):
     metrics = [(g, get_glyph_metrics(font, g)[category]) for g in glyphs]
     justmetrics = [x[1] for x in metrics]
+    if bincount > len(glyphs): bincount = len(glyphs)
     clusters = ckmeans(justmetrics, bincount)
     binned = []
     for c in clusters:
@@ -90,8 +91,8 @@ def bin_glyphs_by_metric(font, glyphs, category, bincount=5):
 
 
 def determine_kern(
-    font, glyph1, glyph2, targetdistance, offset1=(0, 0), offset2=(0, 0)
-):
+    font, glyph1, glyph2, targetdistance, offset1=(0, 0), offset2=(0, 0),
+ maxtuck=0.4):
     from beziers.path import BezierPath
     from beziers.point import Point
 
@@ -115,6 +116,14 @@ def determine_kern(
                 if not minDistance or d[0] < minDistance:
                     minDistance = d[0]
                     closestsegs = (d[3], d[4])
+                    # import matplotlib.pyplot as plt
+
+                    # fig, ax = plt.subplots()
+                    # p1.clone().plot(ax, drawNodes=False)
+                    # p2.clone().plot(ax)
+                    # for s in closestsegs:
+                    #     BezierPath.fromSegments([s]).plot(ax, drawNodes=False, color="red")
+                    # plt.show()
         if not lastBest or minDistance < lastBest:
             lastBest = minDistance
         else:
@@ -124,4 +133,8 @@ def determine_kern(
         iterations = iterations + 1
         kern = kern + (targetdistance - minDistance)
 
+    if maxtuck:
+        kern = max(kern, -(font["hmtx"][glyph1][0] * maxtuck))
+    else:
+        kern = max(kern, -(font["hmtx"][glyph1][0]))
     return int(kern)

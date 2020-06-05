@@ -6,4 +6,7 @@ def lookup_type(self):
             return 1
         if len(self.glyphs) == 2:
             return 2
+    else:
+    		if len(self.glyphs) == 1:
+	    			return 1
     return 0  # For now
