@@ -31,4 +31,4 @@ class TestChaining(unittest.TestCase):
         r2 = Routine(rules=[pos2], name="dummy2")
 
         c = Chaining([["a"], ["b"]], lookups=[[r1, r2], None])
-        self.assertEqual(c.asFea(), "# Unparsing failed")
+        self.assertEqual(c.asFea(), "sub a' lookup dummy1 lookup dummy2 b';")

@@ -92,12 +92,17 @@ class FeaUnparser:
     def add_chain_context_subst(self, location, prefix, glyphs, suffix, lookups):
         location = "%s:%i:%i" % (location)
         # Find named feature
-        lookups = [[self.find_named_routine(x.name)] for x in lookups]
+        mylookups = []
+        for x in lookups:
+            if x:
+                mylookups.append([self.find_named_routine(y.name) for y in x])
+            else:
+                mylookups.append(None)
         s = fontFeatures.Chaining(
             input_=[list(x) for x in glyphs],
             precontext=prefix,
             postcontext=suffix,
-            lookups=lookups,
+            lookups=mylookups,
             address=location,
         )
         self.currentRoutine.addRule(s)
