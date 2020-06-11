@@ -322,11 +322,10 @@ class GSUBUnparser(GTableUnparser):
             for classId, ruleset in enumerate(rulesets):
                 if not ruleset:
                     continue
-                rules = (
-                    hasattr(ruleset, "ChainSubClassRule")
-                    and ruleset.ChainSubClassRule
-                    or ruleset.SubClassRule
-                )
+                if hasattr(ruleset, "ChainSubClassRule"):
+                    rules = ruleset.ChainSubClassRule
+                else:
+                    rules = ruleset.SubClassRule
                 for r in rules:
                     for sl in r.SubstLookupRecord:
                         deps.append(sl.LookupListIndex)

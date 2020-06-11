@@ -65,11 +65,10 @@ class GPOSUnparser(GTableUnparser):
             for classId, ruleset in enumerate(rulesets):
                 if not ruleset:
                     continue
-                rules = (
-                    hasattr(ruleset, "ChainPosClassRule")
-                    and ruleset.ChainPosClassRule
-                    or ruleset.PosClassRule
-                )
+                if hasattr(ruleset, "ChainPosClassRule"):
+                    rules = ruleset.ChainPosClassRule
+                else:
+                    rules = ruleset.PosClassRule
                 for r in rules:
                     for sl in r.PosLookupRecord:
                         deps.append(sl.LookupListIndex)
