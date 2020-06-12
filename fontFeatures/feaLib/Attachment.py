@@ -1,5 +1,6 @@
 # Code for converting a Attachment object into feaLib statements
 import fontTools.feaLib.ast as feaast
+from fontFeatures.ftUtils import categorize_glyph
 
 
 def glyphref(g):
@@ -57,12 +58,14 @@ def asFeaAST(self):
                 )
             )
     else:
-        # XXX - if the "bases" are actually marks in GDEF, we're doing mark-to-mark
         if not hasattr(self, "baseslist"):
             sortByAnchor(self)  # e.g. when testing
         for base in self.baseslist:
+            statementtype = feaast.MarkBasePosStatement
+            if self.font and categorize_glyph(self.font,base[0][0])[0] == "mark":
+                statementtype = feaast.MarkMarkPosStatement
             b.statements.append(
-                feaast.MarkBasePosStatement(
+                statementtype(
                     glyphref(base[0]),
                     [[feaast.Anchor(*base[1]), feaast.MarkClass(self.base_name)]],
                 )

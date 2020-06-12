@@ -100,4 +100,33 @@ class Attach:
                 for k, v in marks.items()
                 if categorize_glyph(parser.font, k)[0] == "mark"
             }
-        return [fontFeatures.Attachment(aFrom, aTo, bases, marks)]
+        return [
+            fontFeatures.Routine(
+                rules=[
+                    fontFeatures.Attachment(aFrom, aTo, bases, marks, font=parser.font)
+                ]
+            )
+        ]
+
+
+# Dumping this here - script to export Anchors FEE from a FontFeatures object
+# import itertools
+# flatten = itertools.chain.from_iterable
+# mark = list(flatten([x.rules for x in parsed.features["mark"]]))
+# mkmk = list(flatten([x.rules for x in parsed.features["mkmk"]]))
+# allfeat = mark + mkmk
+# for f in allfeat:
+#     for b in f.bases.keys():
+#         if not b in parsed.anchors:
+#             parsed.anchors[b] = {}
+#         parsed.anchors[b][f.base_name] = f.bases[b]
+#     for b in f.marks.keys():
+#         if not b in parsed.anchors:
+#             parsed.anchors[b] = {}
+#         parsed.anchors[b][f.mark_name] = f.marks[b]
+
+# for glyph in parsed.anchors.keys():
+#     print("Anchors %s {" % glyph)
+#     for name, anchor in parsed.anchors[glyph].items():
+#         print("\t%s <%i %i>" % (name, *anchor))
+#     print("};")
