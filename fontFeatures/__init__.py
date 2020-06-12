@@ -260,7 +260,8 @@ class Positioning(Rule):
 
 class Attachment(Rule):
     def __init__(
-        self, base_name, mark_name, bases=None, marks=None, flags=0, address=None
+        self, base_name, mark_name, bases=None, marks=None, flags=0, address=None,
+        font=None
     ):
         self.base_name = base_name
         self.mark_name = mark_name
@@ -268,6 +269,7 @@ class Attachment(Rule):
         self.marks = marks or {}
         self.flags = flags
         self.address = address
+        self.font = font
 
     @property
     def is_cursive(self):
