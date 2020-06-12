@@ -11,7 +11,6 @@ parser = ArgumentParser()
 parser.add_argument("input", help="font file to process", metavar="OTF")
 parser.add_argument(
     "feature",
-    type=FileType("r"),
     default="-",
     nargs="?",
     help="FEE file(s) to add",
@@ -29,7 +28,7 @@ p = FeeParser(font)
 # Unparse existing features
 p.fea = unparse(font)
 # Add features from FEE
-p.parseFile(sys.argv[2])
+p.parseFile(args.feature)
 
 # Send it back to fea
 fea = p.fea.asFea()
