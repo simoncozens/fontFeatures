@@ -1,3 +1,49 @@
+"""
+Class Definitions
+=================
+
+To define a named glyph class in the FEE language, use the ``DefineClass``
+verb. This takes three arguments: the first is a class name, which must
+start with the ``@`` character; the second is the symbol ``=``; the third
+is either a single classname (which may be suffixed - see below),  a regular
+expression (``/.../``), or a set of glyphs and/or classes (which may be suffixed)
+enclosed in square brackets (``[ ... ]``)::
+
+    DefineClass @upper_alts = @upper.alt; # First format
+    DefineClass @lower = /^[a-z]$/; # Second format
+    DefineClass @upper_and_lower = [A B C D E F G @lower]; # Third format
+
+Class Suffixes
+--------------
+
+In Fee, you may use "synthetic classes" anywhere that a class name is valid.
+Synthetic classes are generating by taking existing named class name and adding
+either ``.something`` or ``~something``. FEE will automatically create a class of
+glyphs by adding or removing ``.something`` from glyphs within the given
+class. For example, if you have::
+
+    DefineClass @upper = [A B C D];
+
+You can say::
+
+    Substitute @upper -> @upper.alt;
+
+to substitute the glyphs in ``[A B C D]`` for the glyphs
+``[A.alt B.alt C.alt D.alt]``.
+
+It is often easier, however, to deal with the problem the other way around.
+Instead of having to remember which glyphs you have defined alternates for,
+you can simply ask FEE to find glyphs ending ``.alt``::
+
+    DefineClass @alternates = /\\.alt$/;
+
+and then create a synthetic class which *removes* the dotted suffix by using
+the ``~`` operator::
+
+    Substitute @alternates~alt -> @alterates;
+
+"""
+
 import re
 
 

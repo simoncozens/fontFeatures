@@ -1,3 +1,44 @@
+"""
+Anchor Management
+=================
+
+The ``Anchors`` plugin provides the ``Anchors`` and ``Attach`` verbs.
+
+``Anchors`` takes a glyph name and a block containing anchor names and
+positions, like so::
+
+      Anchors A { top <679 1600> bottom <691 0> };
+
+Note that there are no semicolons between anchors. The *same thing* happens
+for mark glyphs::
+
+      Anchors acutecomb { _top <-570 1290> };
+
+Once all your anchors are defined, the ``Attach`` verb can be used to attach
+marks to bases::
+
+      Feature mark { Attach &top &_top bases; };
+
+The ``Attach`` verb takes three parameters: a base anchor name, a mark anchor
+name, and a class filter, which is either ``marks`` or ``bases``. It collects
+all the glyphs which have anchors defined, and filters them according to their
+class definition in the ``GDEF`` table. In this case, we have asked for ``bases``,
+so glyph ``A`` will be selected. Then it looks for anchor definitions containing
+the mark anchor name (here ``_top``), which will select ``acutecomb``, and
+writes an attachment rule to tie them together. As shown in the example, this
+is the most efficient way of expressing a mark-to-base feature.
+
+Writing a mark-to-mark feature is similar; you just need to define a corresponding
+anchor on the mark, and use the ``marks`` class filter instead of the ``bases``
+filter::
+
+      Anchors acutecomb { _top <-570 1290> top <-570 1650> };
+      Feature mkmk { Attach &top &_top marks; };
+
+fontFeatures will emit the correct mark-to-base or mark-to-mark lookup type based
+on the ``GDEF`` class definition of the "base" glyph.
+"""
+
 class Anchors:
     takesBlock = True
 

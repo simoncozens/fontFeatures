@@ -1,3 +1,18 @@
+"""
+Features
+========
+
+To group a set of rules into a feature, use the ``Feature`` verb. This takes
+a name and a block containing rules::
+
+    Feature rlig {
+        ...
+    };
+
+Note that in FEE syntax you must not repeat the feature name at the end of
+the block, as is required in AFDKO syntax.
+"""
+
 class Feature:
     takesBlock = True
 
