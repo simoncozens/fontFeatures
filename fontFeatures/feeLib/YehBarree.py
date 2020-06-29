@@ -91,8 +91,6 @@ class YBReplaceDots:
     import fontFeatures
     import itertools
     settings = YBSettings.getSettings(parser)
-    if "DropDotsDepth" not in settings:
-      raise ValueError("DropDotsDepth setting is required")
     if "MaxChainLength" not in settings:
       if "ComputedMaxChainLength" not in settings:
         raise ValueError("MaxChainLength setting is required")
