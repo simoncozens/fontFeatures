@@ -175,7 +175,8 @@ class GPOSUnparser(GTableUnparser):
             )
             b.addRule(
                 fontFeatures.Attachment(
-                    anchorClassPrefix, anchorClassPrefix + "_", bases, marks
+                    anchorClassPrefix, anchorClassPrefix + "_", bases, marks,
+                    font = self.font
                 )
             )
         return b, []
@@ -229,7 +230,8 @@ class GPOSUnparser(GTableUnparser):
             )
             b.addRule(
                 fontFeatures.Attachment(
-                    anchorClassPrefix, anchorClassPrefix + "_", bases, marks
+                    anchorClassPrefix, anchorClassPrefix + "_", bases, marks,
+                    font = self.font
                 )
             )
         return b, []
