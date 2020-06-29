@@ -5,7 +5,8 @@ from fontFeatures.ckmeans import ckmeans
 
 
 def categorize_glyph(font, glyphname):
-    classdefs = font["GDEF"].table.GlyphClassDef.classDefs
+    gdef = font["GDEF"].table
+    classdefs = gdef.GlyphClassDef.classDefs
     assert glyphname in classdefs
     if classdefs[glyphname] == 1:
         return ("base", None)
@@ -13,15 +14,32 @@ def categorize_glyph(font, glyphname):
         return ("ligature", None)
     if classdefs[glyphname] == 3:
         # Now find attachment class
-        if font["GDEF"].table.MarkAttachClassDef:
-            markAttachClassDef = font["GDEF"].table.MarkAttachClassDef.classDefs
-            mclass = markAttachClassDef[glyphname]
-        else:
-            mclass = None
+        mclass = None
+        if gdef.MarkAttachClassDef:
+            markAttachClassDef = gdef.MarkAttachClassDef.classDefs
+            if glyphname in markAttachClassDef:
+                mclass = markAttachClassDef[glyphname]
         return ("mark", mclass)
     if classdefs[glyphname] == 4:
         return ("component", None)
-    raise ValueError
+    raise ValueError("Unknown category")
+
+
+def set_glyph_category(font, glyphname, category, maClass=None):
+    gdef = font["GDEF"].table
+    classdefs = gdef.GlyphClassDef.classDefs
+    if category == "base":
+        classdefs[glyphname] = 1
+    elif category == "ligature":
+        classdefs[glyphname] = 2
+    elif category == "mark":
+        classdefs[glyphname] = 3
+        if maClass and gdef.MarkAttachClassDef:
+            gdef.MarkAttachClassDef.classDefs[glyphname] = maClass
+    elif category == "component":
+        classdefs[glyphname] = 4
+    else:
+        raise ValueError("Unknown category")
 
 
 def get_glyph_metrics(font, glyphname):
@@ -74,7 +92,8 @@ def get_rise(font, glyphname):
 def bin_glyphs_by_metric(font, glyphs, category, bincount=5):
     metrics = [(g, get_glyph_metrics(font, g)[category]) for g in glyphs]
     justmetrics = [x[1] for x in metrics]
-    if bincount > len(glyphs): bincount = len(glyphs)
+    if bincount > len(glyphs):
+        bincount = len(glyphs)
     clusters = ckmeans(justmetrics, bincount)
     binned = []
     for c in clusters:
@@ -91,8 +110,8 @@ def bin_glyphs_by_metric(font, glyphs, category, bincount=5):
 
 
 def determine_kern(
-    font, glyph1, glyph2, targetdistance, offset1=(0, 0), offset2=(0, 0),
- maxtuck=0.4):
+    font, glyph1, glyph2, targetdistance, offset1=(0, 0), offset2=(0, 0), maxtuck=0.4
+):
     from beziers.path import BezierPath
     from beziers.point import Point
 
@@ -138,3 +157,17 @@ def determine_kern(
     else:
         kern = max(kern, -(font["hmtx"][glyph1][0]))
     return int(kern)
+
+
+def duplicate_glyph(font, existing, new):
+    from babelfont.ttf.font import TTFont
+
+    babelfont = TTFont(font)
+    existingGlyph = babelfont.layers[0][existing]
+    newGlyph = babelfont.layers[0].newGlyph(new)
+
+    for c in existingGlyph.contours:
+        newGlyph.appendContour(c)
+    for c in existingGlyph.components:
+        newGlyph.appendComponent(c)
+    newGlyph.width = existingGlyph.width
