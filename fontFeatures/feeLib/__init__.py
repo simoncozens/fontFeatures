@@ -42,7 +42,9 @@ class FeeParser:
             self.loadPlugin(plugin)
 
     def loadPlugin(self, plugin):
-        mod = importlib.import_module(__name__ + "." + plugin)
+        if "." not in plugin:
+            plugin = __name__ + "." + plugin
+        mod = importlib.import_module(plugin)
         classes = inspect.getmembers(mod, inspect.isclass)
         for verb, c in classes:
             self.verbs[verb] = c
