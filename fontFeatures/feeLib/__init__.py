@@ -12,6 +12,12 @@ def warning_on_one_line(message, category, filename, lineno, file=None, line=Non
 
 warnings.formatwarning = warning_on_one_line
 
+class FeePlugin:
+    @classmethod
+    def validate_tokencount(self, tokens, verbaddress):
+        if len(tokens) != self.arguments:
+            from fontFeatures.parserTools import ParseError
+            raise ParseError("Too many arguments given", verbaddress, self)
 
 class FeeParser:
     DEFAULT_PLUGINS = [
