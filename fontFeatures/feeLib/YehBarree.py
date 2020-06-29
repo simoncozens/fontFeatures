@@ -76,13 +76,13 @@ class YBFixOverhang:
     settings["ComputedMaxChainLength"] = maxchainlength
     return [fontFeatures.Routine(rules=rules, flags=8)]
 
-class YBDropDots:
+class YBReplaceDots:
   takesBlock = False
 
   @classmethod
   def validate(self, tokens, verbaddress):
     from fontFeatures.parserTools import ParseError
-    if len(tokens) != 3:
+    if len(tokens) != 4:
       raise ParseError("Wrong number of arguments", tokens[0].address, self)
     return True
 
@@ -90,8 +90,6 @@ class YBDropDots:
   def store(self, parser, tokens, doFilter = None):
     import fontFeatures
     import itertools
-    from fontFeatures.ftUtils import get_glyph_metrics, bin_glyphs_by_metric
-    import warnings
     settings = YBSettings.getSettings(parser)
     if "DropDotsDepth" not in settings:
       raise ValueError("DropDotsDepth setting is required")
@@ -103,27 +101,25 @@ class YBDropDots:
     yehbarrees = parser.expandGlyphOrClassName(tokens[0].token)
     medis = parser.expandGlyphOrClassName(tokens[1].token)
     dots = parser.expandGlyphOrClassName(tokens[2].token)
-    parser.fea.namedClasses["YBDots"] = dots
-    # XXX check anchors
-    binned_medis = bin_glyphs_by_metric(parser.font, medis, "rise", bincount = int(settings["DropDotsBinCount"]))
+    ybdots = parser.expandGlyphOrClassName(tokens[3].token)
+    dots.extend(ybdots)
+    parser.fea.namedClasses["Dots"] = dots
     rules = []
     for i in range(1,int(settings["MaxChainLength"])+1):
-      for bases in itertools.product(binned_medis, repeat=i):
-        for marks in itertools.product([dots,None], repeat=i):
-          totalrise = sum([ x[1] for x in bases])
-          precontext = [ bases[0][0] ]
-          newbases = bases[1:]
-          justbases = [ x[0] for x in newbases ]
-          string = [val for pair in zip(justbases, marks) for val in pair]
-          postcontext = [i for i in string if i] + [ yehbarrees ]
-          rules.append(
-            fontFeatures.Positioning(
-              [dots],
-              [fontFeatures.ValueRecord(yPlacement=-(totalrise+int(settings["DropDotsDepth"])))],
-              precontext = precontext,
-              postcontext = postcontext
-              )
-          )
+      bases = [medis] * i
+      for marks in itertools.product([dots,None], repeat=i):
+        precontext = [ bases[0] ]
+        justbases = bases[1:]
+        string = [val for pair in zip(justbases, marks) for val in pair]
+        postcontext = [i for i in string if i] + [ yehbarrees ]
+        rules.append(
+          fontFeatures.Substitution(
+            [dots],
+            [ybdots],
+            precontext = precontext,
+            postcontext = postcontext
+            )
+        )
     r = fontFeatures.Routine(rules=list(reversed(rules)),flags=0x10 )
-    r.markFilteringSet="YBDots"
+    r.markFilteringSet="Dots"
     return [r]
