@@ -24,7 +24,7 @@ if output is None:
     output = "fea-" + args.input
 
 font = TTFont(args.input)
-p = FeeParser(font)
+p = FeeParser(args.input)
 # Unparse existing features
 p.fea = unparse(font)
 # Add features from FEE

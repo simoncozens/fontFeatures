@@ -1,11 +1,11 @@
 #!env python3
 from fontFeatures.feeLib import FeeParser
-from fontTools.ttLib import TTFont
 from fontFeatures.optimizer import Optimizer
 import sys
 
-p = FeeParser(TTFont(sys.argv[1]))
+p = FeeParser(sys.argv[1])
 
 p.parseFile(sys.argv[2])
 Optimizer(p.fea).optimize(level=1)
 print(p.fea.asFea())
+

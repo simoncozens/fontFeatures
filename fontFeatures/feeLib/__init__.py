@@ -3,6 +3,7 @@ from .. import FontFeatures
 from ..parserTools import ParseContext
 import re
 import warnings
+from fontTools.ttLib import TTFont
 
 
 def warning_on_one_line(message, category, filename, lineno, file=None, line=None):
@@ -21,10 +22,12 @@ class FeeParser:
         "Anchors",
     ]
 
-    def __init__(self, font):
-        self.font = font
+    def __init__(self, filename):
+        self.fontfile = filename
+        self.font = TTFont(filename)
         self.fea = FontFeatures()
-        self.glyphs = font.getGlyphOrder()
+        self.glyphs = self.font.getGlyphOrder()
+        self.fontModified = False
 
         self.plugins = []
         self.verbs = {}
@@ -62,6 +65,9 @@ class FeeParser:
                 self.verbs[verb].validate(tokens, verbaddress)
                 returns.extend(self.verbs[verb].store(self, tokens))
             pc.skipWhitespaceAndComments()
+        if self.fontModified:
+            print("# The font has been modified")
+            self.font.save(self.fontfile)
         return returns
 
     def expandGlyphOrClassName(self, s, mustExist=True):
