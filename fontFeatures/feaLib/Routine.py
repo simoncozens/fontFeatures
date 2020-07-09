@@ -18,6 +18,15 @@ def lookup_type(rule):
     raise ValueError
 
 
+counter = 0
+
+
+def gensym(prefix):
+    global counter
+    counter = counter + 1
+    return prefix + str(counter)
+
+
 def arrange_by_type(self):
     from fontFeatures import Routine
 
@@ -163,13 +172,19 @@ def asFeaAST(self):
         if self.flags & 0xFF00:
             # This is dirty and wrong and I feel bad.
             flags = feaast.LookupFlagStatement(
-                    self.flags,
-                    markAttachment=feaast.Comment("@MarkClass%i" % (self.flags >> 8)),
-                )
+                self.flags,
+                markAttachment=feaast.Comment("@MarkClass%i" % (self.flags >> 8)),
+            )
         else:
             flags = feaast.LookupFlagStatement(self.flags)
         if hasattr(self, "markFilteringSet"):
-            flags.markFilteringSet = feaast.GlyphClass(glyphs= self.markFilteringSet)
+            mfsname = gensym("markFilteringSet")
+            mfs = feaast.GlyphClassDefinition(
+                mfsname,
+                feaast.GlyphClass([feaast.GlyphName(x) for x in self.markFilteringSet]),
+            )
+            f.statements.append(mfs)
+            flags.markFilteringSet = feaast.GlyphClassName(mfs)
         f.statements.append(flags)
 
     for x in self.comments:
