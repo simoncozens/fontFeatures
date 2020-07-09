@@ -82,7 +82,7 @@ class YBReplaceDots:
   @classmethod
   def validate(self, tokens, verbaddress):
     from fontFeatures.parserTools import ParseError
-    if len(tokens) != 4:
+    if len(tokens) != 5:
       raise ParseError("Wrong number of arguments", tokens[0].address, self)
     return True
 
@@ -98,15 +98,16 @@ class YBReplaceDots:
 
     yehbarrees = parser.expandGlyphOrClassName(tokens[0].token)
     medis = parser.expandGlyphOrClassName(tokens[1].token)
-    dots = parser.expandGlyphOrClassName(tokens[2].token)
-    ybdots = parser.expandGlyphOrClassName(tokens[3].token)
+    inits = parser.expandGlyphOrClassName(tokens[2].token)
+    dots = parser.expandGlyphOrClassName(tokens[3].token)
+    ybdots = parser.expandGlyphOrClassName(tokens[4].token)
     dots.extend(ybdots)
     parser.fea.namedClasses["Dots"] = dots
     rules = []
     for i in range(1,int(settings["MaxChainLength"])+1):
       bases = [medis] * i
       for marks in itertools.product([dots,None], repeat=i):
-        precontext = [ bases[0] ]
+        precontext = [ set(bases[0]) | set(inits) ]
         justbases = bases[1:]
         string = [val for pair in zip(justbases, marks) for val in pair]
         postcontext = [i for i in string if i] + [ yehbarrees ]
