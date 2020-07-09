@@ -102,7 +102,6 @@ class YBReplaceDots:
     dots = parser.expandGlyphOrClassName(tokens[3].token)
     ybdots = parser.expandGlyphOrClassName(tokens[4].token)
     dots.extend(ybdots)
-    parser.fea.namedClasses["Dots"] = dots
     rules = []
     for i in range(1,int(settings["MaxChainLength"])+1):
       bases = [medis] * i
@@ -120,5 +119,5 @@ class YBReplaceDots:
             )
         )
     r = fontFeatures.Routine(rules=list(reversed(rules)),flags=0x10 )
-    r.markFilteringSet="Dots"
+    r.markFilteringSet = dots
     return [r]
