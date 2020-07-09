@@ -325,6 +325,7 @@ class FontDameUnparser:
                     precontext = self.make_context(
                         re.split(r",\s*", m[1]), self.backtrackclassContexts
                     )
+                    precontext = list(reversed(precontext))
                 context = self.make_context(re.split(r",\s*", m[2]), self.classContexts)
                 postcontext = []
                 if m[3]:
