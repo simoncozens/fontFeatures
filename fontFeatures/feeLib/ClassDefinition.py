@@ -83,9 +83,9 @@ class DefineClass:
         name = tokens[0].token[1:]
         if tokens[2].token.startswith("/"):
             glyphs = self.expandRegex(parser, tokens)
-        if tokens[2].token.startswith("["):
+        elif tokens[2].token.startswith("["):
             glyphs = self.expandClass(parser, tokens)
-        if tokens[2].token.startswith("@"):
+        elif tokens[2].token.startswith("@"):
             glyphs = parser.expandGlyphOrClassName(tokens[2].token)
         parser.fea.namedClasses[name] = glyphs
         return []
