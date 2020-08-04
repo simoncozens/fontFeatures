@@ -112,6 +112,64 @@ class DefineClass:
         return list(dict.fromkeys(glyphs))
 
 
+
+class DefineClassBinned(DefineClass):
+    takesBlock = False
+
+    @classmethod
+    def validate(self, tokens, verbaddress):
+        from fontFeatures.parserTools import ParseError
+
+        if not tokens[0].token.startswith("@"):
+            raise ParseError("Class name must start with '@'", tokens[0].address, self)
+
+        try:
+            int(tokens[1].token)
+        except Exception as e:
+            raise ParseError("Second argument must be a number", tokens[1].address, self)
+
+        metrics = ["xMin","xMax","yMin","yMax", "width", "lsb", "rise","rsb"]
+        if tokens[2].token not in metrics:
+            raise ParseError("Third argument must be one of %s" % metrics, tokens[2].address, self)
+
+        if tokens[3].token != "=":
+            raise ParseError(
+                "Expected something to equal something else", tokens[1].address, self
+            )
+
+        if tokens[4].token.startswith("/"):
+            if not tokens[-1].token.endswith("/"):
+                raise ParseError(
+                    "Unterminated regular expression", tokens[4].address, self
+                )
+        elif tokens[4].token.startswith("["):
+            if not tokens[-1].token.endswith("]"):
+                raise ParseError("Unterminated class", tokens[4].address, self)
+        elif tokens[4].token.startswith("@"):
+            if len(tokens) > 3:
+                raise ParseError("Too many arguments given", verbaddress, self)
+        else:
+            raise ParseError("Can't understand class", self)
+
+        return True
+
+    @classmethod
+    def store(self, parser, tokens):
+        from fontFeatures.ftUtils import bin_glyphs_by_metric
+        name = tokens[0].token[1:]
+        if tokens[4].token.startswith("/"):
+            glyphs = self.expandRegex(parser, tokens[2:])
+        elif tokens[4].token.startswith("["):
+            glyphs = self.expandClass(parser, tokens[2:])
+        elif tokens[4].token.startswith("@"):
+            glyphs = parser.expandGlyphOrClassName(tokens[4].token)
+        count = int(tokens[1].token)
+        metric = tokens[2].token
+        binned = bin_glyphs_by_metric(parser.font, glyphs, metric, bincount=count)
+        for i in range(1,count+1):
+            parser.fea.namedClasses["%s_%s%i" % (name,metric,i)] = binned[i-1][0]
+        return []
+
 class ShowClass:
     takesBlock = False
 
