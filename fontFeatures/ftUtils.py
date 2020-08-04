@@ -49,12 +49,20 @@ def get_glyph_metrics(font, glyphname):
     }
     if "glyf" in font:
         glyf = font["glyf"][glyphname]
-        metrics["xMin"], metrics["xMax"], metrics["yMin"], metrics["yMax"] = (
-            glyf.xMin,
-            glyf.xMax,
-            glyf.yMin,
-            glyf.yMax,
-        )
+        try:
+            metrics["xMin"], metrics["xMax"], metrics["yMin"], metrics["yMax"] = (
+                glyf.xMin,
+                glyf.xMax,
+                glyf.yMin,
+                glyf.yMax,
+            )
+        except Exception as e:
+            metrics["xMin"], metrics["xMax"], metrics["yMin"], metrics["yMax"] = (
+                0,
+                0,
+                0,
+                0,
+            )
     else:
         bounds = font.getGlyphSet()[glyphname]._glyph.calcBounds(font.getGlyphSet())
         metrics["xMin"], metrics["yMin"], metrics["xMax"], metrics["yMax"] = bounds
