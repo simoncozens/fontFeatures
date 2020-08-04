@@ -9,6 +9,7 @@ are always available.
 
 .. automodule:: fontFeatures.feeLib.ClassDefinition
 .. automodule:: fontFeatures.feeLib.Feature
+.. automodule:: fontFeatures.feeLib.LoadPlugin
 
 
 
