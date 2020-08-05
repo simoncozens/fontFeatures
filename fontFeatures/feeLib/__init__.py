@@ -1,53 +1,129 @@
-import importlib, inspect
-from .. import FontFeatures
-from ..parserTools import ParseContext
 import re
-import warnings
+import parsley
+import importlib, inspect
+from fontFeatures import FontFeatures
+from ometa.grammar import OMeta
 from fontTools.ttLib import TTFont
-
+import warnings
+from more_itertools import collapse
 
 def warning_on_one_line(message, category, filename, lineno, file=None, line=None):
-    return "# [warning] %s\n" % (message)
+    return "# %s\n" % (message)
 
 
 warnings.formatwarning = warning_on_one_line
 
-class FeePlugin:
-    @classmethod
-    def validate_tokencount(self, tokens, verbaddress):
-        if len(tokens) != self.arguments:
-            from fontFeatures.parserTools import ParseError
-            raise ParseError("Too many arguments given", verbaddress, self)
 
-class FeeParser:
+def callRule(self):
+    _locals = {"self": self}
+    n1 = self._apply(self.rule_anything, "anything", [])
+    n2 = self._apply(self.rule_anything, "anything", [])
+    rule = getattr(self, "rule_" + n1[0] + "_" + n2[0])
+    print(rule)
+    return rule()
+
+
+class GlyphSelector:
+    def __init__(self, selector, suffixes, location):
+        self.selector = selector
+        self.suffixes = suffixes
+        self.location = location
+
+    def as_text(self):
+        if "barename" in self.selector:
+            returned = self.selector["barename"]
+        elif "classname" in self.selector:
+            returned = "@" + self.selector["classname"]
+        elif "regex" in self.selector:
+            returned = "/" + self.selector["regex"] + "/"
+        for s in self.suffixes:
+            returned = returned + s["suffixtype"] + s["suffix"]
+        return returned
+
+    def _apply_suffix(self, glyphname, suffix):
+        if suffix["suffixtype"] == ".":
+            glyphname = glyphname + "." + suffix["suffix"]
+        else:
+            if glyphname.endswith("." + suffix["suffix"]):
+                glyphname = glyphname[: -(len(suffix["suffix"]) + 1)]
+        return glyphname
+
+    def resolve(self, fontfeatures, font, mustExist=True):
+        returned = []
+        glyphs = font.getGlyphOrder()
+        if "barename" in self.selector:
+            returned = self.selector["barename"]
+        elif "classname" in self.selector:
+            classname = self.selector["classname"]
+            if not classname in fontfeatures.namedClasses:
+                raise ValueError(
+                    "Tried to expand glyph class '@%s' but @%s was not defined (at %s)"
+                    % (classname, classname, self.location)
+                )
+            returned = fontfeatures.namedClasses[classname]
+        elif "regex" in self.selector:
+            regex = self.selector["regex"]
+            try:
+                pattern = re.compile(regex)
+            except Exception as e:
+                raise ValueError(
+                    "Couldn't parse regular expression '%s' at %s"
+                    % (regex, self.location)
+                )
+
+            returned = list(filter(lambda x: re.search(pattern, x), glyphs))
+        for s in self.suffixes:
+            returned = [self._apply_suffix(g, s) for g in returned]
+        if mustExist:
+            notFound = list(filter(lambda x: x not in glyphs, returned))
+            returned = list(filter(lambda x: x in glyphs, returned))
+            if len(notFound) > 0:
+                plural = ""
+                if len(notFound) > 1:
+                    plural = "s"
+                glyphstring = ", ".join(notFound)
+                warnings.warn(
+                    "# Couldn't find glyph%s '%s' in font (at %s)"
+                    % (plural, glyphstring, self.location)
+                )
+        return list(returned)
+
+
+class Parser:
+    basegrammar = """
+feefile = wsc statement+
+statement = verb:v wsc callRule(v "Args"):args wsc ';' wsc -> parser.do(v, args)
+rest_of_line = <('\\\n' | (~'\n' anything))*>
+wsc = ws | '#' rest_of_line
+verb = <letter+>:x ?(x in self.valid_verbs) -> x
+
+LoadPlugin_Args = <(letter|".")+>:x !(parser._load_plugin(x))
+
+# Ways of specifying glyphs
+classname = '@' <(letter|"_")+>:b  -> {"classname": b}
+barename = <(letter|"."|"_")+>:b -> {"barename": b}
+inlineclass_member = (barename|classname):m ws? -> m
+inlineclass_members = inlineclass_member+
+inlineclass = '[' ws inlineclass_members:m ']' -> {"inlineclass": m}
+regex = '/' <(~'/' anything)+>:r '/' -> {"regex": r}
+glyphsuffix = ('.'|'~'):suffixtype <letter+>:suffix -> {"suffixtype":suffixtype, "suffix":suffix}
+glyphselector = (regex | barename | classname | inlineclass ):g glyphsuffix*:s -> GlyphSelector(g,s, self.input.position)
+"""
+
     DEFAULT_PLUGINS = [
         "ClassDefinition",
         "Feature",
         "Substitute",
-        "LoadPlugin",
-        "Anchors",
+        # "Anchors",
     ]
 
-    def __init__(self, filename):
-        self.fontfile = filename
-        self.font = TTFont(filename)
-        self.fea = FontFeatures()
-        self.glyphs = self.font.getGlyphOrder()
-        self.fontModified = False
-
-        self.plugins = []
-        self.verbs = {}
-
+    def __init__(self, font):
+        self.grammar = self._make_initial_grammar()
+        self.font = font
+        self.fontfeatures = FontFeatures()
         for plugin in self.DEFAULT_PLUGINS:
-            self.loadPlugin(plugin)
-
-    def loadPlugin(self, plugin):
-        if "." not in plugin:
-            plugin = __name__ + "." + plugin
-        mod = importlib.import_module(plugin)
-        classes = inspect.getmembers(mod, inspect.isclass)
-        for verb, c in classes:
-            self.verbs[verb] = c
+            self._load_plugin(plugin)
+        self._rebuild_parser()
 
     def parseFile(self, filename):
         with open(filename, "r") as f:
@@ -55,75 +131,55 @@ class FeeParser:
         return self.parseString(data)
 
     def parseString(self, s):
-        pc = ParseContext(s)
-        pc.skipWhitespaceAndComments()
-        returns = []
-        while pc.moreToParse:
-            verbaddress = pc.address
-            verb = pc.expect(self.verbs.keys())
-            pc.skipWhitespaceAndComments()
-            if self.verbs[verb].takesBlock:
-                token = pc.consumeToken()
-                pc.skipWhitespaceAndComments()
-                block = pc.returnBlock()
-                self.verbs[verb].validateBlock(token, block, verbaddress)
-                returns.extend(self.verbs[verb].storeBlock(self, token, block))
-            else:
-                tokens = pc.consumeTokens()
-                self.verbs[verb].validate(tokens, verbaddress)
-                returns.extend(self.verbs[verb].store(self, tokens))
-            pc.skipWhitespaceAndComments()
-        if self.fontModified:
-            print("# The font has been modified")
-            self.font.save(self.fontfile)
-        return returns
+        return self.parser(s).feefile()
 
-    def expandGlyphOrClassName(self, s, mustExist=True):
-        """Returns a list of glyphs expanded from a name. e.g.
-        space    -> space
-        @foo     -> contents of class foo
-        @foo.sc  -> contents of class foo, suffixed by .sc
-        @foo~sc  -> contents of class foo, with .sc removed
-    """
-        if not s.startswith("@"):
-            m = re.match("(.*)([\\.~])(.*)$", s)
-            if not s in self.glyphs and mustExist:
-                warnings.warn("Couldn't find glyph '%s' in font" % s)
-            return [s]
-        s = s[1:]
-        if s in self.fea.namedClasses:
-            return self.fea.namedClasses[s]
-        m = re.match("(.*)([\\.~])(.*)$", s)
-        if m:
-            origclass = m[1]
-            operation = m[2]
-            suffix = m[3]
-            if not origclass in self.fea.namedClasses:
-                raise ValueError(
-                    "Tried to expand glyph class '@%s' but @%s was not defined"
-                    % (s, origclass)
-                )
-            origglyphs = self.fea.namedClasses[origclass]
-            expanded = []
-            for g in origglyphs:
-                if operation == ".":
-                    newglyph = g + "." + suffix
-                else:
-                    newglyph = g
-                    if newglyph.endswith("." + suffix):
-                        newglyph = newglyph[: -(len(suffix) + 1)]
-                if not newglyph in self.glyphs and mustExist:
-                    op = operation == "." and "" or "de-"
-                    warnings.warn(
-                        "# Couldn't find glyph '%s' in font during %ssuffixing operation @%s"
-                        % (newglyph, op, s)
-                    )
-                expanded.append(newglyph)
-            return expanded
+    def _rebuild_parser(self):
+        self.parser = parsley.wrapGrammar(self.grammar)
 
-    def parse_languages(self, token):
-        assert token[0] == "<"
-        assert token[-1] == ">"
-        token = token[1:-1]
-        scriptlangs = token.split(",")
-        return [tuple(l.split("/")) for l in scriptlangs]
+    def _make_initial_grammar(self):
+        g = parsley.makeGrammar(
+            Parser.basegrammar,
+            {"match": re.match, "GlyphSelector": GlyphSelector},
+            unwrap=True,
+        )
+        g.globals["parser"] = self
+        g.rule_callRule = callRule
+        g.valid_verbs = ["LoadPlugin"]
+        return g
+
+    def _load_plugin(self, plugin):
+        if "." not in plugin:
+            plugin = "fontFeatures.feeLib." + plugin
+        mod = importlib.import_module(plugin)
+        if not hasattr(mod, "GRAMMAR"):
+            warnings.warn("Module %s is not a FEE plugin" % plugin)
+            return
+
+        self._register_plugin(mod)
+
+    def _register_plugin(self, mod):
+        rules = mod.GRAMMAR
+        verbs = getattr(mod, "VERBS", [])
+        classes = inspect.getmembers(mod, inspect.isclass)
+        self.grammar.valid_verbs.extend(verbs)
+        self.grammar = OMeta.makeGrammar(rules, "Grammar").createParserClass(
+            self.grammar, {**self.grammar.globals, **dict(classes)}
+        )
+        self._rebuild_parser()
+
+    def do(self, verb, args):
+        print(verb, *args)
+        return self.grammar.globals[verb].action(self, *args)
+
+    def filterResults(self, results):
+        return [x for x in collapse(results) if x]
+
+
+test = """
+Feature smcp {
+    Substitute /.sc$/~sc -> /.sc$/;
+};
+"""
+p = Parser(TTFont("fonts/LibertinusSans-Regular.otf"))
+p.parseString(test)
+print(p.fontfeatures.asFea())

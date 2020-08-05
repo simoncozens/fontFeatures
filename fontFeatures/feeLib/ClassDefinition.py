@@ -45,117 +45,76 @@ the ``~`` operator::
 """
 
 import re
+from fontFeatures.ftUtils import get_glyph_metrics
+import warnings
+
+
+GRAMMAR = """
+DefineClass_Args = classname:c ws '=' ws DefineClass_definition:d -> (c,d)
+DefineClass_orconjunction = glyphselector:l ws '|' ws DefineClass_primary:r  -> {'conjunction': 'or', 'left': l, 'right': r}
+DefineClass_andconjunction = glyphselector:l ws '&' ws DefineClass_primary:r  -> {'conjunction': 'and', 'left': l, 'right': r}
+
+DefineClass_predicate = ws 'and' ws '(' ws <letter+>:metric ws ('>'|'<'|'='|'<='|'>='):comparator ws <digit+>:value ws ')' -> {'predicate': metric, 'comparator': comparator, 'value': value}
+DefineClass_primary_paren = '(' ws DefineClass_primary:p ws ')' -> p
+DefineClass_primary =  DefineClass_primary_paren | DefineClass_orconjunction | DefineClass_andconjunction | glyphselector
+DefineClass_definition = DefineClass_primary:g DefineClass_predicate*:p -> (g,p)
+
+ShowClass_Args = glyphselector:g -> (g,)
+"""
+
+VERBS = ["DefineClass", "ShowClass"]
+
+takesBlock = False
 
 
 class DefineClass:
-    takesBlock = False
+    @classmethod
+    def action(self, parser, classname, definition):
+        glyphs = self.resolve_definition(parser, definition[0])
+        predicates = definition[1]
+        for p in predicates:
+            glyphs = list(filter(lambda x: self.meets_predicate(x, p, parser), glyphs))
+        parser.fontfeatures.namedClasses[classname["classname"]] = glyphs
 
     @classmethod
-    def validate(self, tokens, verbaddress):
-        from fontFeatures.parserTools import ParseError
-
-        if not tokens[0].token.startswith("@"):
-            raise ParseError("Class name must start with '@'", tokens[0].address, self)
-
-        if tokens[1].token != "=":
-            raise ParseError(
-                "Expected something to equal something else", tokens[1].address, self
-            )
-
-        if tokens[2].token.startswith("/"):
-            if not tokens[-1].token.endswith("/"):
-                raise ParseError(
-                    "Unterminated regular expression", tokens[2].address, self
-                )
-        elif tokens[2].token.startswith("["):
-            if not tokens[-1].token.endswith("]"):
-                raise ParseError("Unterminated class", tokens[2].address, self)
-        elif tokens[2].token.startswith("@"):
-            if len(tokens) > 3:
-                raise ParseError("Too many arguments given", verbaddress, self)
+    def resolve_definition(self, parser, primary):
+        # import code; code.interact(local=locals())
+        if isinstance(primary, dict) and "conjunction" in primary:
+            left = set(self.resolve_definition(parser, primary["left"]))
+            right = set(self.resolve_definition(parser, primary["right"]))
+            if primary["conjunction"] == "or":
+                return list(left | right)
+            else:
+                return list(left & right)
         else:
-            raise ParseError("Can't understand class", self)
-
-        return True
+            return primary.resolve(parser.fontfeatures, parser.font)
 
     @classmethod
-    def store(self, parser, tokens):
-        name = tokens[0].token[1:]
-        if tokens[2].token.startswith("/"):
-            glyphs = self.expandRegex(parser, tokens)
-        elif tokens[2].token.startswith("["):
-            glyphs = self.expandClass(parser, tokens)
-        elif tokens[2].token.startswith("@"):
-            glyphs = parser.expandGlyphOrClassName(tokens[2].token)
-        parser.fea.namedClasses[name] = glyphs
-        return []
+    def meets_predicate(self, glyphname, predicate, parser):
+        metric = predicate["predicate"]
+        comp = predicate["comparator"]
+        testvalue = int(predicate["value"])
 
-    @classmethod
-    def expandRegex(self, parser, tokens):
-        regex = " ".join([x.token for x in tokens[2:]])
-        regex = regex[1:-1]
-        try:
-            pattern = re.compile(regex)
-        except Exception as e:
-            raise ParseError(
-                "Couldn't parse regular expression", tokens[2].address, self
-            )
-        return list(filter(lambda g: pattern.search(g), parser.glyphs))
-
-    @classmethod
-    def expandClass(self, parser, tokens):
-        tokens[2].token = tokens[2].token[1:]
-        tokens[-1].token = tokens[-1].token[:-1]
-        glyphs = []
-        for token in [t.token for t in tokens[2:]]:
-            glyphs.extend(parser.expandGlyphOrClassName(token))
-        return list(dict.fromkeys(glyphs))
-
+        metrics = get_glyph_metrics(parser.font, glyphname)
+        if metric not in metrics:
+            raise ValueError("Unknown metric '%s'" % metric)
+        value = metrics[metric]
+        if comp == ">":
+            return value > testvalue
+        elif comp == "<":
+            return value < testvalue
+        elif comp == ">=":
+            return value >= testvalue
+        elif comp == "<=":
+            return value <= testvalue
+        raise ValueError("Bad comparator (can't happen?)")
 
 
 class DefineClassBinned(DefineClass):
-    takesBlock = False
-
-    @classmethod
-    def validate(self, tokens, verbaddress):
-        from fontFeatures.parserTools import ParseError
-
-        if not tokens[0].token.startswith("@"):
-            raise ParseError("Class name must start with '@'", tokens[0].address, self)
-
-        try:
-            int(tokens[1].token)
-        except Exception as e:
-            raise ParseError("Second argument must be a number", tokens[1].address, self)
-
-        metrics = ["xMin","xMax","yMin","yMax", "width", "lsb", "rise","rsb"]
-        if tokens[2].token not in metrics:
-            raise ParseError("Third argument must be one of %s" % metrics, tokens[2].address, self)
-
-        if tokens[3].token != "=":
-            raise ParseError(
-                "Expected something to equal something else", tokens[1].address, self
-            )
-
-        if tokens[4].token.startswith("/"):
-            if not tokens[-1].token.endswith("/"):
-                raise ParseError(
-                    "Unterminated regular expression", tokens[4].address, self
-                )
-        elif tokens[4].token.startswith("["):
-            if not tokens[-1].token.endswith("]"):
-                raise ParseError("Unterminated class", tokens[4].address, self)
-        elif tokens[4].token.startswith("@"):
-            if len(tokens) > 3:
-                raise ParseError("Too many arguments given", verbaddress, self)
-        else:
-            raise ParseError("Can't understand class", self)
-
-        return True
-
     @classmethod
     def store(self, parser, tokens):
         from fontFeatures.ftUtils import bin_glyphs_by_metric
+
         name = tokens[0].token[1:]
         if tokens[4].token.startswith("/"):
             glyphs = self.expandRegex(parser, tokens[2:])
@@ -166,27 +125,19 @@ class DefineClassBinned(DefineClass):
         count = int(tokens[1].token)
         metric = tokens[2].token
         binned = bin_glyphs_by_metric(parser.font, glyphs, metric, bincount=count)
-        for i in range(1,count+1):
-            parser.fea.namedClasses["%s_%s%i" % (name,metric,i)] = binned[i-1][0]
+        for i in range(1, count + 1):
+            parser.fea.namedClasses["%s_%s%i" % (name, metric, i)] = binned[i - 1][0]
         return []
 
+
 class ShowClass:
-    takesBlock = False
-
     @classmethod
-    def validate(self, tokens, verbaddress):
-        from fontFeatures.parserTools import ParseError
-
-        if not tokens[0].token.startswith("@"):
-            raise ParseError("Class name must start with '@'", tokens[0].address, self)
-        if len(tokens) > 1:
-            raise ParseError("Too many arguments given", verbaddress, self)
-
-    @classmethod
-    def store(self, parser, tokens):
-        name = tokens[0].token
-        print(
-            "Expanding class %s -> [%s]"
-            % (name, " ".join(parser.expandGlyphOrClassName(name)))
+    def action(self, parser, classname):
+        warnings.warn(
+            "%s = %s"
+            % (
+                classname.as_text(),
+                " ".join(classname.resolve(parser.fontfeatures, parser.font)),
+            )
         )
         return []
