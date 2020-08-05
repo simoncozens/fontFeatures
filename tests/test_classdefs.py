@@ -20,4 +20,4 @@ class TestFeeDefinitions(unittest.TestCase):
         	DefineClass @consonants = /^[bcdfghjklmnpqrstvwxyz]$/;
         	DefineClass @letters = [@vowels @consonants];
         	""");
-        self.assertEqual(len(p.fea.namedClasses["letters"]),26)
+        self.assertEqual(len(p.fontfeatures.namedClasses["letters"]),26)

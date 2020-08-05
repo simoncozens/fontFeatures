@@ -34,7 +34,7 @@ class TestFeeAnchors(unittest.TestCase):
 """
         )
 
-        self.assertEqual(p.fea.anchors["A"]["top"], (679, 1600))
+        self.assertEqual(p.fontfeatures.anchors["A"]["top"], (679, 1600))
         self.assertSufficientlyEqual(
             p.fea.asFea(),
             """    markClass acutecomb <anchor -570 1290> @top;
