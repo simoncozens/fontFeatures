@@ -1,0 +1,5 @@
+fontTools
+beziers
+parsley
+numpy
+more_itertools
