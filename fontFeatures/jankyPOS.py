@@ -19,7 +19,6 @@ class JankyPos:
         self.font = font
         self.direction = direction
 
-
     def serialize_buffer(self, buf):
         """Returns the contents of the given buffer in a string format similar to
     that used by hb-shape."""
@@ -29,14 +28,20 @@ class JankyPos:
             outs.append("%s" % info["glyph"])
             outs[-1] = outs[-1] + "+%i" % position.xAdvance
             if position.xPlacement != 0 or position.yPlacement != 0:
-                outs[-1] = outs[-1] + "@<%i,%i>" % (position.xPlacement or 0, position.yPlacement or 0)
+                outs[-1] = outs[-1] + "@<%i,%i>" % (
+                    position.xPlacement or 0,
+                    position.yPlacement or 0,
+                )
         return "|".join(outs)
 
     def positioning_buffer(self, glyphstring):
         return [
-            { "glyph": g,
-              "position": ValueRecord(xAdvance=get_glyph_metrics(self.font, g)["width"]),
-              "category": categorize_glyph(self.font, g)
+            {
+                "glyph": g,
+                "position": ValueRecord(
+                    xAdvance=get_glyph_metrics(self.font, g)["width"],
+                ),
+                "category": categorize_glyph(self.font, g),
             }
             for g in glyphstring
         ]
@@ -72,13 +77,20 @@ class JankyPos:
                 if len(r.glyphs) == 1:
                     buf = self.position_one(buf, r)
                 else:
-                    raise ValueError
+                    continue  # XXX
             elif isinstance(r, Attachment):
-                buf = self.attach(buf, r)
+                if r.is_cursive:
+                    buf = self.attach_cursive(buf, r)
+                else:
+                    buf = self.attach(buf, r)
             elif isinstance(r, Chaining):
                 buf = self.chain(buf, r)
             else:
                 continue
+        return buf
+
+    def chain(self, buf, rule):
+        # XXXX
         return buf
 
     def position_one(self, buf, rule):
@@ -113,18 +125,70 @@ class JankyPos:
                 previous = previous - 1
             prev = buf[previous]["glyph"]
             prevVr = buf[previous]["position"]
-            print("Trying %s(%i)/%s" % (g, ix, prev))
             if g in rule.marks and ix > 0 and prev in rule.bases:
-                print("Attach %s -> %s" % ( g, prev))
-                xpos = -(rule.bases[prev][0] - rule.marks[g][0])
-                ypos = -(rule.bases[prev][1] - rule.marks[g][1])
-                print(" %i, %i" % ( xpos, ypos))
-                if rule.is_cursive:
-                    xpos = xpos + (prevVr.xPlacement or 0)
-                    ypos = ypos + (prevVr.yPlacement or 0)
-                    prevVr.xPlacement = (prevVr.xPlacement or 0) + xpos - prevVr.xAdvance
-                    prevVr.yPlacement = (prevVr.yPlacement or 0) + ypos
-                else:
-                    vr.xPlacement = (vr.xPlacement or 0) + xpos - prevVr.xAdvance
-                    vr.yPlacement = (vr.yPlacement or 0) + ypos
+                xpos = rule.bases[prev][0] - rule.marks[g][0]
+                ypos = rule.bases[prev][1] - rule.marks[g][1]
+                vr.xPlacement = (vr.xPlacement or 0) + xpos
+                vr.yPlacement = (vr.yPlacement or 0) + ypos
+                if self.direction == "LTR":
+                    vr.xPlacement = (vr.xPlacement or 0) - prevVr.xAdvance
         return buf
+
+    def attach_cursive(self, buf, rule):
+        for j, info in enumerate(buf):
+            g = info["glyph"]
+            vr = info["position"]
+            if j == 0 or buf[j]["category"][0] != "base":
+                continue
+            i = j - 1
+            while i > 0 and buf[i]["category"][0] != "base":
+                i = i - 1
+
+            # Get entry anchor for i and exit anchor for i
+            prev = buf[i]["glyph"]
+            if g not in rule.bases or not prev in rule.marks:
+                continue
+            exit_x, exit_y = rule.marks[prev]
+            entry_x, entry_y = rule.bases[g]
+            if self.direction == "RTL":
+                d = exit_x + buf[i]["position"].xPlacement
+                buf[i]["position"].xAdvance = buf[i]["position"].xAdvance - d
+                buf[i]["position"].xPlacement = buf[i]["position"].xPlacement - d
+                buf[j]["position"].xAdvance = entry_x + buf[j]["position"].xPlacement
+            else:
+                raise ValueError
+            child = i
+            parent = j
+            x_offset = entry_x - exit_x
+            y_offset = entry_y - exit_y
+            if True or not (rule.flags & 1):  # LeftToRight XXX
+                parent, child = child, parent
+                x_offset = -x_offset
+                y_offset = -y_offset
+            buf[child]["position"].yPlacement = (
+                buf[parent]["position"].yPlacement + y_offset
+            )
+        return buf
+
+
+if __name__ == "__main__":
+    import sys
+    from fontFeatures.ttLib import unparse
+    from fontTools.ttLib import TTFont
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Test janky positioning")
+    parser.add_argument("font", metavar="FONT", help="font file")
+    parser.add_argument("glyphs", metavar="GLYPHS", help="glyph string")
+    parser.add_argument("--direction", action="store", help="direction")
+
+    args = parser.parse_args()
+    font = TTFont(args.font)
+    glyphs = args.glyphs.split()
+    ff = unparse(font)
+    janky = JankyPos(font)
+    if args.direction:
+        janky.direction = args.direction
+    buf = janky.positioning_buffer(glyphs)
+    buf = janky.process_fontfeatures(buf, ff)
+    print(janky.serialize_buffer(buf))
