@@ -166,29 +166,32 @@ class GPOSUnparser(GTableUnparser):
         b = fontFeatures.Routine(name=self.getname("MarkToBase" + self.gensym()))
         for subtable in lookup.SubTable:  # fontTools.ttLib.tables.otTables.MarkBasePos
             assert subtable.Format == 1
-            anchorClassPrefix = "Anchor" + self.gensym()
-            marks = self.formatMarkArray(
-                subtable.MarkArray, subtable.MarkCoverage, anchorClassPrefix
-            )
-            bases = self.formatBaseArray(
-                subtable.BaseArray, subtable.BaseCoverage, anchorClassPrefix
-            )
-            b.addRule(
-                fontFeatures.Attachment(
-                    anchorClassPrefix, anchorClassPrefix + "_", bases, marks,
-                    font = self.font
+            for classId in range(0,subtable.ClassCount):
+                anchorClassPrefix = "Anchor" + self.gensym()
+                marks = self.formatMarkArray(
+                    subtable.MarkArray, subtable.MarkCoverage, classId
                 )
-            )
+                bases = self.formatBaseArray(
+                    subtable.BaseArray, subtable.BaseCoverage, classId
+                )
+                b.addRule(
+                    fontFeatures.Attachment(
+                        anchorClassPrefix, anchorClassPrefix + "_", bases, marks,
+                        font = self.font
+                    )
+                )
         return b, []
 
-    def formatMarkArray(self, markArray, markCoverage, anchorClassPrefix):
+    def formatMarkArray(self, markArray, markCoverage, classId):
         id2Name = markCoverage.glyphs
         marks = {}
         for i, markRecord in enumerate(markArray.MarkRecord):
-            marks[id2Name[i]] = (
-                markRecord.MarkAnchor.XCoordinate,
-                markRecord.MarkAnchor.YCoordinate,
-            )
+            if markRecord.Class == classId:
+                marks[id2Name[i]] = (
+                    markRecord.MarkAnchor.XCoordinate,
+                    markRecord.MarkAnchor.YCoordinate,
+                    markRecord.Class
+                )
         return marks
 
     def formatMark2Array(self, markArray, markCoverage, anchorClassPrefix):
@@ -202,11 +205,13 @@ class GPOSUnparser(GTableUnparser):
             )
         return marks
 
-    def formatBaseArray(self, baseArray, baseCoverage, anchorClassPrefix):
+    def formatBaseArray(self, baseArray, baseCoverage, wantedClassId):
         id2Name = baseCoverage.glyphs
         bases = {}
         for i, baseRecord in enumerate(baseArray.BaseRecord):
             for classId, anchor in enumerate(baseRecord.BaseAnchor):
+                if classId != wantedClassId:
+                    continue
                 if not anchor:
                     continue
                 bases[id2Name[i]] = (anchor.XCoordinate, anchor.YCoordinate)  # ClassId?
