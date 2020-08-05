@@ -15,20 +15,12 @@ the name::
     LoadPlugin myTools.myFEEPlugin; # Loads myTools.myFEEPlugin
 
 """
+
+GRAMMAR = """
+LoadPlugin_Args = <(letter|".")+>:x -> [x]
+"""
+VERBS = ["LoadPlugin"]
 class LoadPlugin:
-    takesBlock = False
-    arguments = 1
-
     @classmethod
-    def validate(self, tokens, verbaddress):
-        if len(tokens) > self.arguments:
-            from fontFeatures.parserTools import ParseError
-
-            raise ParseError("Too many arguments given", verbaddress, self)
-
-        return True
-
-    @classmethod
-    def store(self, parser, tokens):
-        parser.loadPlugin(tokens[0].token)
-        return []
+    def action(self, parser, name):
+        parser._load_plugin(name)

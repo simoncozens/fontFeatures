@@ -115,8 +115,6 @@ wsc = comment | ws
 comment = '#' rest_of_line ws?
 verb = <letter+>:x ?(x in self.valid_verbs) -> x
 
-LoadPlugin_Args = <(letter|".")+>:x !(parser._load_plugin(x))
-
 # Ways of specifying glyphs
 classname = '@' <(letter|"_")+>:b  -> {"classname": b}
 barename = <(letter|digit|"."|"_")+>:b -> {"barename": b}
@@ -129,6 +127,7 @@ glyphselector = (regex | barename | classname | inlineclass ):g glyphsuffix*:s -
 """
 
     DEFAULT_PLUGINS = [
+        "LoadPlugin",
         "ClassDefinition",
         "Feature",
         "Substitute",
