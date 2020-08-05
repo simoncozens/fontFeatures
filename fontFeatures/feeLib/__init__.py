@@ -61,6 +61,15 @@ class GlyphSelector:
         glyphs = font.getGlyphOrder()
         if "barename" in self.selector:
             returned = [self.selector["barename"]]
+        elif "inlineclass" in self.selector:
+            returned = list(
+                collapse(
+                    [
+                        GlyphSelector(i, (), self.location).resolve(fontfeatures, font)
+                        for i in self.selector["inlineclass"]
+                    ]
+                )
+            )
         elif "classname" in self.selector:
             classname = self.selector["classname"]
             if not classname in fontfeatures.namedClasses:
@@ -176,7 +185,8 @@ glyphselector = (regex | barename | classname | inlineclass ):g glyphsuffix*:s -
         self.grammar.valid_verbs.extend(verbs)
         newgrammar = OMeta.makeGrammar(
             rules, "Grammar%i" % self.grammar_generation
-        ).createParserClass(self.grammar, {**self.grammar.globals})
+        ).createParserClass(self.grammar, {})
+        newgrammar.globals = self.grammar.globals
         for v in verbs:
             self.grammar.globals[v] = newgrammar
         for c in classes:

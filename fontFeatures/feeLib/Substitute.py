@@ -1,8 +1,8 @@
 import fontFeatures
 
 GRAMMAR = """
-Substitute_Args = Substitute_gsws+:l ws '->' ws? Substitute_gsws+:r -> (l,r)
-Substitute_gsws = glyphselector:g ws? -> g
+Substitute_Args = gsws+:l ws '->' ws? gsws+:r -> (l,r)
+gsws = glyphselector:g ws? -> g
 """
 
 VERBS = ["Substitute"]
