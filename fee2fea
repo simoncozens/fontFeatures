@@ -6,6 +6,6 @@ import sys
 p = FeeParser(sys.argv[1])
 
 p.parseFile(sys.argv[2])
-Optimizer(p.fea).optimize(level=1)
-print(p.fea.asFea())
+Optimizer(p.fontfeatures).optimize(level=1)
+print(p.fontfeatures.asFea())
 

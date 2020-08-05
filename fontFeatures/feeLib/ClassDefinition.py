@@ -50,14 +50,14 @@ import warnings
 
 
 GRAMMAR = """
-DefineClass_Args = classname:c ws '=' ws DefineClass_definition:d -> (c,d)
-DefineClass_orconjunction = glyphselector:l ws '|' ws DefineClass_primary:r  -> {'conjunction': 'or', 'left': l, 'right': r}
-DefineClass_andconjunction = glyphselector:l ws '&' ws DefineClass_primary:r  -> {'conjunction': 'and', 'left': l, 'right': r}
+predicate = ws 'and' ws '(' ws <letter+>:metric ws ('>='|'<='|'='|'<'|'>'):comparator ws <digit+>:value ws ')' -> {'predicate': metric, 'comparator': comparator, 'value': value}
+andconjunction = glyphselector:l ws '&' ws primary:r -> {'conjunction': 'and', 'left': l, 'right': r}
+orconjunction = glyphselector:l2 ws '|' ws primary:r2 -> {'conjunction': 'or', 'left': l2, 'right': r2}
+primary_paren = '(' ws primary:p ws ')' -> p
+primary =  primary_paren | orconjunction | andconjunction | glyphselector
 
-DefineClass_predicate = ws 'and' ws '(' ws <letter+>:metric ws ('>'|'<'|'='|'<='|'>='):comparator ws <digit+>:value ws ')' -> {'predicate': metric, 'comparator': comparator, 'value': value}
-DefineClass_primary_paren = '(' ws DefineClass_primary:p ws ')' -> p
-DefineClass_primary =  DefineClass_primary_paren | DefineClass_orconjunction | DefineClass_andconjunction | glyphselector
-DefineClass_definition = DefineClass_primary:g DefineClass_predicate*:p -> (g,p)
+DefineClass_Args = classname:c ws '=' ws definition:d -> (c,d)
+definition = primary:g predicate*:p -> (g,p)
 
 ShowClass_Args = glyphselector:g -> (g,)
 """
@@ -65,6 +65,12 @@ ShowClass_Args = glyphselector:g -> (g,)
 VERBS = ["DefineClass", "ShowClass"]
 
 takesBlock = False
+
+
+class GlyphConjunction:
+    def __init__(self, a, b):
+        self.left = a
+        self.right = b
 
 
 class DefineClass:
@@ -78,7 +84,6 @@ class DefineClass:
 
     @classmethod
     def resolve_definition(self, parser, primary):
-        # import code; code.interact(local=locals())
         if isinstance(primary, dict) and "conjunction" in primary:
             left = set(self.resolve_definition(parser, primary["left"]))
             right = set(self.resolve_definition(parser, primary["right"]))
@@ -93,7 +98,14 @@ class DefineClass:
     def meets_predicate(self, glyphname, predicate, parser):
         metric = predicate["predicate"]
         comp = predicate["comparator"]
-        testvalue = int(predicate["value"])
+        if isinstance(predicate["value"], dict):
+            v = predicate["value"]
+            testvalue_metrics = get_glyph_metrics(parser.font, v["glyph"])
+            if v["metric"] not in metrics:
+                raise ValueError("Unknown metric '%s'" % metric)
+            testvalue = testvalue_metrics[v["metric"]]
+        else:
+            testvalue = int(predicate["value"])
 
         metrics = get_glyph_metrics(parser.font, glyphname)
         if metric not in metrics:

@@ -7,6 +7,7 @@ from fontTools.ttLib import TTFont
 import warnings
 from more_itertools import collapse
 
+
 def warning_on_one_line(message, category, filename, lineno, file=None, line=None):
     return "# %s\n" % (message)
 
@@ -18,9 +19,7 @@ def callRule(self):
     _locals = {"self": self}
     n1 = self._apply(self.rule_anything, "anything", [])
     n2 = self._apply(self.rule_anything, "anything", [])
-    rule = getattr(self, "rule_" + n1[0] + "_" + n2[0])
-    print(rule)
-    return rule()
+    return self.foreignApply(n1[0], n1[0] + "_" + n2[0], self.globals, self.locals)
 
 
 class GlyphSelector:
@@ -36,6 +35,15 @@ class GlyphSelector:
             returned = "@" + self.selector["classname"]
         elif "regex" in self.selector:
             returned = "/" + self.selector["regex"] + "/"
+        elif "inlineclass" in self.selector:
+            items = [
+                GlyphSelector(i, (), self.location)
+                for i in self.selector["inlineclass"]
+            ]
+            returned = "[" + " ".join([item.as_text() for item in items]) + "]"
+
+        else:
+            raise ValueError("Unknown selector type %s" % self.selector)
         for s in self.suffixes:
             returned = returned + s["suffixtype"] + s["suffix"]
         return returned
@@ -52,7 +60,7 @@ class GlyphSelector:
         returned = []
         glyphs = font.getGlyphOrder()
         if "barename" in self.selector:
-            returned = self.selector["barename"]
+            returned = [self.selector["barename"]]
         elif "classname" in self.selector:
             classname = self.selector["classname"]
             if not classname in fontfeatures.namedClasses:
@@ -89,19 +97,20 @@ class GlyphSelector:
         return list(returned)
 
 
-class Parser:
+class FeeParser:
     basegrammar = """
 feefile = wsc statement+
-statement = verb:v wsc callRule(v "Args"):args wsc ';' wsc -> parser.do(v, args)
+statement = verb:v wsc callRule(v "Args"):args ws ';' ws -> parser.do(v, args)
 rest_of_line = <('\\\n' | (~'\n' anything))*>
-wsc = ws | '#' rest_of_line
+wsc = comment | ws
+comment = '#' rest_of_line ws?
 verb = <letter+>:x ?(x in self.valid_verbs) -> x
 
 LoadPlugin_Args = <(letter|".")+>:x !(parser._load_plugin(x))
 
 # Ways of specifying glyphs
 classname = '@' <(letter|"_")+>:b  -> {"classname": b}
-barename = <(letter|"."|"_")+>:b -> {"barename": b}
+barename = <(letter|digit|"."|"_")+>:b -> {"barename": b}
 inlineclass_member = (barename|classname):m ws? -> m
 inlineclass_members = inlineclass_member+
 inlineclass = '[' ws inlineclass_members:m ']' -> {"inlineclass": m}
@@ -119,11 +128,13 @@ glyphselector = (regex | barename | classname | inlineclass ):g glyphsuffix*:s -
 
     def __init__(self, font):
         self.grammar = self._make_initial_grammar()
-        self.font = font
+        self.grammar_generation = 1
+        self.font = TTFont(font)
         self.fontfeatures = FontFeatures()
+        self.plugin_classes = {}
+        self._rebuild_parser()
         for plugin in self.DEFAULT_PLUGINS:
             self._load_plugin(plugin)
-        self._rebuild_parser()
 
     def parseFile(self, filename):
         with open(filename, "r") as f:
@@ -138,7 +149,7 @@ glyphselector = (regex | barename | classname | inlineclass ):g glyphsuffix*:s -
 
     def _make_initial_grammar(self):
         g = parsley.makeGrammar(
-            Parser.basegrammar,
+            FeeParser.basegrammar,
             {"match": re.match, "GlyphSelector": GlyphSelector},
             unwrap=True,
         )
@@ -160,26 +171,20 @@ glyphselector = (regex | barename | classname | inlineclass ):g glyphsuffix*:s -
     def _register_plugin(self, mod):
         rules = mod.GRAMMAR
         verbs = getattr(mod, "VERBS", [])
+        self.grammar_generation = self.grammar_generation + 1
         classes = inspect.getmembers(mod, inspect.isclass)
         self.grammar.valid_verbs.extend(verbs)
-        self.grammar = OMeta.makeGrammar(rules, "Grammar").createParserClass(
-            self.grammar, {**self.grammar.globals, **dict(classes)}
-        )
+        newgrammar = OMeta.makeGrammar(
+            rules, "Grammar%i" % self.grammar_generation
+        ).createParserClass(self.grammar, {**self.grammar.globals})
+        for v in verbs:
+            self.grammar.globals[v] = newgrammar
+        for c in classes:
+            self.plugin_classes[c[0]] = c[1]
         self._rebuild_parser()
 
     def do(self, verb, args):
-        print(verb, *args)
-        return self.grammar.globals[verb].action(self, *args)
+        return self.plugin_classes[verb].action(self, *args)
 
     def filterResults(self, results):
         return [x for x in collapse(results) if x]
-
-
-test = """
-Feature smcp {
-    Substitute /.sc$/~sc -> /.sc$/;
-};
-"""
-p = Parser(TTFont("fonts/LibertinusSans-Regular.otf"))
-p.parseString(test)
-print(p.fontfeatures.asFea())

@@ -26,7 +26,4 @@ class Feature:
     def action(self, parser, featurename, statements):
         if not featurename in parser.fontfeatures.features:
             parser.fontfeatures.features[featurename] = []
-        import code
-
-        code.interact(local=locals())
         parser.fontfeatures.addFeature(featurename, parser.filterResults(statements))
