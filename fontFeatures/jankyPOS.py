@@ -151,10 +151,12 @@ class JankyPos:
             exit_x, exit_y = rule.marks[prev]
             entry_x, entry_y = rule.bases[g]
             if self.direction == "RTL":
-                d = exit_x + buf[i]["position"].xPlacement
-                buf[i]["position"].xAdvance = buf[i]["position"].xAdvance - d
-                buf[i]["position"].xPlacement = buf[i]["position"].xPlacement - d
-                buf[j]["position"].xAdvance = entry_x + buf[j]["position"].xPlacement
+                d = exit_x + (buf[i]["position"].xPlacement or 0)
+                buf[i]["position"].xAdvance = (buf[i]["position"].xAdvance or 0) - d
+                buf[i]["position"].xPlacement = (buf[i]["position"].xPlacement or 0) - d
+                buf[j]["position"].xAdvance = entry_x + (
+                    buf[j]["position"].xPlacement or 0
+                )
             else:
                 raise ValueError
             child = i
@@ -166,8 +168,8 @@ class JankyPos:
                 x_offset = -x_offset
                 y_offset = -y_offset
             buf[child]["position"].yPlacement = (
-                buf[parent]["position"].yPlacement + y_offset
-            )
+                buf[parent]["position"].yPlacement or 0
+            ) + y_offset
         return buf
 
 
