@@ -109,7 +109,7 @@ class GlyphSelector:
 class FeeParser:
     basegrammar = """
 feefile = wsc statement+
-statement = verb:v wsc callRule(v "Args"):args ws ';' ws -> parser.do(v, args)
+statement = verb:v wsc callRule(v "Args"):args ws ';' wsc -> parser.do(v, args)
 rest_of_line = <('\\\n' | (~'\n' anything))*>
 wsc = comment | ws
 comment = '#' rest_of_line ws?
