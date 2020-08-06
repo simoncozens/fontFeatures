@@ -147,6 +147,8 @@ def feaPreamble(self, ff):
 
 
 def asFeaAST(self):
+    if not self.name:
+        self.name = gensym("Routine_")
     if self.name:
         f = feaast.LookupBlock(name=self.name)
     else:
