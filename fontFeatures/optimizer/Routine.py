@@ -13,7 +13,7 @@ class MoveLongCoverageToClassDefinition:
 
     def replaceLongWithClasses(self, i, ff):
         if not "glyphclasses" in ff.scratch:
-            ff.scratch["glyphclasses"] = {}
+            ff.scratch["glyphclasses"] = {tuple(sorted(ff.namedClasses[g])): g for g in ff.namedClasses.keys()}
         for ix, gc in enumerate(i):
             if len(gc) > 5:
                 if not tuple(sorted(gc)) in ff.scratch["glyphclasses"]:

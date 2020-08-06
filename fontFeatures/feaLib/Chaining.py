@@ -62,7 +62,7 @@ def replaceLongWithClasses(i, ff):
 
 def feaPreamble(self, ff):
     if not "glyphclasses" in ff.scratch:
-        ff.scratch["glyphclasses"] = {}
+        ff.scratch["glyphclasses"] = {tuple(sorted(ff.namedClasses[g])): g for g in ff.namedClasses.keys()}
     replaceLongWithClasses(self.input, ff)
     replaceLongWithClasses(self.precontext, ff)
     replaceLongWithClasses(self.postcontext, ff)
