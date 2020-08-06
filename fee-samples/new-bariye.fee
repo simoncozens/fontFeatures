@@ -1,0 +1,17 @@
+LoadPlugin NewYB;
+
+DefineClass @finas = /f\d+$/;
+DefineClass @medis = /m\d+$/;
+DefineClass @inits = /i\d+$/;
+DefineClass @bariye = [BARI_YEf1];
+DefineClass @below_dots = [sdb ddb tdb];
+
+DefineClass @behs = /^BE/;
+
+DefineClass @short_behs = @behs & (@inits | @medis) and (width < 200);
+
+DefineClassBinned @medis[rise,10] = @medis;
+
+Feature rlig {
+	NewYB TryToFit;
+};
