@@ -59,19 +59,12 @@ primary =  primary_paren | orconjunction | andconjunction | glyphselector
 DefineClass_Args = classname:c ws '=' ws definition:d -> (c,d)
 definition = primary:g predicate*:p -> (g,p)
 
+DefineClassBinned_Args = classname:c '[' <letter+>:metric ws "," ws <digit+>:bincount ']' ws '=' ws definition:d -> (metric, bincount, c,d)
+
 ShowClass_Args = glyphselector:g -> (g,)
 """
 
-VERBS = ["DefineClass", "ShowClass"]
-
-takesBlock = False
-
-
-class GlyphConjunction:
-    def __init__(self, a, b):
-        self.left = a
-        self.right = b
-
+VERBS = ["DefineClass", "ShowClass", "DefineClassBinned"]
 
 class DefineClass:
     @classmethod
@@ -124,22 +117,16 @@ class DefineClass:
 
 class DefineClassBinned(DefineClass):
     @classmethod
-    def store(self, parser, tokens):
+    def action(self, parser, metric, bincount, classname, definition):
         from fontFeatures.ftUtils import bin_glyphs_by_metric
+        glyphs = self.resolve_definition(parser, definition[0])
+        predicates = definition[1]
+        for p in predicates:
+            glyphs = list(filter(lambda x: self.meets_predicate(x, p, parser), glyphs))
 
-        name = tokens[0].token[1:]
-        if tokens[4].token.startswith("/"):
-            glyphs = self.expandRegex(parser, tokens[2:])
-        elif tokens[4].token.startswith("["):
-            glyphs = self.expandClass(parser, tokens[2:])
-        elif tokens[4].token.startswith("@"):
-            glyphs = parser.expandGlyphOrClassName(tokens[4].token)
-        count = int(tokens[1].token)
-        metric = tokens[2].token
-        binned = bin_glyphs_by_metric(parser.font, glyphs, metric, bincount=count)
-        for i in range(1, count + 1):
-            parser.fea.namedClasses["%s_%s%i" % (name, metric, i)] = binned[i - 1][0]
-        return []
+        binned = bin_glyphs_by_metric(parser.font, glyphs, metric, bincount=int(bincount))
+        for i in range(1, int(bincount) + 1):
+            parser.fontfeatures.namedClasses["%s_%s%i" % (classname["classname"], metric, i)] = binned[i - 1][0]
 
 
 class ShowClass:
