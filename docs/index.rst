@@ -11,6 +11,7 @@ Welcome to fontFeatures's documentation!
    :caption: Contents:
 
    fee-format
+   fontFeatures
 
 
 Indices and tables
