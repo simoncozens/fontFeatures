@@ -7,7 +7,8 @@ from fontFeatures.ckmeans import ckmeans
 def categorize_glyph(font, glyphname):
     gdef = font["GDEF"].table
     classdefs = gdef.GlyphClassDef.classDefs
-    assert glyphname in classdefs
+    if not glyphname in classdefs:
+        return ("unknown", None)
     if classdefs[glyphname] == 1:
         return ("base", None)
     if classdefs[glyphname] == 2:
@@ -22,7 +23,7 @@ def categorize_glyph(font, glyphname):
         return ("mark", mclass)
     if classdefs[glyphname] == 4:
         return ("component", None)
-    raise ValueError("Unknown category")
+    return ("unknown", None)
 
 
 def set_glyph_category(font, glyphname, category, maClass=None):
