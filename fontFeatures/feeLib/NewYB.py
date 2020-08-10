@@ -53,7 +53,7 @@ class NewYB:
         r.markFilteringSet = below_dots
         for i in range (0,maximum_sequence_length):
             for j in range(0,i+1):
-                sequence = [inits] + [medis] * (j-1) + [below_dots] + [medis] * (i-j) + [[bariye]]
+                sequence = [inits] + [medis] * j + [below_dots] + [medis] * (i-j) + [[bariye]]
                 lu = [None]*len(sequence)
                 lu[j+1] = [dropSingleDotRoutine]
                 r.addRule(fontFeatures.Chaining(sequence, lookups=lu))
