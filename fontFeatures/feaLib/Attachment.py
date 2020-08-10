@@ -1,6 +1,6 @@
 # Code for converting a Attachment object into feaLib statements
 import fontTools.feaLib.ast as feaast
-from fontFeatures.ftUtils import categorize_glyph
+from glyphtools import categorize_glyph
 import warnings
 
 

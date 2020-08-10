@@ -12,7 +12,7 @@ class IMatra:
     @classmethod
     def store(self, parser, tokens, doFilter=None):
         import fontFeatures
-        from fontFeatures.ftUtils import get_glyph_metrics
+        from glyphtools import get_glyph_metrics
 
         matra = parser.expandGlyphOrClassName(tokens[0].token)
         matras = parser.expandGlyphOrClassName(tokens[1].token)

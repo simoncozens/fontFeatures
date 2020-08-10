@@ -1,4 +1,4 @@
-from fontFeatures.ftUtils import get_glyph_metrics, categorize_glyph
+from glyphtools import get_glyph_metrics, categorize_glyph
 from fontFeatures import ValueRecord, Attachment, Positioning, Chaining, Routine
 import warnings
 

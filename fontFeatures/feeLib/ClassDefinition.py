@@ -45,7 +45,7 @@ the ``~`` operator::
 """
 
 import re
-from fontFeatures.ftUtils import get_glyph_metrics
+from glyphtools import get_glyph_metrics
 import warnings
 
 
@@ -118,7 +118,7 @@ class DefineClass:
 class DefineClassBinned(DefineClass):
     @classmethod
     def action(self, parser, metric, bincount, classname, definition):
-        from fontFeatures.ftUtils import bin_glyphs_by_metric
+        from glyphtools import bin_glyphs_by_metric
         glyphs = self.resolve_definition(parser, definition[0])
         predicates = definition[1]
         for p in predicates:

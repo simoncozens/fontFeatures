@@ -111,7 +111,7 @@ class Attach:
 
     @classmethod
     def store(self, parser, tokens, doFilter=None):
-        from fontFeatures.ftUtils import categorize_glyph
+        from glyphtools import categorize_glyph
         import fontFeatures
 
         aFrom = tokens[0].token[1:]

@@ -58,16 +58,16 @@ class DuplicateGlyphs(FeePlugin):
                 tokens[1].address,
                 self,
             )
-        import fontFeatures.ftUtils
+        import glyphtools
         import warnings
         for o,n in zip(oldglyphs, newglyphs):
             if n in parser.glyphs:
                 warnings.warn("Glyph '%s' already exists" % n)
                 continue
-            fontFeatures.ftUtils.duplicate_glyph(parser.font, o, n)
+            glyphtools.duplicate_glyph(parser.font, o, n)
             if "GDEF" in parser.font:
-                oldcat, maclass = fontFeatures.ftUtils.categorize_glyph(parser.font, o)
-                fontFeatures.ftUtils.set_glyph_category(parser.font, n, oldcat, maclass)
+                oldcat, maclass = glyphtools.categorize_glyph(parser.font, o)
+                glyphtools.set_glyph_category(parser.font, n, oldcat, maclass)
             parser.fontModified = True
         parser.glyphs = parser.font.getGlyphOrder()
         return []

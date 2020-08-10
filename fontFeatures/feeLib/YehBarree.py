@@ -38,7 +38,7 @@ class YBFixOverhang:
   @classmethod
   def store(self, parser, tokens, doFilter = None):
     import fontFeatures
-    from fontFeatures.ftUtils import get_glyph_metrics, bin_glyphs_by_metric
+    from glyphtools import get_glyph_metrics, bin_glyphs_by_metric
     import warnings
     settings = YBSettings.getSettings(parser)
     yehbarrees = parser.expandGlyphOrClassName(tokens[0].token)

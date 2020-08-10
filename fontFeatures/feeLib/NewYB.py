@@ -1,6 +1,6 @@
 import fontFeatures
 from fontFeatures.jankyPOS import JankyPos
-from fontFeatures.ftUtils import categorize_glyph, get_glyph_metrics, bin_glyphs_by_metric, get_rise
+from glyphtools import categorize_glyph, get_glyph_metrics, bin_glyphs_by_metric, get_rise
 from fontFeatures.pathUtils import get_bezier_paths
 from beziers.line import Line
 from beziers.point import Point
@@ -44,6 +44,7 @@ class NewYB:
         smallest_init = min(inits, key = lambda g: get_glyph_metrics(parser.font,g)["width"])
         bariye_tail = -get_glyph_metrics(parser.font,bariye)["rsb"]
         maximum_sequence_length = math.ceil((bariye_tail - smallest_init_width) / smallest_medi_width)
+        maximum_sequence_length = 8
 
         # Next, let's create a chain rule for all single-nukta sequences
         dropSingleDotRoutine = fontFeatures.Routine(flags= 0x0010)

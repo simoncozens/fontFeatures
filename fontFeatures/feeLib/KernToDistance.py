@@ -19,7 +19,7 @@ class KernToDistance:
 
     @classmethod
     def store(self, parser, tokens):
-        from fontFeatures.ftUtils import determine_kern, bin_glyphs_by_metric
+        from glyphtools import determine_kern, bin_glyphs_by_metric
         import fontFeatures
         import itertools
 
