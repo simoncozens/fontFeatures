@@ -16,6 +16,14 @@ NewYB_Args = <('AlwaysDrop'|'TryToFit')>:w -> [w]
 
 VERBS = ["NewYB"]
 
+def interleave(a,b):
+    c = a + b
+    c[::2] = a
+    c[1::2] = b
+    return c
+
+def dropnone(a):
+    return list(filter(None, a))
 
 # Accuracy of width detector
 accuracy1 = 5 # This creates O[(n • n+1)/2] lookups
@@ -25,7 +33,7 @@ accuracy2 = 10
 class NewYB:
     @classmethod
     def action(self, parser, w):
-        for c in ["inits", "medis", "bariye", "below_dots"]:
+        for c in ["inits", "medis", "bariye", "below_dots", "behs"]:
             if c not in parser.fontfeatures.namedClasses:
                 raise ValueError("Please define @%s class before calling")
 
@@ -33,31 +41,52 @@ class NewYB:
 
         # OK, here's the plan of attack for bari ye.
         # First, we find the length of the longest possible sequence.
-        # Smallest medi * n + smallest init -> length of bari yeh right tail
+        # Smallest medi * n + smallest beh + smallest init -> length of bari yeh right tail
         medis = parser.fontfeatures.namedClasses["medis"]
         inits = parser.fontfeatures.namedClasses["inits"]
+        behs = parser.fontfeatures.namedClasses["behs"]
         # Only support one bariye for now
         bariye = parser.fontfeatures.namedClasses["bariye"][0]
         below_dots = parser.fontfeatures.namedClasses["below_dots"]
         smallest_medi_width = min([ get_glyph_metrics(parser.font,g)["width"] for g in medis ])
         smallest_init_width = min([ get_glyph_metrics(parser.font,g)["width"] for g in inits ])
-        smallest_init = min(inits, key = lambda g: get_glyph_metrics(parser.font,g)["width"])
         bariye_tail = -get_glyph_metrics(parser.font,bariye)["rsb"]
-        maximum_sequence_length = math.ceil((bariye_tail - smallest_init_width) / smallest_medi_width)
-        maximum_sequence_length = 8
+        # Consider two cases.
+        # First, the case where the beh is init and full of short medis
+        smallest_init_beh_width = min([ get_glyph_metrics(parser.font,g)["width"] for g in (set(behs)&set(inits)) ])
+        smallest_init_beh = min((set(behs)&set(inits)), key=lambda g: get_glyph_metrics(parser.font,g)["width"])
+        smallest_medi = min(medis, key=lambda g: get_glyph_metrics(parser.font,g)["width"])
+        maximum_sequence_length_1 = 1 + math.ceil((bariye_tail - smallest_init_beh_width) / smallest_medi_width)
+        warnings.warn("Longest init beh sequence: %s" % " ".join([smallest_medi] * (maximum_sequence_length_1-1) + [smallest_init_beh] ))
+        # Second, the case where the init is not beh, but there are a bunch of medis,
+        # one (or more) of which is a medi beh
+        smallest_init_nonbeh_width = min([ get_glyph_metrics(parser.font,g)["width"] for g in (set(inits)-set(behs)) ])
+        smallest_medi_beh_width = min([ get_glyph_metrics(parser.font,g)["width"] for g in (set(medis)&set(behs)) ])
 
-        # Next, let's create a chain rule for all single-nukta sequences
+        maximum_sequence_length_2 = 2 + math.ceil((bariye_tail - smallest_init_nonbeh_width - smallest_medi_beh_width) / smallest_medi_width)
+
+        maximum_sequence_length = max(maximum_sequence_length_1, maximum_sequence_length_2)
+
+        # Next, let's create a chain rule for all nukta sequences
         dropSingleDotRoutine = fontFeatures.Routine(flags= 0x0010)
         dropSingleDotRoutine.markFilteringSet = below_dots
 
         r = fontFeatures.Routine(flags= 0x0010)
         r.markFilteringSet = below_dots
+        # We are going to count in binary to evaluate all nukta combinations
+        bin2mk = { "0": None, "1": below_dots}
+        bin2routine = { "0": None, "1": [dropSingleDotRoutine]}
         for i in range (0,maximum_sequence_length):
-            for j in range(0,i+1):
-                sequence = [inits] + [medis] * j + [below_dots] + [medis] * (i-j) + [[bariye]]
-                lu = [None]*len(sequence)
-                lu[j+1] = [dropSingleDotRoutine]
-                r.addRule(fontFeatures.Chaining(sequence, lookups=lu))
+            for j in range(1,2 ** (i+1)):
+                basesequence = [inits] + [medis] * i + [[bariye]]
+                binary = '{0:0%ib}' % (i+1)
+                marksequence = [bin2mk[x] for x in list(binary.format(j))]
+                sequence = dropnone(interleave(basesequence, marksequence))
+                baselus = [[None]]*len(basesequence)
+                marklus = [bin2routine[x] for x in list(binary.format(j))]
+                lusequence = dropnone(interleave(baselus,marklus))
+                lusequence = [ None if x == [None] else x for x in lusequence]
+                r.addRule(fontFeatures.Chaining(sequence, lookups=lusequence))
 
         # Now we have an [init, medi*(n = 0..max), nukta] sequence
         # For now, we're just going to drop them all.
@@ -71,7 +100,6 @@ class NewYB:
         binned_medis = bin_glyphs_by_metric(parser.font, medis, "width", bincount=accuracy1)
         binned_inits = bin_glyphs_by_metric(parser.font, inits, "width", bincount=accuracy1)
 
-        warnings.warn("Evaluating single-dot bari ye sequences")
         queue = [[[[bariye]]]]
         while len(queue) > 0:
             consideration = queue.pop(0)
@@ -87,11 +115,16 @@ class NewYB:
                 lu[0] = [dropADotRoutine]
             else:
                 lu[0] = [maybeDropDotRoutine]
-            chainrule = fontFeatures.Chaining([below_dots],postcontext=sequence, lookups=lu)
+            for j in range(0,2**(len(sequence)-1)):
+                binary = '{0:0%ib}' % (len(sequence)-1)
+                marksequence = [bin2mk[x] for x in list(binary.format(j))]
+                # import code; code.interact(local=locals())
+                newsequence = dropnone(interleave(sequence, marksequence))
+                chainrule = fontFeatures.Chaining([below_dots],postcontext=newsequence, lookups=lu)
             # We don't combine the bins here precisely because they're
             # disjoint sets and that means they can be expressed as a
             # format 2 class-based rule! Wonderful!
-            dropSingleDotRoutine.addRule(chainrule)
+                dropSingleDotRoutine.addRule(chainrule)
             for m in binned_medis:
                 queue.append([list(m)] + consideration)
 
