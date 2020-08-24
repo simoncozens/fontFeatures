@@ -73,7 +73,7 @@ class DefineClass:
         predicates = definition[1]
         for p in predicates:
             glyphs = list(filter(lambda x: self.meets_predicate(x, p, parser), glyphs))
-        parser.fontfeatures.namedClasses[classname["classname"]] = glyphs
+        parser.fontfeatures.namedClasses[classname["classname"]] = tuple(glyphs)
 
     @classmethod
     def resolve_definition(self, parser, primary):
@@ -126,7 +126,7 @@ class DefineClassBinned(DefineClass):
 
         binned = bin_glyphs_by_metric(parser.font, glyphs, metric, bincount=int(bincount))
         for i in range(1, int(bincount) + 1):
-            parser.fontfeatures.namedClasses["%s_%s%i" % (classname["classname"], metric, i)] = binned[i - 1][0]
+            parser.fontfeatures.namedClasses["%s_%s%i" % (classname["classname"], metric, i)] = tuple(binned[i - 1][0])
 
 
 class ShowClass:

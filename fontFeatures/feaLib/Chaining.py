@@ -51,12 +51,7 @@ def gensym(ff):
 def replaceLongWithClasses(i, ff):
     for ix, gc in enumerate(i):
         if len(gc) > 5:
-            if not tuple(sorted(gc)) in ff.scratch["glyphclasses"]:
-                classname = "class" + gensym(ff)
-                ff.namedClasses[classname] = gc
-                ff.scratch["glyphclasses"][tuple(sorted(gc))] = classname
-            else:
-                classname = ff.scratch["glyphclasses"][tuple(sorted(gc))]
+            classname = ff.getNamedClassFor(sorted(gc), "class" + gensym(ff))
             i[ix] = ["@" + classname]
 
 

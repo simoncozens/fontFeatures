@@ -2,6 +2,7 @@ from fontTools.ttLib import TTFont
 from collections import OrderedDict
 from fontTools.feaLib.ast import ValueRecord
 from itertools import chain
+from bidict import bidict
 
 
 class FontFeatures:
@@ -23,7 +24,7 @@ class FontFeatures:
   of them as functions that are called on a glyph string."""
 
     def __init__(self):
-        self.namedClasses = {}
+        self.namedClasses = bidict({})
         self.routines = []
         self.features = OrderedDict()
         self.anchors = {}
@@ -34,6 +35,12 @@ class FontFeatures:
         assert isinstance(r, Routine)
         self.routines.append(r)
         r.parent = self
+
+    def getNamedClassFor(self, glyphs, name):
+        if tuple(glyphs) in self.namedClasses.inverse:
+            return self.namedClasses.inverse[tuple(glyphs)]
+        self.namedClasses[name] = tuple(glyphs)
+        return name
 
     def addFeature(self, name, rs):
         if not name in self.features:

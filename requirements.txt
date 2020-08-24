@@ -4,3 +4,4 @@ parsley
 numpy
 more_itertools
 glyphtools
+bidict
