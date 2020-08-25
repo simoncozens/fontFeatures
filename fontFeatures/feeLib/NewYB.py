@@ -12,9 +12,10 @@ import statistics
 
 GRAMMAR = """
 NewYB_Args = <('AlwaysDrop'|'TryToFit')>:w -> [w]
+YBFixOverhang_Args = <(digit+)>:overhang_padding -> [overhang_padding]
 """
 
-VERBS = ["NewYB"]
+VERBS = ["NewYB", "YBFixOverhang"]
 
 def interleave(a,b):
     c = a + b
@@ -183,3 +184,47 @@ class NewYB:
         displacement = anchor2_y - anchor1_y
         bottomOfDot = statistics.mean([get_glyph_metrics(font, x)["yMin"] for x in below_dots])
         return -(bottomOfDot + displacement)
+
+
+class YBFixOverhang:
+  @classmethod
+  def action(self, parser, overhang_padding):
+    for c in ["inits", "medis", "bariye"]:
+        if c not in parser.fontfeatures.namedClasses:
+            raise ValueError("Please define @%s class before calling")
+
+    medis = parser.fontfeatures.namedClasses["medis"]
+    inits = parser.fontfeatures.namedClasses["inits"]
+    bariye = parser.fontfeatures.namedClasses["bariye"]
+
+    binned_medis = bin_glyphs_by_metric(parser.font, medis, "width", bincount = 4)
+    binned_inits = bin_glyphs_by_metric(parser.font, inits, "width", bincount = 4)
+    rules = []
+    maxchainlength = 0
+    longeststring = []
+    for yb in bariye:
+      overhang =  -get_glyph_metrics(parser.font,yb)["rsb"]
+      workqueue = [[x] for x in binned_inits]
+      while workqueue:
+        string = workqueue.pop(0)
+        totalwidth = sum([x[1] for x in string])
+        if totalwidth > overhang: continue
+
+        adjustment = overhang - totalwidth + int(overhang_padding)
+        postcontext = [ x[0] for x in string[:-1] ] + [ [yb] ]
+        input_ = string[-1]
+        example = [input_[0][0]] + [x[0] for x in postcontext]
+        maxchainlength = max(maxchainlength, len(string))
+
+        rules.append(
+          fontFeatures.Positioning(
+            [input_[0]],
+            [fontFeatures.ValueRecord(xAdvance=adjustment)],
+            postcontext = postcontext
+            )
+        )
+        for medi in binned_medis:
+          workqueue.append([medi] + string)
+    warnings.warn("Yeh Barree collision maximum chain length was %i glyphs" % maxchainlength)
+    return [fontFeatures.Routine(rules=rules, flags=8)]
+
