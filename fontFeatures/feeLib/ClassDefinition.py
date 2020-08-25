@@ -50,7 +50,8 @@ import warnings
 
 
 GRAMMAR = """
-predicate = ws 'and' ws '(' ws <letter+>:metric ws ('>='|'<='|'='|'<'|'>'):comparator ws <digit+>:value ws ')' -> {'predicate': metric, 'comparator': comparator, 'value': value}
+predicate = ws 'and' ws '(' ws <letter+>:metric ws ('>='|'<='|'='|'<'|'>'):comparator ws (<digit+>|bracketed_metric):value ws ')' -> {'predicate': metric, 'comparator': comparator, 'value': value}
+bracketed_metric = <letter+>:metric '(' <(letter|digit|"."|"_")+>:glyph ')' -> {'metric': metric, 'glyph': glyph}
 andconjunction = glyphselector:l ws '&' ws primary:r -> {'conjunction': 'and', 'left': l, 'right': r}
 orconjunction = glyphselector:l2 ws '|' ws primary:r2 -> {'conjunction': 'or', 'left': l2, 'right': r2}
 primary_paren = '(' ws primary:p ws ')' -> p
@@ -94,7 +95,7 @@ class DefineClass:
         if isinstance(predicate["value"], dict):
             v = predicate["value"]
             testvalue_metrics = get_glyph_metrics(parser.font, v["glyph"])
-            if v["metric"] not in metrics:
+            if v["metric"] not in testvalue_metrics:
                 raise ValueError("Unknown metric '%s'" % metric)
             testvalue = testvalue_metrics[v["metric"]]
         else:
