@@ -12,16 +12,9 @@ class MoveLongCoverageToClassDefinition:
         return str(ff.scratch["index"])
 
     def replaceLongWithClasses(self, i, ff):
-        if not "glyphclasses" in ff.scratch:
-            ff.scratch["glyphclasses"] = {tuple(sorted(ff.namedClasses[g])): g for g in ff.namedClasses.keys()}
         for ix, gc in enumerate(i):
             if len(gc) > 5:
-                if not tuple(sorted(gc)) in ff.scratch["glyphclasses"]:
-                    classname = "class" + self.gensym(ff)
-                    ff.namedClasses[classname] = gc
-                    ff.scratch["glyphclasses"][tuple(sorted(gc))] = classname
-                else:
-                    classname = ff.scratch["glyphclasses"][tuple(sorted(gc))]
+                classname = ff.getNamedClassFor(sorted(gc), "class" + self.gensym(ff))
                 i[ix] = ["@" + classname]
 
     def apply(self, routine, ff):
