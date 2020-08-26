@@ -27,6 +27,7 @@ class Feature:
     @classmethod
     def action(self, parser, featurename, statements):
         results = parser.filterResults(statements)
+        parser.current_feature = featurename
         oddStatements = []
         def wrap_and_flush():
           nonlocal oddStatements
@@ -41,6 +42,7 @@ class Feature:
           else:
             oddStatements.append(r)
         wrap_and_flush()
+        parser.current_feature = None
 
 
 class FeatureName:

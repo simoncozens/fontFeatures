@@ -136,6 +136,7 @@ integer = '-'?:sign <digit+>:i -> (-int(i) if sign == "-" else int(i))
         "Feature",
         "Substitute",
         "Anchors",
+        "Routine",
     ]
 
     def __init__(self, font):
@@ -144,6 +145,7 @@ integer = '-'?:sign <digit+>:i -> (-int(i) if sign == "-" else int(i))
         self.font = TTFont(font)
         self.fontfeatures = FontFeatures()
         self.plugin_classes = {}
+        self.current_feature = None
         self._rebuild_parser()
         for plugin in self.DEFAULT_PLUGINS:
             self._load_plugin(plugin)
