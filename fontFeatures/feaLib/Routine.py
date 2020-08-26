@@ -149,12 +149,6 @@ def feaPreamble(self, ff):
 
 
 def asFeaAST(self):
-    # XXX There *was* a reason I had to give all routines a name, but
-    # I don't remember what it is, and it's breaking tests for now (as
-    # well as producing ugly output) so disabled until I remember it.
-
-    # if not self.name:
-    #     self.name = gensym("Routine_")
     if self.name:
         f = feaast.LookupBlock(name=self.name)
     else:

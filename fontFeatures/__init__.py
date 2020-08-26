@@ -28,8 +28,15 @@ class FontFeatures:
         self.routines = []
         self.features = OrderedDict()
         self.anchors = {}
+        self.symbols = {}
         self.scratch = {}  # Space for items to communicate context to each other. :(
         self.doneUsageMarking = False
+
+    def gensym(self, category):
+        if not category in self.symbols:
+            self.symbols[category] = 0
+        self.symbols[category] += 1
+        return f'{category}{self.symbols[category]}'
 
     def addRoutine(self, r):
         assert isinstance(r, Routine)

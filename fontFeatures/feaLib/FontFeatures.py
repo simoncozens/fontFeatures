@@ -29,6 +29,8 @@ def asFeaAST(self):
     # Preamble
     for k in self.routines:
         assert isinstance(k, Routine)
+        if not k.name:
+            k.name = self.gensym("Routine_")
         pre = k.feaPreamble(self)
         for s in pre:
             ff.statements.append(s)
