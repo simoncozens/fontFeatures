@@ -39,92 +39,42 @@ fontFeatures will emit the correct mark-to-base or mark-to-mark lookup type base
 on the ``GDEF`` class definition of the "base" glyph.
 """
 
+from glyphtools import categorize_glyph
+import fontFeatures
+
+GRAMMAR = """
+Anchors_Args = glyphselector:gs ws '{' ws (anchor_def)+:a ws '}' -> [gs, a]
+anchor_def = <(letter|digit|"."|"_")+>:anchorname ws '<' integer:x ws integer:y '>' ws -> {"name":anchorname, "x": x, "y": y}
+
+Attach_Args = '&' <(letter|digit|"."|"_")+>:anchor1 ws '&' <(letter|digit|"."|"_")+>:anchor2 ws ("marks"|"bases"):attachtype -> [anchor1, anchor2, attachtype]
+"""
+
+VERBS = ["Anchors", "Attach"]
+
 class Anchors:
-    takesBlock = True
-
     @classmethod
-    def validateBlock(self, token, block, verbaddress):
-        from ..parserTools import ParseContext
-        from fontFeatures.parserTools import ParseError
-        import re
-
-        b = ParseContext(block)
-        names = []
-        while b.moreToParse:
-            name = b.consumeToken().token
-            if name in names:
-                raise ParseError("Repeated anchor %s" % name, token.address, self)
-            names.append(name)
-            x = b.consumeToken()
-            if not re.match("^<-?[\\d.]+$", x.token):
-                raise ParseError(
-                    "Invalid X coordinate for %s anchor" % name, token.address, self
-                )
-            y = b.consumeToken()
-            if not re.match("^-?[\\d.]+>$", y.token):
-                raise ParseError(
-                    "Invalid Y coordinate for %s anchor" % name, token.address, self
-                )
-        return True
-
-    @classmethod
-    def storeBlock(self, parser, token, block):
-        from ..parserTools import ParseContext
-
-        glyphs = parser.expandGlyphOrClassName(token.token)
-        anchors = {}
-        b = ParseContext(block)
-        while b.moreToParse:
-            name = b.consumeToken().token
-            x = b.consumeToken().token
-            y = b.consumeToken().token
-            anchors[name] = (int(x[1:]), int(y[:-1]))  # Or float?
-
+    def action(self, parser, glyphselector, anchors):
+        glyphs = glyphselector.resolve(parser.fontfeatures, parser.font)
         for g in glyphs:
-            if not g in parser.fea.anchors:
-                parser.fea.anchors[g] = {}
-            parser.fea.anchors[g].update(anchors)
+            if not g in parser.fontfeatures.anchors:
+                parser.fontfeatures.anchors[g] = {}
+            for a in anchors:
+                parser.fontfeatures.anchors[g][a["name"]] = (a["x"], a["y"])
 
         return []
 
 
 class Attach:
-    takesBlock = False
-
     @classmethod
-    def validate(self, tokens, verbaddress):
-        from fontFeatures.parserTools import ParseError
-
-        if len(tokens) < 2 or len(tokens) > 3:
-            raise ParseError("Wrong number of arguments", token[0].address, self)
-        if not (tokens[0].token.startswith("&")):
-            raise ParseError("Anchor class should start with &", token[0].address, self)
-        if not (tokens[1].token.startswith("&")):
-            raise ParseError("Anchor class should start with &", token[1].address, self)
-        if len(tokens) == 3 and (
-            tokens[2].token != "bases" and tokens[2].token != "marks"
-        ):
-            raise ParseError(
-                "Anchor filter should be 'marks' or 'bases'", token[2].address, self
-            )
-        return True
-
-    @classmethod
-    def store(self, parser, tokens, doFilter=None):
-        from glyphtools import categorize_glyph
-        import fontFeatures
-
-        aFrom = tokens[0].token[1:]
-        aTo = tokens[1].token[1:]
+    def action(self, parser, aFrom, aTo, attachtype):
         bases = {}
         marks = {}
-        for k, v in parser.fea.anchors.items():
+        for k, v in parser.fontfeatures.anchors.items():
             if aFrom in v:
                 bases[k] = v[aFrom]
             if aTo in v:
                 marks[k] = v[aTo]
-        if len(tokens) == 3:
-            if tokens[2].token == "bases":
+            if attachtype == "bases":
                 bases = {
                     k: v
                     for k, v in bases.items()

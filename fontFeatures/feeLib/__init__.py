@@ -124,6 +124,10 @@ inlineclass = '[' ws inlineclass_members:m ']' -> {"inlineclass": m}
 regex = '/' <(~'/' anything)+>:r '/' -> {"regex": r}
 glyphsuffix = ('.'|'~'):suffixtype <letter+>:suffix -> {"suffixtype":suffixtype, "suffix":suffix}
 glyphselector = (regex | barename | classname | inlineclass ):g glyphsuffix*:s -> GlyphSelector(g,s, self.input.position)
+
+# Number things
+integer = '-'?:sign <digit+>:i -> (-int(i) if sign == "-" else int(i))
+
 """
 
     DEFAULT_PLUGINS = [
@@ -131,7 +135,7 @@ glyphselector = (regex | barename | classname | inlineclass ):g glyphsuffix*:s -
         "ClassDefinition",
         "Feature",
         "Substitute",
-        # "Anchors",
+        "Anchors",
     ]
 
     def __init__(self, font):
