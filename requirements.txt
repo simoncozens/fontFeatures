@@ -1,7 +1,7 @@
+glyphtools
 fontTools
 beziers>=0.1.0
 parsley
 numpy
 more_itertools
-glyphtools
 bidict
