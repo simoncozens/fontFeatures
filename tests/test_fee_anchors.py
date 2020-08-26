@@ -30,13 +30,13 @@ class TestFeeAnchors(unittest.TestCase):
       Anchors acutecomb { _top <-570 1290> };
       Anchors tildecomb { _top <-542 1256> };
 
-      Feature mark { Attach &top &_top; };
+      Feature mark { Attach &top &_top bases; };
 """
         )
 
         self.assertEqual(p.fontfeatures.anchors["A"]["top"], (679, 1600))
         self.assertSufficientlyEqual(
-            p.fea.asFea(),
+            p.fontfeatures.asFea(),
             """    markClass acutecomb <anchor -570 1290> @top;
     markClass tildecomb <anchor -542 1256> @top;
 

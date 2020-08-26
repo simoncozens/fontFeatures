@@ -11,12 +11,9 @@ class TestPositioning(unittest.TestCase):
 
     def test_buffer(self):
         buf = self.janky.positioning_buffer(["H", "A", "Z"])
-        self.assertEqual(buf[0]["glyph"], "H")
-        self.assertEqual(buf[0]["position"], ValueRecord(xAdvance=708))
-        self.assertEqual(buf[1]["glyph"], "A")
-        self.assertEqual(buf[1]["position"], ValueRecord(xAdvance=612))
-        self.assertEqual(buf[2]["glyph"], "Z")
-        self.assertEqual(buf[2]["position"], ValueRecord(xAdvance=618))
+        self.assertEqual(self.janky.serialize_buffer(buf),
+            "H+708@<0,0>|A+612@<0,0>|Z+618@<0,0>"
+        )
 
     # def test_buffer_rtl(self):
     #   buf = self.janky.positioning_buffer(["uni0633.init","uni0646.fina"], direction="RTL")
@@ -30,12 +27,9 @@ class TestPositioning(unittest.TestCase):
         v = ValueRecord(xAdvance=120)
         s = Positioning([["A"]], [v])
         buf = self.janky.process_rules(buf, [s])
-        self.assertEqual(buf[0]["glyph"], "H")
-        self.assertEqual(buf[0]["position"].asFea(), ValueRecord(xAdvance=708).asFea())
-        self.assertEqual(buf[1]["glyph"], "A")
-        self.assertEqual(buf[1]["position"].asFea(), ValueRecord(xAdvance=732).asFea())
-        self.assertEqual(buf[2]["glyph"], "Z")
-        self.assertEqual(buf[2]["position"].asFea(), ValueRecord(xAdvance=618).asFea())
+        self.assertEqual(self.janky.serialize_buffer(buf),
+            "H+708@<0,0>|A+732@<0,0>|Z+618@<0,0>"
+        )
 
     def test_anchor(self):
         self.font = TTFont("fonts/Roboto-Regular.ttf")
@@ -44,30 +38,18 @@ class TestPositioning(unittest.TestCase):
         buf = self.janky.positioning_buffer(["F", "acutecomb", "B"])
         s = Attachment("top", "top_", {"F": (619, 1612)}, {"acutecomb": (-570, 1290)})
         buf = self.janky.process_rules(buf, [s])
-        self.assertEqual(buf[0]["glyph"], "F")
-        self.assertEqual(buf[0]["position"].asFea(), ValueRecord(xAdvance=1132).asFea())
-        self.assertEqual(buf[1]["glyph"], "acutecomb")
         # Harfbuzz has 52 here, not 57, but I am not sure why
-        vr = ValueRecord(xAdvance=0, yAdvance=0, xPlacement=57, yPlacement=322)
-        self.assertEqual(buf[1]["position"].asFea(), vr.asFea())
-        self.assertEqual(buf[2]["glyph"], "B")
-        self.assertEqual(buf[2]["position"].asFea(), ValueRecord(xAdvance=1275).asFea())
+        self.assertEqual(self.janky.serialize_buffer(buf),
+            "F+1132@<0,0>|acutecomb+0@<57,322>|B+1275@<0,0>"
+        )
 
     def test_urdu(self):
         font = TTFont("fonts/NotoNastaliqUrdu-Dummy.ttf")
-        janky = JankyPos(font)
+        janky = JankyPos(font, direction="RTL")
         ff = unparse(font)
-        buf = janky.positioning_buffer(["NoonxFin", "SeenMed", "SeenIni"])
+        buf = janky.positioning_buffer(["SeenIni", "SeenMed", "NoonxFin"])
         buf = janky.process_fontfeatures(buf, ff)
-        self.assertEqual(buf[0]["glyph"], "NoonxFin")
-        self.assertEqual(buf[0]["position"].asFea(), ValueRecord(xAdvance=750).asFea())
-        self.assertEqual(buf[1]["glyph"], "SeenMed")
-        self.assertEqual(
-            buf[1]["position"].asFea(),
-            ValueRecord(xAdvance=539, xPlacement=-1, yPlacement=335).asFea(),
-        )
-        self.assertEqual(buf[2]["glyph"], "SeenIni")
-        self.assertEqual(
-            buf[2]["position"].asFea(),
-            ValueRecord(xAdvance=607, xPlacement=-2, yPlacement=558).asFea(),
-        )
+        # Note that this is technically incorrect, because we do not
+        # currently support the RightToLeft flag of cursive attachments.
+        self.assertEqual(janky.serialize_buffer(buf),
+            "NoonxFin+749@<0,-558>|SeenMed+538@<0,-223>|SeenIni+607@<0,0>")

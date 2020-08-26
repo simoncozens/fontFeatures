@@ -35,5 +35,5 @@ class TestSubstitution(unittest.TestCase):
         Optimizer(ff).optimize_routine(r1, level=1)
         self.assertEqual(r1.asFea(), "    sub @class1 by z;\n")
         self.assertEqual(
-            ff.namedClasses, {"class1": ["a", "b", "c", "d", "e", "f", "g", "h"]}
+            ff.namedClasses["class1"], ("a", "b", "c", "d", "e", "f", "g", "h")
         )
