@@ -34,6 +34,13 @@ def asFeaAST(self):
             glyphref(self.replacement[0]),
             False,
         )
+    elif lut == 8:
+        return feaast.ReverseChainSingleSubstStatement(
+            [glyphref(x) for x in self.precontext],
+            [glyphref(x) for x in self.postcontext],
+            [glyphref(x) for x in self.input],
+            [glyphref(self.replacement[0])],
+        )
     elif lut == 9:
         raise ValueError
     elif lut == 2:

@@ -26,7 +26,7 @@ class GSUBUnparser(GTableUnparser):
         5: "ContextualSubstitution",
         6: "ChainingContextualSubstitution",
         7: "Extension",
-        8: "NotImplemented8GSUB",
+        8: "ReverseContextualSubstitution",
     }
 
     def isChaining(self, lookupType):
@@ -70,6 +70,34 @@ class GSUBUnparser(GTableUnparser):
                     self.unparsable(b, "Lookup type 5 (" + str(e) + ")", sub)
 
         return b, []
+
+    def unparseReverseContextualSubstitution(self, lookup):
+        b = fontFeatures.Routine(
+            name=self.getname("ReverseContextualSubstitution" + self.gensym())
+        )
+        for sub in lookup.SubTable:
+            prefix  = []
+            outputs = []
+            suffix  = []
+            if hasattr(sub, "BacktrackCoverage"):
+                for coverage in reversed(sub.BacktrackCoverage):
+                    prefix.append(coverage.glyphs)
+            if hasattr(sub, "LookAheadCoverage"):
+                for i, coverage in enumerate(sub.LookAheadCoverage):
+                    suffix.append(coverage.glyphs)
+            outputs = [ sub.Substitute ]
+            inputs =  [ sub.Coverage.glyphs ]
+            b.addRule(
+                fontFeatures.Substitution(
+                    inputs,
+                    outputs,
+                    prefix,
+                    suffix,
+                    flags=lookup.LookupFlag,
+                    reverse=True
+                )
+            )
+        return b,[]
 
     def unparseChainingContextualSubstitution(self, lookup):
         b = fontFeatures.Routine(

@@ -183,6 +183,7 @@ class Substitution(Rule):
         address=None,
         languages=None,
         lookups=None,
+        reverse=False,
         flags=0,
     ):
         self.precontext = precontext or []
@@ -193,6 +194,7 @@ class Substitution(Rule):
         self.lookups = lookups or []
         self.languages = languages
         self.flags = flags
+        self.reverse = reverse
 
     @property
     def involved_glyphs(self):

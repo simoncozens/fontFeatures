@@ -1,4 +1,6 @@
 def lookup_type(self):
+    if self.reverse:
+        return 8
     if len(self.lookups) > 0 and any([x is not None for x in self.lookups]):
         return 6  # Chaining
     # if self.input == self.replacement: # It's an ignore
