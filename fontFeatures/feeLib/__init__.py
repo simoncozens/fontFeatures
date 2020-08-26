@@ -117,7 +117,7 @@ verb = <letter+>:x ?(x in self.valid_verbs) -> x
 
 # Ways of specifying glyphs
 classname = '@' <(letter|"_")+>:b  -> {"classname": b}
-barename = <(letter|digit|"."|"_")+>:b -> {"barename": b}
+barename = <(letter|digit|"."|"_")+ (("."|"_"|"-") (letter|digit)+)*>:b -> {"barename": b}
 inlineclass_member = (barename|classname):m ws? -> m
 inlineclass_members = inlineclass_member+
 inlineclass = '[' ws inlineclass_members:m ']' -> {"inlineclass": m}

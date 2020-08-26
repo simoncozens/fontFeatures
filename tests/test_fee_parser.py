@@ -25,6 +25,14 @@ def test_barename(parser):
     a = parser.parser(s).barename()
     assert a == {"barename": s}
 
+    s = "CH_YEf1"
+    a = parser.parser(s).barename()
+    assert a == {"barename": s}
+
+    s = "teh-ar"
+    a = parser.parser(s).barename()
+    assert a == {"barename": s}
+
 
 def test_classname(parser):
     s = "@foo"
