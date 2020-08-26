@@ -36,7 +36,7 @@ class NewYB:
     def action(self, parser, w):
         for c in ["inits", "medis", "bariye", "below_dots", "behs"]:
             if c not in parser.fontfeatures.namedClasses:
-                raise ValueError("Please define @%s class before calling")
+                raise ValueError("Please define @%s class before calling" % c)
 
         alwaysDrop = w == "AlwaysDrop"
 
