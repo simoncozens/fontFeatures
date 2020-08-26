@@ -15,15 +15,35 @@ the block, as is required in AFDKO syntax.
 
 GRAMMAR = """
 Feature_Args = featurename:f ws '{' ws statement+:s '}' -> (f,s)
+FeatureName_Args = '"' <~'"' anything >+:name '"' -> (name,)
 
 featurename = <letter (letter|digit){3}>
 """
-VERBS = ["Feature"]
+VERBS = ["Feature", "FeatureName"]
 
+from fontFeatures import Routine
 
 class Feature:
     @classmethod
     def action(self, parser, featurename, statements):
-        if not featurename in parser.fontfeatures.features:
-            parser.fontfeatures.features[featurename] = []
-        parser.fontfeatures.addFeature(featurename, parser.filterResults(statements))
+        results = parser.filterResults(statements)
+        oddStatements = []
+        def wrap_and_flush():
+          nonlocal oddStatements
+          if len(oddStatements) > 0:
+            parser.fontfeatures.addFeature(featurename, [Routine(rules=oddStatements)])
+          oddStatements = []
+
+        for r in results:
+          if isinstance(r, Routine):
+            wrap_and_flush()
+            parser.fontfeatures.addFeature(featurename, [r])
+          else:
+            oddStatements.append(r)
+        wrap_and_flush()
+
+
+class FeatureName:
+    @classmethod
+    def action(self, parser, name):
+      pass
