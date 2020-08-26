@@ -3,6 +3,7 @@ fs
 fontTools
 beziers>=0.1.0
 parsley
+booleanOperations
 numpy
 more_itertools
 bidict
