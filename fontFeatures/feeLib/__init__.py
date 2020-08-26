@@ -137,6 +137,7 @@ integer = '-'?:sign <digit+>:i -> (-int(i) if sign == "-" else int(i))
         "Substitute",
         "Anchors",
         "Routine",
+        "Include"
     ]
 
     def __init__(self, font):
@@ -144,6 +145,7 @@ integer = '-'?:sign <digit+>:i -> (-int(i) if sign == "-" else int(i))
         self.grammar_generation = 1
         self.font = TTFont(font)
         self.fontfeatures = FontFeatures()
+        self.current_file = None
         self.plugin_classes = {}
         self.current_feature = None
         self._rebuild_parser()
@@ -153,6 +155,7 @@ integer = '-'?:sign <digit+>:i -> (-int(i) if sign == "-" else int(i))
     def parseFile(self, filename):
         with open(filename, "r") as f:
             data = f.read()
+        self.current_file = filename
         return self.parseString(data)
 
     def parseString(self, s):
