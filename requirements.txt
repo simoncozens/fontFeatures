@@ -1,4 +1,5 @@
 glyphtools
+fs
 fontTools
 beziers>=0.1.0
 parsley
