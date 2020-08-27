@@ -41,7 +41,12 @@ class Routine:
         r = fontFeatures.Routine()
         if routinename:
           r.name = routinename
-        r.rules = parser.filterResults(statements)
+        r.rules = []
+        for res in parser.filterResults(statements):
+          if isinstance(res, fontFeatures.Routine):
+            r.rules.extend(res.rules)
+          else:
+            r.rules.append(res)
         r.flags = 0
         for f in flags:
           if isinstance(f, tuple):
@@ -52,3 +57,4 @@ class Routine:
             r.flags |= f
         if not parser.current_feature:
           parser.fontfeatures.addRoutine(r)
+        return [r]

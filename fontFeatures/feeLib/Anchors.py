@@ -46,7 +46,7 @@ GRAMMAR = """
 Anchors_Args = glyphselector:gs ws '{' ws (anchor_def)+:a ws '}' -> [gs, a]
 anchor_def = <(letter|digit|"."|"_")+>:anchorname ws '<' integer:x ws integer:y '>' ws -> {"name":anchorname, "x": x, "y": y}
 
-Attach_Args = '&' <(letter|digit|"."|"_")+>:anchor1 ws '&' <(letter|digit|"."|"_")+>:anchor2 ws ("marks"|"bases"):attachtype -> [anchor1, anchor2, attachtype]
+Attach_Args = '&' <(letter|digit|"."|"_")+>:anchor1 ws '&' <(letter|digit|"."|"_")+>:anchor2 ws ("marks"|"bases"|"cursive"):attachtype -> [anchor1, anchor2, attachtype]
 """
 
 VERBS = ["Anchors", "Attach"]
@@ -74,23 +74,24 @@ class Attach:
                 bases[k] = v[aFrom]
             if aTo in v:
                 marks[k] = v[aTo]
-            if attachtype == "bases":
-                bases = {
-                    k: v
-                    for k, v in bases.items()
-                    if categorize_glyph(parser.font, k)[0] == "base"
-                }
-            else:
+            if attachtype == "marks":
                 bases = {
                     k: v
                     for k, v in bases.items()
                     if categorize_glyph(parser.font, k)[0] == "mark"
                 }
-            marks = {
-                k: v
-                for k, v in marks.items()
-                if categorize_glyph(parser.font, k)[0] == "mark"
-            }
+            else:
+                bases = {
+                    k: v
+                    for k, v in bases.items()
+                    if categorize_glyph(parser.font, k)[0] == "base"
+                }
+            if attachtype != "cursive":
+                marks = {
+                    k: v
+                    for k, v in marks.items()
+                    if categorize_glyph(parser.font, k)[0] == "mark"
+                }
         return [
             fontFeatures.Routine(
                 rules=[

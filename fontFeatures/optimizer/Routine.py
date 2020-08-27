@@ -14,7 +14,7 @@ class MoveLongCoverageToClassDefinition:
     def replaceLongWithClasses(self, i, ff):
         for ix, gc in enumerate(i):
             if len(gc) > 5:
-                classname = ff.getNamedClassFor(sorted(gc), "class" + self.gensym(ff))
+                classname = ff.getNamedClassFor(gc, "class" + self.gensym(ff))
                 i[ix] = ["@" + classname]
 
     def apply(self, routine, ff):

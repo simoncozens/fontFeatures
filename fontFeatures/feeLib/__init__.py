@@ -135,6 +135,7 @@ integer = '-'?:sign <digit+>:i -> (-int(i) if sign == "-" else int(i))
         "ClassDefinition",
         "Feature",
         "Substitute",
+        "Position",
         "Anchors",
         "Routine",
         "Include"

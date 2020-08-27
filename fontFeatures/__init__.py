@@ -289,7 +289,7 @@ class Attachment(Rule):
 
     @property
     def is_cursive(self):
-        return self.base_name == "cursive_entry"  # XXX
+        return self.base_name == "cursive_entry" or self.base_name == "entry" # XXX
 
     from .feaLib.Attachment import asFeaAST, feaPreamble
 
