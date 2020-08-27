@@ -1,4 +1,4 @@
-#!env python3
+#!/usr/bin/env python3
 from fontFeatures.feeLib import FeeParser
 from fontFeatures.optimizer import Optimizer
 from fontFeatures.ttLib import unparse
@@ -9,18 +9,22 @@ import argparse
 parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument('--load', action='store_true',
                     help='Load features from font file')
+parser.add_argument('-O', nargs='?', const=1, type=int, default=1,
+                    help='Optimization level')
+
 parser.add_argument("font",
                     help="Font file to process", metavar="FONT")
 parser.add_argument("fee",
                     help="FEE file to process", metavar="FEE")
 
 args = parser.parse_args()
+
 font = TTFont(args.font)
 p = FeeParser(args.font)
 if args.load:
 	p.fontfeatures = unparse(font)
 
 p.parseFile(args.fee)
-Optimizer(p.fontfeatures).optimize(level=1)
+Optimizer(p.fontfeatures).optimize(level=args.O)
 print(p.fontfeatures.asFea())
 
