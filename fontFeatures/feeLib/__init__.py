@@ -111,7 +111,7 @@ class FeeParser:
 feefile = wsc statement+
 statement = verb:v wsc callRule(v "Args"):args ws ';' wsc -> parser.do(v, args)
 rest_of_line = <('\\\n' | (~'\n' anything))*>
-wsc = comment | ws
+wsc = (comment | ' ' | '\t' | '\n')+ | ws
 comment = '#' rest_of_line ws?
 verb = <letter+>:x ?(x in self.valid_verbs) -> x
 
