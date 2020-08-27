@@ -9,4 +9,4 @@ def lookup_type(self):
     else:
     		if len(self.glyphs) == 1:
 	    			return 1
-    return 0  # For now
+    return 8  # ???

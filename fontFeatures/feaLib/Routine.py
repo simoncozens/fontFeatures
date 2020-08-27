@@ -59,7 +59,7 @@ def arrange_by_lookup_type(self):
         return
     # Special case the fact that a single sub can be expressed as part of a
     # multiple sub if needed
-    if tuple(sorted(ruleTypes.keys())) == (1, 2):
+    if tuple(sorted(ruleTypes.keys())) == (1, 2) or tuple(sorted(ruleTypes.keys())) == (1, 8):
         return
     routines = []
     for k, v in ruleTypes.items():
