@@ -5,42 +5,72 @@ Class Definitions
 To define a named glyph class in the FEE language, use the ``DefineClass``
 verb. This takes three arguments: the first is a class name, which must
 start with the ``@`` character; the second is the symbol ``=``; the third
-is either a single classname (which may be suffixed - see below),  a regular
-expression (``/.../``), or a set of glyphs and/or classes (which may be suffixed)
-enclosed in square brackets (``[ ... ]``)::
+is a glyph selector as described above::
 
-    DefineClass @upper_alts = @upper.alt; # First format
-    DefineClass @lower = /^[a-z]$/; # Second format
-    DefineClass @upper_and_lower = [A B C D E F G @lower]; # Third format
+    DefineClass @upper_alts = @upper.alt;
+    DefineClass @lower = /^[a-z]$/;
+    DefineClass @upper_and_lower = [A B C D E F G @lower];
 
-Class Suffixes
---------------
+In addition, glyph classes can be *combined* within the ``DefineClass``
+statement using intersection (``|``) and union (``&``) operators::
 
-In Fee, you may use "synthetic classes" anywhere that a class name is valid.
-Synthetic classes are generating by taking existing named class name and adding
-either ``.something`` or ``~something``. FEE will automatically create a class of
-glyphs by adding or removing ``.something`` from glyphs within the given
-class. For example, if you have::
+    DefineClass @all_marks = @lower_marks | @upper_marks;
+    DefineClass @uppercase_vowels = @uppercase & @vowels;
 
-    DefineClass @upper = [A B C D];
+Finally, glyph classes can be filtered through the use of one or more
+*predicates*, which take the form `` and `` followed by a
+bracketed relationship, and which tests the properties of the glyphs
+against the expression given::
 
-You can say::
+    DefineClass @short_behs = /^BE/ and (width < 200);
 
-    Substitute @upper -> @upper.alt;
+The first part of the relationship is a metric, which can be one of
+``width`` (advance width), ``lsb`` (left side bearing), ``rsb`` (right
+side bearing), ``xMin`` (minimum X coordinate), ``xMax`` (maximum X
+coordinate), ``yMin`` (minimum Y coordinate), ``yMax`` (maximum Y
+coordinate), ``rise`` (difference in Y coordinate between cursive entry
+and exit); the second part is a comparison operator (``>=``, ``<=``,
+``=``, ``<``, or ``>``); the third is either an integer or a metric
+name and the name of a single glyph in brackets. This is best
+understood by example. The following definition selects all members of
+the glyph class ``@alpha`` whose advance width is less than the advance
+width of the ``space`` glyph::
 
-to substitute the glyphs in ``[A B C D]`` for the glyphs
-``[A.alt B.alt C.alt D.alt]``.
+    DefineClass @shorter_than_space = @alpha and (width < width(space));
 
-It is often easier, however, to deal with the problem the other way around.
-Instead of having to remember which glyphs you have defined alternates for,
-you can simply ask FEE to find glyphs ending ``.alt``::
 
-    DefineClass @alternates = /\\.alt$/;
+Binned Definitions
+------------------
 
-and then create a synthetic class which *removes* the dotted suffix by using
-the ``~`` operator::
+Sometimes it is useful to split up a large glyph class into a number of
+smaller classes according to some metric, in order to treat them
+differently. For example, when performing an i-matra substitution in
+Devanagari, you would generally want to split your base glyphs by width,
+and apply the appropriate matra for each set of glyphs. FEE calls the
+operation of organising glyphs into groups of similar metrics "binning".
 
-    Substitute @alternates~alt -> @alterates;
+The ``ClassDefinition`` plugin also provides the ``DefineClassBinned`` verb,
+which generated a set of related glyph classes. The arguments of ``DefineClassBinned``
+are identical to that of ``DefineClass``, except that after the class name
+you must specify an open square bracket, the metric to be used to bin the
+glyphs, a comma, the number of bins to create, and a close bracket, like so::
+
+    DefineClassBinned @bases[width,5] = @bases;
+
+This will create five classes, called ``@bases_width1`` .. ``@bases_width2``,
+grouped in increasing order of advance width. Note that the size of the bins is
+not guaranteed to be equal, but glyphs are clustered according to the similarity
+of their metric. For example, if the advance widths are 99, 100, 110, 120,
+500, and 510 and two bins are created, four glyphs will be in one bin and two
+will be in the second.
+
+Glyph Class Debugging
+---------------------
+
+The combination of the above rules allows for extreme flexibility in creating
+glyph classes, to the extent that it may become difficult to understand the
+final composition of glyph classes! To alleviate this, the verb ``ShowClass``
+will take any glyph selector and display its contents on standard error.
 
 """
 
