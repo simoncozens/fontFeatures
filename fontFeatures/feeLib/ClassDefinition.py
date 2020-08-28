@@ -18,23 +18,28 @@ statement using intersection (``|``) and union (``&``) operators::
     DefineClass @uppercase_vowels = @uppercase & @vowels;
 
 Finally, glyph classes can be filtered through the use of one or more
-*predicates*, which take the form `` and `` followed by a
+*predicates*, which take the form ``and`` followed by a
 bracketed relationship, and which tests the properties of the glyphs
 against the expression given::
 
     DefineClass @short_behs = /^BE/ and (width < 200);
 
-The first part of the relationship is a metric, which can be one of
+- The first part of the relationship is a metric, which can be one of
 ``width`` (advance width), ``lsb`` (left side bearing), ``rsb`` (right
 side bearing), ``xMin`` (minimum X coordinate), ``xMax`` (maximum X
 coordinate), ``yMin`` (minimum Y coordinate), ``yMax`` (maximum Y
 coordinate), ``rise`` (difference in Y coordinate between cursive entry
-and exit); the second part is a comparison operator (``>=``, ``<=``,
-``=``, ``<``, or ``>``); the third is either an integer or a metric
-name and the name of a single glyph in brackets. This is best
-understood by example. The following definition selects all members of
-the glyph class ``@alpha`` whose advance width is less than the advance
-width of the ``space`` glyph::
+and exit)
+
+- The second part is a comparison operator (``>=``, ``<=``,
+``=``, ``<``, or ``>``).
+
+- The third is either an integer or a metric name and the name of a
+single glyph in brackets.
+
+This last form is best understood by example. The following definition
+selects all members of the glyph class ``@alpha`` whose advance width is
+less than the advance width of the ``space`` glyph::
 
     DefineClass @shorter_than_space = @alpha and (width < width(space));
 

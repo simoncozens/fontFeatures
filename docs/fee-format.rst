@@ -43,7 +43,7 @@ In general, amount and type of whitespace is not significant so long
 as arguments are separated unambiguously, and comments may be inserted
 between sentences in the usual form (``# ignored to end of line``).
 
-Here is a simple FEE file:
+Here is a simple FEE file::
 
 	DefineClass @comma = [uni060C uni061B];
 	Feature ss08 {
@@ -94,9 +94,8 @@ verbs are always available.
 .. automodule:: fontFeatures.feeLib.Feature
 .. automodule:: fontFeatures.feeLib.LoadPlugin
 .. automodule:: fontFeatures.feeLib.Routine
-.. automodule:: fontFeatures.feeLib.Position
 .. automodule:: fontFeatures.feeLib.Substitute
-
+.. automodule:: fontFeatures.feeLib.Position
 
 Optional plugins
 ----------------

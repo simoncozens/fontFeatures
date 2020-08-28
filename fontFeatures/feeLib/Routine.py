@@ -1,6 +1,6 @@
 """
 Routine
-========
+=======
 
 To group a set of rules into a routine, use the ``Routine`` verb. This takes
 a name and a block containing rules::
@@ -15,6 +15,11 @@ added to the end of the block, and may be any combination of ``RightToLeft``;
 ``IgnoreBases`` (AFDKO users, note the changed name); ``IgnoreLigatures``;
 ``IgnoreMarks`` or ``UseMarkFilteringSet`` followed by a glyph selector.
 
+In simple cases, you do not need to wrap rules in a routine inside of a feature
+block; however, to combine rules with different flags, you must place the rules
+within a routine. Once you have placed one set of rules within a routine, you
+may find it less surprising to place all rulesets within a feature within their
+own routines as well, due to the way that OpenType orders lookups for processing.
 """
 
 GRAMMAR = """
