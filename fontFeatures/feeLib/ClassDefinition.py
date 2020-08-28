@@ -25,17 +25,21 @@ against the expression given::
     DefineClass @short_behs = /^BE/ and (width < 200);
 
 - The first part of the relationship is a metric, which can be one of
-``width`` (advance width), ``lsb`` (left side bearing), ``rsb`` (right
-side bearing), ``xMin`` (minimum X coordinate), ``xMax`` (maximum X
-coordinate), ``yMin`` (minimum Y coordinate), ``yMax`` (maximum Y
-coordinate), ``rise`` (difference in Y coordinate between cursive entry
-and exit)
+
+  - ``width`` (advance width)
+  - ``lsb`` (left side bearing)
+  - ``rsb`` (right side bearing)
+  - ``xMin`` (minimum X coordinate)
+  - ``xMax`` (maximum X coordinate)
+  - ``yMin`` (minimum Y coordinate)
+  - ``yMax`` (maximum Y coordinate)
+  - ``rise`` (difference in Y coordinate between cursive entry and exit)
 
 - The second part is a comparison operator (``>=``, ``<=``,
-``=``, ``<``, or ``>``).
+  ``=``, ``<``, or ``>``).
 
 - The third is either an integer or a metric name and the name of a
-single glyph in brackets.
+  single glyph in brackets.
 
 This last form is best understood by example. The following definition
 selects all members of the glyph class ``@alpha`` whose advance width is
