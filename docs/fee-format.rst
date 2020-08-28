@@ -102,6 +102,12 @@ Optional plugins
 
 .. automodule:: fontFeatures.feeLib.Anchors
 .. automodule:: fontFeatures.feeLib.Arabic
+.. automodule:: fontFeatures.feeLib.AvoidCollision
+.. automodule:: fontFeatures.feeLib.BariYe
+.. automodule:: fontFeatures.feeLib.FontEngineering
+.. automodule:: fontFeatures.feeLib.IfCollides
+.. automodule:: fontFeatures.feeLib.IMatra
+.. automodule:: fontFeatures.feeLib.KernToDistance
 
 Writing your own plugins
 ------------------------

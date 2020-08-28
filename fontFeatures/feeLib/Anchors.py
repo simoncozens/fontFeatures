@@ -20,12 +20,13 @@ marks to bases::
       Feature mark { Attach &top &_top bases; };
 
 The ``Attach`` verb takes three parameters: a base anchor name, a mark anchor
-name, and a class filter, which is either ``marks`` or ``bases``. It collects
-all the glyphs which have anchors defined, and filters them according to their
-class definition in the ``GDEF`` table. In this case, we have asked for ``bases``,
-so glyph ``A`` will be selected. Then it looks for anchor definitions containing
-the mark anchor name (here ``_top``), which will select ``acutecomb``, and
-writes an attachment rule to tie them together. As shown in the example, this
+name, and a class filter, which is either ``marks``, ``bases`` or ``cursive``.
+The verb acts by collecting all the glyphs which have anchors defined, and
+filtering them according to their class definition in the ``GDEF`` table.
+In this case, we have asked for ``bases``, so glyph ``A`` will be selected.
+Then it looks for anchor definitions containing the mark anchor name
+(here ``_top``), which will select ``acutecomb``, and writes an attachment
+rule to tie them together. As shown in the example, this
 is the most efficient way of expressing a mark-to-base feature.
 
 Writing a mark-to-mark feature is similar; you just need to define a corresponding
@@ -35,8 +36,13 @@ filter::
       Anchors acutecomb { _top <-570 1290> top <-570 1650> };
       Feature mkmk { Attach &top &_top marks; };
 
-fontFeatures will emit the correct mark-to-base or mark-to-mark lookup type based
-on the ``GDEF`` class definition of the "base" glyph.
+Writing a cursive attachment figure can be done by defining ``entry`` and ``exit``
+anchors, and using an ``Attach`` statement like the following::
+
+        Feature curs {
+            Routine { Attach &entry &exit cursive; } IgnoreMarks;
+        };
+
 """
 
 from glyphtools import categorize_glyph

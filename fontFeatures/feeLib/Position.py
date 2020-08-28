@@ -1,3 +1,31 @@
+"""
+Position
+========
+
+Positioning rules are created using the ``Position`` verb. There are two
+forms of this verb:
+
+- a simple positioning, which simply has one or more glyph selectors each
+  optionally followed by a value record.
+- a contextual positioning, which wraps the main glyphs and value records in
+  curly braces, and optionally surrounds them with prefix and/or suffix glyphs.
+
+A value record can be specified either as a bare integer, in which case it
+represents an X advance adjustment, or a tuple of four integers surrounded by
+angle brackets, representing X position, Y position, X advance and Y advance.
+
+Here are examples of each form of the positioning verb::
+
+    # Above nuktas followed by GAF or KAF glyphs should drop down
+    # and to the right
+    Position @above_nuktas <30 -70 0 0> /^[KG]AF/;
+
+    # Initial forms will get more space if they have consecutive dotted glyphs
+    # and appear after a word-final glyph.
+    Position @endofword { @inits 200 } @below_dots @medis @below_dots;
+
+"""
+
 from fontFeatures import Positioning, ValueRecord
 
 
