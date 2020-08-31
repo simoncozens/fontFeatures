@@ -5,6 +5,8 @@ from fontFeatures.ttLib import unparse
 from fontTools.ttLib import TTFont
 import sys
 import argparse
+import os
+import warnings
 
 parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument('--load', action='store_true',
@@ -27,4 +29,8 @@ if args.load:
 p.parseFile(args.fee)
 Optimizer(p.fontfeatures).optimize(level=args.O)
 print(p.fontfeatures.asFea())
+if p.font_modified:
+	modified = "modified-%s" % os.path.basename(args.font)
+	p.font.save(modified)
+	warnings.warn("Modified font written on %s" % modified)
 

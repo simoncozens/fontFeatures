@@ -149,6 +149,7 @@ integer = '-'?:sign <digit+>:i -> (-int(i) if sign == "-" else int(i))
         self.current_file = None
         self.plugin_classes = {}
         self.current_feature = None
+        self.font_modified = False
         self._rebuild_parser()
         for plugin in self.DEFAULT_PLUGINS:
             self._load_plugin(plugin)
@@ -160,7 +161,10 @@ integer = '-'?:sign <digit+>:i -> (-int(i) if sign == "-" else int(i))
         return self.parseString(data)
 
     def parseString(self, s):
-        return self.parser(s).feefile()
+        fee = self.parser(s).feefile()
+        if self.font_modified:
+            warnings.warn("Font was modified")
+        return fee
 
     def _rebuild_parser(self):
         self.parser = parsley.wrapGrammar(self.grammar)
