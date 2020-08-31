@@ -23,7 +23,7 @@ own routines as well, due to the way that OpenType orders lookups for processing
 """
 
 GRAMMAR = """
-Routine_Args = routinename?:f ws '{' ws statement+:s '}' ws flag*:flags -> (f,s, flags)
+Routine_Args = routinename?:f wsc '{' wsc statement+:s '}' wsc flag*:flags -> (f,s, flags)
 
 routinename = <(letter|digit|"_")+>
 

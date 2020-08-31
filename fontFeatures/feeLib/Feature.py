@@ -14,7 +14,7 @@ the block, as is required in AFDKO syntax.
 """
 
 GRAMMAR = """
-Feature_Args = featurename:f ws '{' ws statement+:s '}' -> (f,s)
+Feature_Args = featurename:f wsc '{' wsc statement+:s '}' -> (f,s)
 FeatureName_Args = '"' <~'"' anything >+:name '"' -> (name,)
 
 featurename = <letter (letter|digit){3}>
