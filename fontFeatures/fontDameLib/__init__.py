@@ -8,6 +8,13 @@ import warnings
 
 
 class FontDameUnparser:
+    """Convert layout files in Monotype's FontDame format to fontFeatures.
+
+    Args:
+        lines: An array of strings containing the FontDame file, one line per string.
+        config: A dictionary of glyph class names.
+        glyphset: A list of glyph names in the font.
+    """
     def __init__(self, lines, config={}, glyphset=()):
         self.all_languages = []
         self.lines = lines
@@ -29,6 +36,9 @@ class FontDameUnparser:
         self.lookaheadclassContexts = {}
 
     def unparse(self):
+        """Unparses the font file, creating a fontFeatures object.
+
+        Returns: A fontFeatures object containing the rules in the FontDame file."""
         # Parse lookups
         for line in self.lines:
             self.parse_line(line)
@@ -106,6 +116,7 @@ class FontDameUnparser:
 
         for i in self.lookups.keys():
             dolookup(i)
+        return self.ff
 
     def format_langcode(self, code):
         script, lang = code

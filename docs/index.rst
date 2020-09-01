@@ -12,6 +12,8 @@ Welcome to fontFeatures's documentation!
 
    fee-format
    fontFeatures
+   converting
+   supportingmodules
 
 
 Indices and tables

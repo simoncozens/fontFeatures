@@ -1,9 +1,24 @@
+"""
+JankyPOS
+========
+
+JankyPOS is a glyph string positioning tool. It's janky because it
+implements half of what an OpenType shaping engine ought to do, badly.
+This is reasonable in this situation, because it's not aiming to be a
+full shaping engine, but to have just enough logic to run the rules in
+a font and work out where the glyphs are likely to end up.
+
+FontFeatures plugin modules can use JankyPOS to position glyph strings
+that they enumerate and determine whether further action needs to be
+taken based on the computed positions. (For instance, if the rules so
+far lead to collisions or clashes.)
+"""
+
 from glyphtools import get_glyph_metrics, categorize_glyph
 from fontFeatures import ValueRecord, Attachment, Positioning, Chaining, Routine
 import warnings
 
-
-def add_value_records(vr1, vr2):
+def _add_value_records(vr1, vr2):
     if vr1.xPlacement or vr2.xPlacement:
         vr1.xPlacement = (vr1.xPlacement or 0) + (vr2.xPlacement or 0)
     if vr1.yPlacement or vr2.yPlacement:
@@ -15,13 +30,48 @@ def add_value_records(vr1, vr2):
 
 
 class JankyPos:
+    """Initialize a positioner with a font.
+
+    Args:
+        font: A fontTools ``TTFont`` object.
+        direction: Text direction. Either "LTR" or "RTL".
+    """
     def __init__(self, font, direction="LTR"):
         self.font = font
         self.direction = direction
 
+    def positioning_buffer(self, glyphstring):
+        """Create a positioning buffer.
+
+        Args:
+            glyphstring: A sequence of glyph names.
+
+        Returns:
+            An array of positioning information, to be passed to
+            positioning methods.
+        """
+        return [
+            {
+                "glyph": g,
+                "position": ValueRecord(
+                    xAdvance=get_glyph_metrics(self.font, g)["width"],
+                ),
+                "category": categorize_glyph(self.font, g),
+            }
+            for g in glyphstring
+        ]
+
     def serialize_buffer(self, buf):
-        """Returns the contents of the given buffer in a string format similar to
-    that used by hb-shape."""
+        """Serialize a buffer to a string.
+
+        Args:
+            buf: A buffer returned from :py:meth:`positioning_buffer`.
+
+        Returns:
+            The contents of the given buffer in a string format similar to
+            that used by ``hb-shape``.
+
+        """
         outs = []
         for info in buf:
             position = info["position"]
@@ -34,19 +84,20 @@ class JankyPos:
                 )
         return "|".join(outs)
 
-    def positioning_buffer(self, glyphstring):
-        return [
-            {
-                "glyph": g,
-                "position": ValueRecord(
-                    xAdvance=get_glyph_metrics(self.font, g)["width"],
-                ),
-                "category": categorize_glyph(self.font, g),
-            }
-            for g in glyphstring
-        ]
-
     def process_fontfeatures(self, buf, ff):
+        """Position a buffer based on the rules of a fontFeatures object.
+
+        This applies the features in order defined in Harfbuzz's "default
+        shaper" implementation. Note that this may not be sufficient for
+        Indic scripts.
+
+        Args:
+            buf: A buffer returned from :py:meth:`positioning_buffer`.
+            ff: A fontFeatures object.
+
+        Returns:
+            The buffer, but with positioning information.
+        """
         features = ["rvrn"]
         if self.direction == "LTR":
             features.extend(["ltra", "ltrm"])
@@ -72,28 +123,40 @@ class JankyPos:
         return buf
 
     def process_rules(self, buf, rules):
+        """Apply a set of rules to a buffer.
+
+        This applies rules directly to the buffer.
+
+        Args:
+            buf: A buffer returned from :py:meth:`positioning_buffer`.
+            rules: A sequence of fontFeatures rules (Positioning, Attachment
+                or Chaining.)
+
+        Returns:
+            The buffer, but with positioning information.
+        """
         for r in rules:
             if isinstance(r, Positioning):
                 if len(r.glyphs) == 1:
-                    buf = self.position_one(buf, r)
+                    buf = self._position_one(buf, r)
                 else:
                     continue  # XXX
             elif isinstance(r, Attachment):
                 if r.is_cursive:
-                    buf = self.attach_cursive(buf, r)
+                    buf = self._attach_cursive(buf, r)
                 else:
-                    buf = self.attach(buf, r)
+                    buf = self._attach(buf, r)
             elif isinstance(r, Chaining):
                 buf = self.chain(buf, r)
             else:
                 continue
         return buf
 
-    def chain(self, buf, rule):
+    def _chain(self, buf, rule):
         # XXXX
         return buf
 
-    def position_one(self, buf, rule):
+    def _position_one(self, buf, rule):
         applicable_range = range(
             0 + len(rule.precontext), len(buf) - len(rule.postcontext)
         )
@@ -109,10 +172,10 @@ class JankyPos:
                     continue
             if g not in rule.glyphs[0]:
                 continue
-            add_value_records(vr, rule.valuerecords[0])
+            _add_value_records(vr, rule.valuerecords[0])
         return buf
 
-    def attach(self, buf, rule):
+    def _attach(self, buf, rule):
         for ix, info in enumerate(buf):
             g = info["glyph"]
             vr = info["position"]
@@ -134,7 +197,7 @@ class JankyPos:
                     vr.xPlacement = (vr.xPlacement or 0) - prevVr.xAdvance
         return buf
 
-    def attach_cursive(self, buf, rule):
+    def _attach_cursive(self, buf, rule):
         for j, info in enumerate(buf):
             g = info["glyph"]
             vr = info["position"]

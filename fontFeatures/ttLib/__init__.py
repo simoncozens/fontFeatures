@@ -29,6 +29,15 @@ def unparseLanguageSystems(tables):
 
 
 def unparse(font, do_gdef=False, doLookups=True, config={}):
+    """Convert a binary OpenType font into a fontFeatures object
+
+    Args:
+        font: A ``TTFont`` object.
+        do_gdef: Boolean. Whether the GDEF table should also be read.
+        doLookups: Whether the lookups should be read, or just the script/language
+            information and top-level features.
+        config: A dictionary of glyph class and routine names.
+    """
     gsub_gpos = [font[tableTag] for tableTag in ("GSUB", "GPOS") if tableTag in font]
     ff = FontFeatures()
 

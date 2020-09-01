@@ -1,3 +1,22 @@
+"""
+The FontFeatures class is a way of representing the transformations -
+substitutions and positionings - going on inside a font at a semantically
+high level. It aims to be independent of and unconstrained by the OpenType
+representation, with the assumption that these high-level objects can be
+either "compiled down" into AFDKO feature code or directly written to the
+GSUB/GPOS tables of a font.
+
+FontFeatures aims to marshal data between OTF binary representations,
+AFDKO feature code, FontDame, and a new language called FEE (Font
+Engineering language with Extensibility).
+
+A FontFeatures representation of a font will make use of two other top-level
+concepts: Features and Routines. Routines are collections of rules; they play
+a similar function to the AFDKO concept of a lookup, but unlike lookups,
+Routines do not need to be comprised of rules of the same type. You can think
+of them as functions that are called on a glyph string.
+"""
+
 from fontTools.ttLib import TTFont
 from collections import OrderedDict
 from fontTools.feaLib.ast import ValueRecord
@@ -6,23 +25,7 @@ from bidict import bidict
 
 
 class FontFeatures:
-    """The FontFeatures class is a way of representing the transformations -
-  substitutions and positionings - going on inside a font at a semantically
-  high level. It aims to be independent of and unconstrained by the OpenType
-  representation, with the assumption that these high-level objects can be
-  either "compiled down" into AFDKO feature code or directly written to the
-  GSUB/GPOS tables of a font.
-
-  FontFeatures aims to marshal data between OTF binary representations,
-  AFDKO feature code, FontDame, and a new language called FEE (Font
-  Engineering language with Extensibility).
-
-  A FontFeatures representation of a font will make use of two other top-level
-  concepts: Features and Routines. Routines are collections of rules; they play
-  a similar function to the AFDKO concept of a lookup, but unlike lookups,
-  Routines do not need to be comprised of rules of the same type. You can think
-  of them as functions that are called on a glyph string."""
-
+    """An object representing the layout rules in a font."""
     def __init__(self):
         self.namedClasses = bidict({})
         self.routines = []
@@ -39,17 +42,40 @@ class FontFeatures:
         return f'{category}{self.symbols[category]}'
 
     def addRoutine(self, r):
+        """Add a Routine to the preamble.
+
+        Args:
+            r: A :py:class:`Routine` object.
+        """
         assert isinstance(r, Routine)
         self.routines.append(r)
         r.parent = self
 
     def getNamedClassFor(self, glyphs, name):
+        """Find and optionally stores a named class of glyphs
+
+        Args:
+            glyphs: A sequence of glyph names.
+            name: A name for this glyph class if it does not exist.
+
+        Returns:
+            The name of a glyph class. If the exact same set of glyphs
+            was already stored as a glyph class, then the name of that
+            class will be returned. If not, then the class will be stored
+            and the name provided as the ``name`` argument will be returned.
+        """
         if tuple(glyphs) in self.namedClasses.inverse:
             return self.namedClasses.inverse[tuple(glyphs)]
         self.namedClasses[name] = tuple(glyphs)
         return name
 
     def addFeature(self, name, rs):
+        """Add Routines to a named feature.
+
+        Args:
+            name: The feature name.
+            rs: A sequence of :py:class:`Routine` objects.
+        """
         if not name in self.features:
             self.features[name] = []
         for r in rs:
@@ -57,6 +83,11 @@ class FontFeatures:
             self.features[name].append(r)
 
     def allRoutines(self):
+        """Return all Routines in the font.
+
+        Returns:
+            Routines stored in the preamble and within features.
+        """
         routines = set(self.routines)
         for k, v in self.features.items():
             for n in v:
@@ -65,12 +96,22 @@ class FontFeatures:
         return list(routines)
 
     def allRules(self, ruletype=None):
+        """Return all rules in the font, optionally filtered by type
+
+        Args:
+            ruletype: A class (``Positioning``, ``Substitution`` etc)
+                to filter the results.
+
+        Returns:
+            Routines stored in the preamble and within features.
+        """
+
         rules = []
         for r in self.allRoutines():
             rules.extend(r.rules)
         for k, v in self.features.items():
             for n in v:
-                if not isinstance(n, Routine):
+                if isinstance(n, Routine):
                     rules.extend(n.rules)
 
         if ruletype:
@@ -78,6 +119,12 @@ class FontFeatures:
         return rules
 
     def markRoutineUseInChains(self):
+        """Annotate routines which are used in chaining rules.
+
+        Generally used when converting the fontFeatures object to another
+        format; allows routines to know where they are being used by annotating
+        them with the ``.usedin`` property for optimization purposes.
+        """
         if self.doneUsageMarking:
             return
         for r in self.allRoutines():
@@ -94,7 +141,7 @@ class FontFeatures:
     from .feaLib.FontFeatures import asFea, asFeaAST
 
     def hoist_languages(self):
-        # Sort into scripts and languages, resolve wildcards
+        """Sort routines into scripts and languages and resolve wildcards."""
         scripts = OrderedDict()
         count = 0
 
@@ -130,6 +177,11 @@ class FontFeatures:
 
 
 class Routine:
+    """Represent a Routine (similar to OT Lookup).
+
+    A routine is a set of rules, sometimes but always with an explicit name.
+    It can apply to a set of language/script pairs.
+    """
     def __init__(
         self,
         name="",
@@ -154,14 +206,28 @@ class Routine:
         self.flags = flags
 
     def addRule(self, rule):
+        """Adds a rule to a Routine.
+
+        Args:
+            rule: A ``Substitution``, ``Positioning``, etc. object.
+        """
         assert isinstance(rule, Rule)
         self.rules.append(rule)
 
     def addComment(self, comment):
+        """Adds a comment to a Routine.
+
+        Comments are emitted when the Routine is converted to text formats
+        such as AFDKO.
+
+        Args:
+            comment: A string comment.
+        """
         self.comments.append(comment)
 
     @property
     def involved_glyphs(self):
+        """Returns the names of all of the glyphs involved in this Routine."""
         return set.union(*[r.involved_glyphs for r in self.rules])
 
     from .feaLib.Routine import asFea, asFeaAST, feaPreamble
@@ -169,17 +235,37 @@ class Routine:
 
 class Rule:
     def asFea(self):
+        """Returns this Rule as a string of AFDKO feature text."""
         return self.asFeaAST().asFea()
 
     def feaPreamble(self, ff):
+        """Computes any text that needs to go in the feature file header."""
         return []
 
 
 class Substitution(Rule):
-    """A substitution represents any kind of exchange of one set of glyphs for
-  another: single substitutions, multiple substitutions and ligatures are all
-  substitutions. Optionally, substitutions may be followed by precontext and
-  postcontext."""
+    """Represents a Substitution rule.
+
+    A substitution represents any kind of exchange of one set of glyphs for
+    another: single substitutions, multiple substitutions and ligatures are all
+    substitutions. Optionally, substitutions may be followed by precontext and
+    postcontext.
+
+    Args:
+        input_: A list of lists. The outer list represents the positions in
+            the glyph stream to substitute, with the inner list representing
+            the glyph names at each position.
+        replacement: A list of list of glyphs.
+        precontext: A list of list of glyphs which must appear before the input
+            sequence.
+        postcontext: A list of list of glyphs which must appear before the input
+            sequence.
+        lookups: A list of list of lookups to be applied to the glyph sequence.
+            The outer list represents the positions in the input sequence, with
+            the inner list containing Routines to apply.
+        reverse: Boolean representing if the substitutions should take place from
+            the end of the string.
+  """
 
     def __init__(
         self,

@@ -107,6 +107,13 @@ class GlyphSelector:
 
 
 class FeeParser:
+    """Convert a FEE file into a fontFeatures object.
+
+    The resulting object is stored in the parser's ``fontFeatures`` property.
+
+    Args:
+        font: A TTFont object.
+    """
     basegrammar = """
 feefile = wsc statement+
 statement = verb:v wsc callRule(v "Args"):args ws ';' wsc -> parser.do(v, args)
@@ -155,12 +162,22 @@ integer = '-'?:sign <digit+>:i -> (-int(i) if sign == "-" else int(i))
             self._load_plugin(plugin)
 
     def parseFile(self, filename):
+        """Load a FEE features file.
+
+        Args:
+            filename: Name of the file to read.
+        """
         with open(filename, "r") as f:
             data = f.read()
         self.current_file = filename
         return self.parseString(data)
 
     def parseString(self, s):
+        """LoadFEE features information from a string.
+
+        Args:
+            s: Layout rules in FEE format.
+        """
         fee = self.parser(s).feefile()
         if self.font_modified:
             warnings.warn("Font was modified")

@@ -3,6 +3,16 @@ import fontFeatures
 
 
 class FeaUnparser:
+    """Turns a AFDKO feature file or string into a FontFeatures object.
+
+    Args:
+        featurefile: File object or string.
+        font: Optionally, a TTFont object.
+
+    Returns:
+        An object with a ``ff`` property, which is the ``FontFeatures`` object
+        containing the rules of this file.
+    """
     def __init__(self, featurefile, font=None):
         from fontTools.feaLib.parser import Parser
 

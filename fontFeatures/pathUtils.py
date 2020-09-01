@@ -1,18 +1,58 @@
+"""
+pathUtils
+=========
+
+This is a set of simple routines to help with extracting information from
+the outlines of glyphs.
+"""
 from beziers.path import BezierPath
 from beziers.line import Line
 from beziers.point import Point
 
 
 def get_bezier_paths(font, glyphname):
+    """Retrieve beziers from a glyph
+
+    Args:
+        font: A fontTools ``TTFont`` object
+        glyphname: The name of a single glyph
+
+    Returns:
+        An array of ``beziers.path.BezierPath`` objects representing the
+        outlines of the glyph.
+    """
     return BezierPath.fromFonttoolsGlyph(font, glyphname)
 
 
 def find_largest_path(font, glyphname):
+    """Find largest path by area
+
+    Args:
+        font: A fontTools ``TTFont`` object
+        glyphname: The name of a single glyph
+
+    Returns:
+        A ``beziers.path.BezierPath`` object representing the largest path
+        in the glyph.
+    """
     paths = get_bezier_paths(font, glyphname)
     return max(paths, key=lambda p: p.area)
 
 
 def thickness_at_x(path, x):
+    """Find the path thickness at a given X coordinate
+
+    This measure the thickness of the lowest horizontal stem at the given
+    coordinate. If there is no stem at this X coordinate, ``None`` is
+    returned.
+
+    Args:
+        path: A ``beziers.path.BezierPath`` object
+        x: X coordinate to search
+
+    Returns:
+        The thickness of the path at this point, in font units.
+    """
     bounds = path.bounds()
     bounds.addMargin(10)
     ray = Line(Point(x - 0.1, bounds.bottom), Point(x + 0.1, bounds.top))
