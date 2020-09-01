@@ -133,7 +133,7 @@ glyphsuffix = ('.'|'~'):suffixtype <letter+>:suffix -> {"suffixtype":suffixtype,
 glyphselector = (regex | barename | classname | inlineclass ):g glyphsuffix*:s -> GlyphSelector(g,s, self.input.position)
 
 # Number things
-integer = '-'?:sign <digit+>:i -> (-int(i) if sign == "-" else int(i))
+integer = ('-'|'+')?:sign <digit+>:i -> (-int(i) if sign == "-" else int(i))
 
 """
 
