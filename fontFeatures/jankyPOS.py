@@ -147,7 +147,7 @@ class JankyPos:
                 else:
                     buf = self._attach(buf, r)
             elif isinstance(r, Chaining):
-                buf = self.chain(buf, r)
+                buf = self._chain(buf, r)
             else:
                 continue
         return buf
