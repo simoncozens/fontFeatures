@@ -61,8 +61,8 @@ def makeValueRecord(valuerecord):
     if not isinstance(valuerecord, dict):
         return ValueRecord(*valuerecord) # Traditional -> list
     v = ValueRecord()
-    for k, pos in valuerecord["members"]:
-        setattr(v, k, pos)
+    for k in valuerecord["members"]:
+        setattr(v,k["dimension"],k["position"])
     return v
 
 class Position:
