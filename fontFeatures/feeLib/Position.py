@@ -12,7 +12,10 @@ forms of this verb:
 
 A value record can be specified either as a bare integer, in which case it
 represents an X advance adjustment, or a tuple of four integers surrounded by
-angle brackets, representing X position, Y position, X advance and Y advance.
+angle brackets, representing X position, Y position, X advance and Y advance,
+or as a dictionary-like structure surrounded by angle brackets, taking the form::
+
+    '<' ( ("xAdvance"| "xPlacement" | "yAdvance" | "yPlacement") '=' integer)+ '>'
 
 Here are examples of each form of the positioning verb::
 
@@ -23,6 +26,9 @@ Here are examples of each form of the positioning verb::
     # Initial forms will get more space if they have consecutive dotted glyphs
     # and appear after a word-final glyph.
     Position @endofword { @inits 200 } @below_dots @medis @below_dots;
+
+    # Move marks back and up.
+    Position @marks <xPlacement=-50 yPlacement=10>;
 
 """
 
@@ -37,10 +43,11 @@ context_pos_args = gsws*:pre '{' ws gsposws+:g_ps2 ws '}' ws gsws*:post language
 
 gsposws = glyphselector:g ws valuerecord?:v ws? -> (g,v)
 gsws = glyphselector:g ws? -> g
-valuerecord = integer_value_record | traditional_value_record | fee_value_record
+valuerecord = integer_value_record | fee_value_record | traditional_value_record
 integer_value_record = integer:xAdvance -> (0, 0, xAdvance, 0)
 traditional_value_record = '<' integer:xPlacement ws integer:yPlacement ws integer:xAdvance ws integer:yAdvance '>' -> (xPlacement, yPlacement, xAdvance, yAdvance)
-fee_value_record = "not_implemented"
+fee_value_record = '<' ws fee_value_record_member+:m '>' -> { "members": m }
+fee_value_record_member = ("xAdvance"| "xPlacement" | "yAdvance" | "yPlacement"):d '=' integer:pos ws -> {"dimension": d, "position": pos}
 
 languages = '<' lang '/' script (ws ',' ws lang '/' script)* '>' ws
 lang = letter{3,4} | '*' # Fix later
@@ -49,6 +56,14 @@ script = letter{3,4} | '*' # Fix later
 """
 
 VERBS = ["Position"]
+
+def makeValueRecord(valuerecord):
+    if not isinstance(valuerecord, dict):
+        return ValueRecord(*valuerecord) # Traditional -> list
+    v = ValueRecord()
+    for k, pos in valuerecord["members"]:
+        setattr(v, k, pos)
+    return v
 
 class Position:
     @classmethod
@@ -60,7 +75,7 @@ class Position:
         for glyphselector, valuerecord in l:
             inputs.append(glyphselector.resolve(parser.fontfeatures, parser.font))
             if valuerecord:
-                valuerecords.append(ValueRecord(*valuerecord))
+                valuerecords.append(makeValueRecord(valuerecord))
             else:
                 valuerecords.append(None)
         languages = None # For now
@@ -68,3 +83,4 @@ class Position:
             precontext = pre,
             postcontext = post,
             languages=languages)]
+
