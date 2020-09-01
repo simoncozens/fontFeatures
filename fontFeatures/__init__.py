@@ -255,7 +255,7 @@ class Substitution(Rule):
         input_: A list of lists. The outer list represents the positions in
             the glyph stream to substitute, with the inner list representing
             the glyph names at each position.
-        replacement: A list of list of glyphs.
+        replacement: A list of glyph names.
         precontext: A list of list of glyphs which must appear before the input
             sequence.
         postcontext: A list of list of glyphs which must appear before the input
@@ -301,7 +301,23 @@ class Substitution(Rule):
 
 
 class Chaining(Rule):
-    # For now
+    """Represents a Chain rule.
+
+    A Chain rule represents the operation of calling another Routine when
+    a particular input context is met.
+
+    Args:
+        input_: A list of lists. The outer list represents the positions in
+            the glyph stream to substitute, with the inner list representing
+            the glyph names at each position.
+        precontext: A list of list of glyphs which must appear before the input
+            sequence.
+        postcontext: A list of list of glyphs which must appear before the input
+            sequence.
+        lookups: A list of list of lookups to be applied to the glyph sequence.
+            The outer list represents the positions in the input sequence, with
+            the inner list containing Routines to apply.
+    """
     def __init__(
         self,
         input_,
@@ -331,6 +347,19 @@ class Chaining(Rule):
 
 
 class Positioning(Rule):
+    """Represents a Positioning rule.
+
+    Args:
+        input_: A list of lists. The outer list represents the positions in
+            the glyph stream to position, with the inner list representing
+            the glyph names at each glyph stream position.
+        valuerecords: A list of ``ValueRecord`` objects to be applied at each
+            glyph stream position.
+        precontext: A list of list of glyphs which must appear before the input
+            sequence.
+        postcontext: A list of list of glyphs which must appear before the input
+            sequence.
+  """
     def __init__(
         self,
         glyphs,
@@ -361,6 +390,19 @@ class Positioning(Rule):
 
 
 class Attachment(Rule):
+    """Represents an Attachment rule.
+
+    Args:
+        base_name: Name of the base class.
+        mark_name: Name of the mark class.
+        bases: Dictionary. They keys are names of glyphs to act as bases to
+            the attachment (this may be categorized as mark glyphs if the
+            attachment is a mark-to-mark operation); the associated values are
+            a two-element tuple with the coordinates of the anchor.
+        marks: Dictionary. They keys are names of glyphs to act as marks;
+            the associated values are a two-element tuple with the coordinates
+            of the anchor.
+  """
     def __init__(
         self, base_name, mark_name, bases=None, marks=None, flags=0, address=None,
         font=None
