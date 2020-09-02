@@ -1,4 +1,4 @@
-#!env python
+#!/usr/bin/env python
 import sys
 from fontFeatures.fontDameLib import unparse
 from argparse import ArgumentParser
