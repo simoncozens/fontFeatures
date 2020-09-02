@@ -21,7 +21,7 @@ config = {
     'description': 'Python library for manipulating OpenType font features',
     'long_description': open('README.md', 'r').read(),
     'license': 'MIT',
-    'version': '0.0.1',
+    'version': '0.9.9',
     'install_requires': install_requires,
     'classifiers': [
         "Programming Language :: Python",
