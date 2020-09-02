@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 from setuptools import setup, find_packages
 import os
+import glob
 
 thelibFolder = os.path.dirname(os.path.realpath(__file__))
 requirementPath = thelibFolder + '/requirements.txt'
@@ -9,6 +10,8 @@ install_requires = []
 if os.path.isfile(requirementPath):
     with open(requirementPath) as f:
         install_requires = f.read().splitlines()
+
+scripts = glob.glob("bin/*")
 
 config = {
     'name': 'fontFeatures',
@@ -31,6 +34,7 @@ config = {
     'package_dir': {'fontFeatures': 'fontFeatures'},
     'packages': find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"])
 ,
+    'scripts': scripts
 }
 
 if __name__ == '__main__':
