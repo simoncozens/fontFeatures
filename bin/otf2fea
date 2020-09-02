@@ -28,6 +28,13 @@ parser.add_argument(
     action="store_true",
     help="Also output GDEF table information",
 )
+
+parser.add_argument(
+    "-i", "--index",
+    dest="index", type=int, default=-1,
+    help="Font index number (required for collections)",
+)
+
 parser.add_argument(
     "--no-lookups",
     dest="nolookups",
@@ -50,7 +57,11 @@ if args.config:
     with open(args.config) as f:
         config = json.load(f)
 
-font = TTFont(args.input)
+if args.input.endswith("c") and args.index == -1:
+    print("Must provide -i argument with TrueType/OpenType collection file", file=sys.stderr)
+    sys.exit(1)
+
+font = TTFont(args.input, fontNumber=args.index)
 ff = unparse(font, do_gdef=args.gdef, doLookups=(not args.nolookups), config=config)
 if args.optimize:
     Optimizer(ff).optimize(level=args.optimize)

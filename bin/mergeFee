@@ -16,14 +16,25 @@ parser.add_argument(
     help="FEE file(s) to add",
     metavar="FEE",
 )
+
+parser.add_argument(
+    "-i", "--index",
+    dest="index", type=int, default=-1,
+    help="Font index number (required for collections)",
+)
+
 parser.add_argument("-o", dest="output", help="path to output font", metavar="FILE")
 args = parser.parse_args()
+
+if args.input.endswith("c") and args.index == -1:
+    print("Must provide -i argument with TrueType/OpenType collection file", file=sys.stderr)
+    sys.exit(1)
 
 output = args.output
 if output is None:
     output = "fea-" + args.input
 
-font = TTFont(args.input)
+font = TTFont(args.input, fontNumber=args.index)
 p = FeeParser(args.input)
 # Unparse existing features
 p.fea = unparse(font)
