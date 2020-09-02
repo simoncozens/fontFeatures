@@ -1,4 +1,4 @@
-#!env python3
+#!/usr/bin/env python3
 from fontFeatures.feeLib import FeeParser
 from fontFeatures.ttLib import unparse
 from fontTools.ttLib import TTFont

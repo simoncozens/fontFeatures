@@ -1,4 +1,4 @@
-#!env python
+#!/usr/bin/env python
 import sys
 from fontTools.ttLib import TTFont
 from fontFeatures.ttLib import unparse
