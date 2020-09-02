@@ -16,11 +16,11 @@ The purpose of this library is to provide a middle ground for representing featu
 
 fontFeatures consists of the following components:
 
-* `fontFeatures` itself, which is an abstract representation of the different layout operations inside a font. (Mostly implemented.)
-* `fontFeatures.feaLib` (included as a mixin) which translates between Adobe feature syntax and fontFeatures representation. (Currently only the `fontFeatures` -> FEA translation is mostly implemented; FEA -> `fontFeatures` not currently implemented.)
+* `fontFeatures` itself, which is an abstract representation of the different layout operations inside a font.
+* `fontFeatures.feaLib` (included as a mixin) which translates between Adobe feature syntax and fontFeatures representation.
 * `fontFeatures.ttLib`, which translates between OpenType binary fonts and fontFeatures representation. (Currently only OTF -> `fontFeatures` is partially implemented; there is no `fontFeatures` -> OTF compiler yet.)
 * `fontFeatures.feeLib` which parses a new, extensible format called FEE for font engineering.
-* `fontFeatures.fontDame2fee` which, despite the name, currently does not use the fontFeatures representation but directly translates FontDame `.txt` feature files into the FEE syntax.
+* `fontFeatures.fontDameLib` which translate FontDame text files into fontFeatures objects.
 
 And the following utilities:
 

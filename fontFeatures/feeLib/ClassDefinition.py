@@ -66,12 +66,15 @@ glyphs, a comma, the number of bins to create, and a close bracket, like so::
 
     DefineClassBinned @bases[width,5] = @bases;
 
-This will create five classes, called ``@bases_width1`` .. ``@bases_width2``,
+This will create five classes, called ``@bases_width1`` .. ``@bases_width5``,
 grouped in increasing order of advance width. Note that the size of the bins is
 not guaranteed to be equal, but glyphs are clustered according to the similarity
 of their metric. For example, if the advance widths are 99, 100, 110, 120,
 500, and 510 and two bins are created, four glyphs will be in one bin and two
 will be in the second.
+
+(This is just an example for the purpose of explaining binning. We'll show a
+better way to handle the i-matra question later.)
 
 Glyph Class Debugging
 ---------------------

@@ -39,15 +39,18 @@ where the dots should be.)
 The other verb, ``BYFixOverhang`` deals with the problem of short bari ye
 sequences. Bari ye glyphs typically have a large negative right sidebearing,
 which means that sequences like "ابے" need additional kerning to stop the
-alif from being "drawn in" to the bari ye. ``BYFixOverhang`` takes an integer
+alif from being "drawn in" to the bari ye.
+
+``BYFixOverhang`` takes an integer
 value (an additional number of points to separate the end of the bari ye tail
 and the following glyph), and computes rules which act only on short sequences;
 it evalutes all possible short sequences (using width-binning to keep the number
 of combinations to a reasonable number), computes the total width of each
 sequence, compares this against the negative RSB of the bari ye, and
 emits appropriate kerning rules to generate the desired separation. e.g.
-``BYFixOverhang 10`` will ensure that there are at least 10 points between
-the end of the bari ye tail and any isolated/final glyph preceding the sequnece.
+``BYFixOverhang 10 @bariye`` will ensure that there are at least 10 points
+between the end of the tail of each glyph in ``@bariye`` and any isolated/final
+glyph preceding the sequence.
 
 """
 
