@@ -91,13 +91,18 @@ class GPOSUnparser(GTableUnparser):
                 spos = fontFeatures.Positioning(
                     [subtable.Coverage.glyphs],
                     [self.makeValueRecord(subtable.Value, subtable.ValueFormat)],
+                    address=self.currentLookup,
+                    flags=lookup.LookupFlag,
+
                 )
                 b.addRule(spos)
             else:
                 # Optimize it later
                 for g, v in zip(subtable.Coverage.glyphs, subtable.Value):
                     spos = fontFeatures.Positioning(
-                        [[g]], [self.makeValueRecord(v, subtable.ValueFormat)]
+                        [[g]], [self.makeValueRecord(v, subtable.ValueFormat)],
+                        address=self.currentLookup,
+                        flags=lookup.LookupFlag,
                     )
                     b.addRule(spos)
         return b, []
@@ -114,6 +119,8 @@ class GPOSUnparser(GTableUnparser):
                                 self.makeValueRecord(vr.Value1, subtable.ValueFormat1),
                                 self.makeValueRecord(vr.Value2, subtable.ValueFormat2),
                             ],
+                            address=self.currentLookup,
+                            flags=lookup.LookupFlag,
                         )
                         b.addRule(spos)
             else:
@@ -133,7 +140,9 @@ class GPOSUnparser(GTableUnparser):
                             set(class1[ix1]) & set(subtable.Coverage.glyphs)
                         )
                         spos = fontFeatures.Positioning(
-                            [firstClass, class2[ix2]], [vr1, vr2]
+                            [firstClass, class2[ix2]], [vr1, vr2],
+                            address=self.currentLookup,
+                            flags=lookup.LookupFlag,
                         )
                         b.addRule(spos)
         return b, []
@@ -157,7 +166,8 @@ class GPOSUnparser(GTableUnparser):
                     )
         b.addRule(
             fontFeatures.Attachment(
-                "cursive_entry", "cursive_exit", entries, exits, flags=lookup.LookupFlag
+                "cursive_entry", "cursive_exit", entries, exits, flags=lookup.LookupFlag,
+                address=self.currentLookup
             )
         )
         return b, []
@@ -177,7 +187,9 @@ class GPOSUnparser(GTableUnparser):
                 b.addRule(
                     fontFeatures.Attachment(
                         anchorClassPrefix, anchorClassPrefix + "_", bases, marks,
-                        font = self.font
+                        font = self.font,
+                        address=self.currentLookup,
+                        flags=lookup.LookupFlag,
                     )
                 )
         return b, []
@@ -236,7 +248,10 @@ class GPOSUnparser(GTableUnparser):
             b.addRule(
                 fontFeatures.Attachment(
                     anchorClassPrefix, anchorClassPrefix + "_", bases, marks,
-                    font = self.font
+                    font = self.font,
+                    address=self.currentLookup,
+                    flags=lookup.LookupFlag,
+
                 )
             )
         return b, []
