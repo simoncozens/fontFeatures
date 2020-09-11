@@ -39,13 +39,33 @@ class Buffer:
         self.clear_mask()
 
     def __getitem__(self, key):
-        return self.glyphs[self.mask[key]]
+        indexed = self.mask[key]
+        if isinstance(indexed, range) or isinstance(indexed, slice):
+            indexed = slice(indexed.start, indexed.stop, indexed.step)
+        if isinstance(indexed, list):
+            return [self.glyphs[g] for g in indexed]
+        return self.glyphs[indexed]
 
     def __setitem__(self, key, value):
-        self.glyphs[self.mask[key]] = value
+        indexed = self.mask[key]
+        if len(indexed) == 1:  # Easy
+            self.glyphs[indexed[0] : indexed[0] + 1] = value
+            return
+        if len(value) == 1:  # Also easy
+            self.glyphs[indexed[0]] = value[0]
+            for i in reversed(indexed[1:]):
+                del self.glyphs[i]
+            return
+        else:
+            raise ValueError("Too hard :-(")
 
     def __len__(self):
         return len(self.mask)
+
+    def update(self):
+        for g in self.glyphs:
+            g.recategorize(self.font)
+        self.recompute_mask()
 
     def clear_mask(self):
         self.flags = 0
