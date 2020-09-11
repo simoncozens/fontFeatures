@@ -15,6 +15,21 @@ class TestPositioning(unittest.TestCase):
             "H+708@<0,0>|A+612@<0,0>|Z+618@<0,0>"
         )
 
+    def test_buffer_mask(self):
+        buf = self.janky.positioning_buffer(["a", "acutecomb", "B"])
+        buf.set_mask(0x8)
+        self.assertEqual(len(buf), 2)
+        self.assertEqual(buf[0].glyph, "a")
+        self.assertEqual(buf[1].glyph, "B")
+        buf.set_mask(0x0)
+        self.assertEqual(len(buf), 3)
+        self.assertEqual(buf[0].glyph, "a")
+        self.assertEqual(buf[1].glyph, "acutecomb")
+        self.assertEqual(buf[2].glyph, "B")
+        buf.set_mask(0x2)
+        self.assertEqual(len(buf), 1)
+        self.assertEqual(buf[0].glyph, "acutecomb")
+
     # def test_buffer_rtl(self):
     #   buf = self.janky.positioning_buffer(["uni0633.init","uni0646.fina"], direction="RTL")
     #   self.assertEqual(buf[0]["glyph"], "uni0646.fina")

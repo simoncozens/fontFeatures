@@ -36,15 +36,45 @@ class Buffer:
     def __init__(self, glyphstring, font):
         self.font = font
         self.glyphs = [BufferGlyph(g, font) for g in glyphstring]
+        self.clear_mask()
 
     def __getitem__(self, key):
-        return self.glyphs[key]
+        return self.glyphs[self.mask[key]]
 
     def __setitem__(self, key, value):
-        self.glyphs[key] = value
+        self.glyphs[self.mask[key]] = value
 
     def __len__(self):
-        return len(self.glyphs)
+        return len(self.mask)
+
+    def clear_mask(self):
+        self.flags = 0
+        self.recompute_mask()
+
+    def set_mask(self, flags, markFilteringSet=None):
+        self.flags = flags
+        self.markFilteringSet = markFilteringSet
+        self.recompute_mask()
+
+    def recompute_mask(self):
+        mask = range(0, len(self.glyphs))
+        if self.flags & 0x2:  # IgnoreBases
+            mask = list(filter(lambda ix: self.glyphs[ix].category[0] != "base", mask))
+        if self.flags & 0x4:  # IgnoreLigatures
+            mask = list(
+                filter(lambda ix: self.glyphs[ix].category[0] != "ligature", mask)
+            )
+        if self.flags & 0x8:  # IgnoreMarks
+            mask = list(filter(lambda ix: self.glyphs[ix].category[0] != "mark", mask))
+        if self.flags & 0x10:  # UseMarkFilteringSet
+            mask = list(
+                filter(
+                    lambda ix: self.glyphs[ix].category[0] != "mark"
+                    or self.glyphs[ix].glyphs in self.markFilteringSet,
+                    mask,
+                )
+            )
+        self.mask = mask
 
     def serialize(self):
         """Serialize a buffer to a string.
