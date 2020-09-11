@@ -18,6 +18,7 @@ def singleglyph(x):
 
 
 class GSUBUnparser(GTableUnparser):
+    _table = "GSUB"
     lookupTypes = {
         1: "SingleSubstitution",
         2: "MultipleSubstitution",
