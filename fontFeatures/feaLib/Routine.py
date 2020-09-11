@@ -190,7 +190,9 @@ def asFeaAST(self):
     for x in self.comments:
         f.statements.append(Comment(x))
 
-    lastaddress = None
+    lastaddress = self.address
+    if lastaddress:
+        f.statements.append(feaast.Comment("# Original source: %s " % (" ".join([str(x) for x in lastaddress]))))
     for x in self.rules:
         if x.address and x.address != lastaddress:
             f.statements.append(feaast.Comment("# Original source: %s " % x.address))
