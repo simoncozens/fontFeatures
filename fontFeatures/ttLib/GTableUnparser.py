@@ -209,6 +209,12 @@ class GTableUnparser:
         for lookupIdx in lookupOrder:
             lookup = self.table.LookupList.Lookup[lookupIdx]
             res, dependencies = self.unparseLookup(lookup, lookupIdx)
+            res.address = (self._table, lookupIdx)
+            debug = self.getDebugInfo(self._table, lookupIdx)
+            if debug:
+                res.address = (self._table, lookupIdx, *debug)
+                if debug[1]:
+                    res.name = debug[1]
             self.lookups[lookupIdx] = {
                 "lookup": res,
                 "dependencies": dependencies,
@@ -227,6 +233,15 @@ class GTableUnparser:
             xt.LookupType = xt.ExtSubTable.LookupType
             xt.LookupFlag = lookup.LookupFlag
             return self.unparseLookup(xt, self.currentLookup)
+
+    def getDebugInfo(self, table, ix):
+        if not self.font or 'Debg' not in self.font:
+            return None
+        debug_data = self.font["Debg"].data
+        if 'com.github.fontTools.feaLib' not in debug_data:
+            return None
+        debug_data = debug_data['com.github.fontTools.feaLib'][table][str(ix)]
+        return debug_data[0], debug_data[1]
 
     def asXML(self, sub):
         writer = XMLWriter(BytesIO())
