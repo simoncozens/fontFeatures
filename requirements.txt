@@ -6,3 +6,4 @@ parsley
 booleanOperations
 more_itertools
 bidict
+dataclasses
