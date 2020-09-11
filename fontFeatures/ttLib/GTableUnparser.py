@@ -174,7 +174,10 @@ class GTableUnparser:
                                 self.lookups[lookupIdx]["inline"] = True
                             if self.lookups[lookupIdx]["inline"]:
                                 newroutine = fontFeatures.Routine(
-                                    languages=[(scriptname, lang)]
+                                    languages=[(scriptname, lang)],
+                                    address = routine.address,
+                                    flags = routine.flags,
+                                    name = routine.name
                                 )
                                 newroutine.rules.extend(routine.rules)
                                 f.append(newroutine)
