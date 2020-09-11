@@ -191,6 +191,7 @@ class Routine:
         languages=None,
         parent=None,
         flags=0,
+        markFilteringSet=None
     ):
         self.name = name
         self.usedin = set()
@@ -204,6 +205,7 @@ class Routine:
         self.languages = languages
         self.parent = parent
         self.flags = flags
+        self.markFilteringSet = markFilteringSet
 
     def addRule(self, rule):
         """Adds a rule to a Routine.
