@@ -15,6 +15,11 @@ class GPOSUnparser(GTableUnparser):
         8: "ChainedContextualPositioning",
         9: "Extension",
     }
+    _format2_attrs = {
+            "ruleset": "ChainPosClassSet",
+            "rule": "ChainPosClassRule",
+            "lookup": "PosLookupRecord"
+    }
 
     def makeValueRecord(self, valueRecord, valueFormat):
         valueFormatFlags = (
@@ -263,7 +268,7 @@ class GPOSUnparser(GTableUnparser):
             name=self.getname("ContextualPositioning" + self.gensym())
         )
         for sub in lookup.SubTable:
-            if sub.Format == 1:
+            if sub.Format == 1 or sub.Format == 3:
                 self._unparse_contextual_pos_format1(sub, b, lookup)
             else:
                 try:
@@ -321,7 +326,7 @@ class GPOSUnparser(GTableUnparser):
             for coverage in reversed(sub.BacktrackCoverage):
                 prefix.append(coverage.glyphs)
         if hasattr(sub, "PosLookupRecord"):
-            lookups = self._unparse_lookups(subrule.PosLookupRecord, lookups)
+            lookups = self._unparse_lookups(sub.PosLookupRecord, lookups)
         if hasattr(sub, "InputCoverage"):
             for coverage in sub.InputCoverage:
                 inputs.append(coverage.glyphs)
@@ -342,5 +347,12 @@ class GPOSUnparser(GTableUnparser):
         b = fontFeatures.Routine(
             name=self.getname("ChainedContextualPositioning" + self.gensym())
         )
-        self.unparsable(b, "Chained Contextual pos", lookup)
+        for sub in lookup.SubTable:
+            if sub.Format == 1 or sub.Format == 3:
+                self._unparse_contextual_chain_format1(sub, b, lookup)
+            elif sub.Format == 2:
+                self._unparse_contextual_format2(sub, b, lookup)
+            else:
+                raise ValueError
         return b, []
+

@@ -260,3 +260,95 @@ class GTableUnparser:
         for ln in out:
             b.addComment("# " + ln)
         b.addComment("# ----\n")
+
+
+    def _unparse_contextual_chain_format1(self, sub, b, lookup):
+        prefix = []
+        inputs = []
+        lookups = []
+        suffix = []
+        if hasattr(sub, "ChainSubRuleSet"):
+            raise ValueError
+        if hasattr(sub, "BacktrackCoverage"):
+            for coverage in reversed(sub.BacktrackCoverage):
+                prefix.append(coverage.glyphs)
+
+        if hasattr(sub, "SubstLookupRecord"):
+            lookups = self._unparse_lookups(sub.SubstLookupRecord)
+        elif hasattr(sub, "PosLookupRecord"):
+            lookups = self._unparse_lookups(sub.PosLookupRecord)
+
+        if hasattr(sub, "InputCoverage"):
+            for coverage in sub.InputCoverage:
+                inputs.append(coverage.glyphs)
+        if hasattr(sub, "LookAheadCoverage"):
+            for i, coverage in enumerate(sub.LookAheadCoverage):
+                suffix.append(coverage.glyphs)
+        if len(lookups) <= len(inputs):
+            lookups.extend([None] * (1 + len(inputs) - len(lookups)))
+        if len(prefix) > 0 or len(suffix) > 0 or any([x is not None for x in lookups]):
+            b.addRule(
+                fontFeatures.Chaining(
+                    inputs,
+                    prefix,
+                    suffix,
+                    lookups=lookups,
+                    address=self.currentLookup,
+                    flags=lookup.LookupFlag,
+                )
+            )
+        elif len(inputs) > 0 and (
+            len(lookups) == 0 or all([x is None for x in lookups])
+        ):
+            # This is an Ignore
+            b.addRule(
+                fontFeatures.Chaining(
+                    inputs,
+                    prefix,
+                    suffix,
+                    lookups=lookups,
+                    address=self.currentLookup,
+                    flags=lookup.LookupFlag,
+                )
+            )
+        else:
+            # import code; code.interact(local=locals())
+            b.addComment("# Another kind of contextual " + str(sub.Format))
+
+
+    def _unparse_contextual_format2(self, sub, b, lookup):
+        rulesetattr, ruleattr, lookupattr = [self._format2_attrs[x] for x in ["ruleset", "rule", "lookup"]]
+
+        backtrack = {}
+        if sub.BacktrackClassDef:
+            backtrack = self._invertClassDef(sub.BacktrackClassDef.classDefs, self.font)
+        lookahead = {}
+        if sub.LookAheadClassDef:
+            lookahead = self._invertClassDef(sub.LookAheadClassDef.classDefs, self.font)
+        inputs = {}
+        if sub.InputClassDef:
+            inputs = self._invertClassDef(sub.InputClassDef.classDefs, self.font)
+
+        rulesets = getattr(sub, rulesetattr)
+        for classId, ruleset in enumerate(rulesets):
+            if not ruleset:
+                continue
+            rules = getattr(ruleset, ruleattr)
+            inputclass = inputs[classId]
+            for r in rules:
+                prefix = [backtrack[x] for x in r.Backtrack]
+                input_ = [inputclass] + [inputs[x] for x in r.Input]
+                suffix = [lookahead[x] for x in r.LookAhead]
+                lookups = self._unparse_lookups(getattr(r, lookupattr))
+                if len(lookups) <= len(input_):
+                    lookups.extend([None] * (1 + len(input_) - len(lookups)))
+                b.addRule(
+                    fontFeatures.Chaining(
+                        input_,
+                        prefix,
+                        suffix,
+                        lookups=lookups,
+                        address=self.currentLookup,
+                        flags=lookup.LookupFlag,
+                    )
+                )
