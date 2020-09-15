@@ -233,6 +233,7 @@ class Routine:
         return set.union(*[r.involved_glyphs for r in self.rules])
 
     from .feaLib.Routine import asFea, asFeaAST, feaPreamble
+    from .shaperLib.Routine import apply_to_buffer
 
 
 class Rule:
@@ -244,6 +245,7 @@ class Rule:
         """Computes any text that needs to go in the feature file header."""
         return []
 
+    from .shaperLib.Rule import apply_to_buffer
 
 class Substitution(Rule):
     """Represents a Substitution rule.
@@ -300,6 +302,7 @@ class Substitution(Rule):
         return i | o | b | a
 
     from .feaLib.Substitution import asFeaAST
+    from .shaperLib.Substitution import shaper_inputs, _do_apply
 
 
 class Chaining(Rule):
@@ -389,6 +392,7 @@ class Positioning(Rule):
         return i | b | a
 
     from .feaLib.Positioning import asFeaAST
+    from .shaperLib.Positioning import shaper_inputs, _do_apply
 
 
 class Attachment(Rule):
@@ -422,6 +426,7 @@ class Attachment(Rule):
         return self.base_name == "cursive_entry" or self.base_name == "entry" # XXX
 
     from .feaLib.Attachment import asFeaAST, feaPreamble
+    from .shaperLib.Attachment import shaper_inputs, _do_apply
 
     @property
     def involved_glyphs(self):
