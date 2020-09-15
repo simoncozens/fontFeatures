@@ -238,9 +238,9 @@ class GTableUnparser:
         if not self.font or 'Debg' not in self.font:
             return None
         debug_data = self.font["Debg"].data
-        if 'com.github.fontTools.feaLib' not in debug_data:
+        if 'com.github.fonttools.feaLib' not in debug_data:
             return None
-        debug_data = debug_data['com.github.fontTools.feaLib'][table][str(ix)]
+        debug_data = debug_data['com.github.fonttools.feaLib'][table][str(ix)]
         return debug_data[0], debug_data[1]
 
     def asXML(self, sub):
