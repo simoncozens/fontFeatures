@@ -268,8 +268,10 @@ class GPOSUnparser(GTableUnparser):
             name=self.getname("ContextualPositioning" + self.gensym())
         )
         for sub in lookup.SubTable:
-            if sub.Format == 1 or sub.Format == 3:
+            if sub.Format == 1:
                 self._unparse_contextual_pos_format1(sub, b, lookup)
+            elif sub.Format == 3:
+                self._unparse_contextual_pos_format3(sub, b, lookup)
             else:
                 try:
                     inputs = self._invertClassDef(sub.ClassDef.classDefs, self.font)
@@ -340,6 +342,22 @@ class GPOSUnparser(GTableUnparser):
                 suffix,
                 address=self.currentLookup,
                 flags=lookup.LookupFlag,
+            )
+        )
+
+    def _unparse_contextual_pos_format3(self, sub, b, lookup):
+        lookups = []
+        suffix = []
+        lookups = self._unparse_lookups(sub.PosLookupRecord, lookups)
+        inputs = [x.glyphs for x in sub.Coverage]
+        while len(lookups) < len(inputs):
+            lookups.append(None)
+        b.addRule(
+            fontFeatures.Chaining(
+                inputs,
+                lookups = lookups,
+                address=self.currentLookup,
+                flags=lookup.LookupFlag
             )
         )
 
