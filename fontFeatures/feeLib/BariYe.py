@@ -14,27 +14,27 @@ First, you must define the following glyph classes:
   *like* bari ye. For example, final jim and final choti ye may have "bari ye
   like tendencies" in that they have a large negative right sidebearing that
   requires nukta repositioning.
-- ``@below_dots``: all nuktas and marks (e.g. kasra) which sit under the rasm
-  and need to be repositioned underneath the bari ye swash. *Note carefully*
-  that this class should *additionally* contain a set of glyphs suffixed ``.yb``
-  which have no anchors defined. i.e. if your two-dots-below glyph is called
-  ``ddb``, then ``@below_dots`` should contain both ``ddb`` and ``ddb.yb``, a
-  copy of ``ddb`` with no anchors. You can use the ``FontEngineering`` plugin to
-  generate these glyphs on the fly if necessary.
 - ``@behs``: all glyphs which may "carry" nuktas and marks under the rasm;
   typically medial and initial beh forms, but also medial and initial jim.
 
 With this set-up in place, the ``BariYe`` plugin provides you with two verbs:
-``BYMoveDots`` moves nuktas to underneath the swash of the bari ye (or jim
+``BYMoveDots`` moves nuktas or marks such as kasra to underneath the
+swash of the bari ye (or jim
 etc...) by computing the length of the swash, the width and rise of all
 sequences, and emitting rules which match applicable sequences. ``BYMoveDots``
-takes a single argument, depending on your preferred stylistic strategy
+takes two arguments. The first depends on your preferred stylistic strategy
 for handling bari ne nuktas: either ``AlwaysDrop``, which simply drops all
 dots underneath the swash, or ``TryToFit`` which only drops those dots which
 would not fit in the gap between the bari ye swash and the rasm. (One nice
 trick is to put ``BYMoveDots TryToFit`` into an ``rlig`` feature,
 and ``BYMoveDots AlwaysDrop`` into a stylistic set, so the user can choose
-where the dots should be.)
+where the dots should be.) The second is the list of all nuktas or marks (e.g.
+kasra) which sit under the rasm and need to be repositioned underneath the
+bari ye swash. *Note carefully* that this class should *additionally* contain
+a set of glyphs suffixed ``.yb`` which have no anchors defined. i.e. if your
+two-dots-below glyph is called ``ddb``, then it should contain both ``ddb``
+and ``ddb.yb``, a copy of ``ddb`` with no anchors. You can use the
+``FontEngineering`` plugin to generate these glyphs on the fly if necessary.
 
 The other verb, ``BYFixOverhang`` deals with the problem of short bari ye
 sequences. Bari ye glyphs typically have a large negative right sidebearing,
@@ -73,7 +73,7 @@ import math
 import statistics
 
 GRAMMAR = """
-BYMoveDots_Args = <('AlwaysDrop'|'TryToFit')>:w -> [w]
+BYMoveDots_Args = <('AlwaysDrop'|'TryToFit')>:w ws glyphselector:g -> [w,g]
 BYFixOverhang_Args = <(digit+)>:overhang_padding ws glyphselector:g -> [overhang_padding, g]
 """
 
@@ -99,8 +99,8 @@ accuracy2 = 10
 
 class BYMoveDots:
     @classmethod
-    def action(self, parser, w):
-        for c in ["inits", "medis", "bariye", "below_dots", "behs"]:
+    def action(self, parser, w, below_dots):
+        for c in ["inits", "medis", "bariye", "behs"]:
             if c not in parser.fontfeatures.namedClasses:
                 raise ValueError("Please define @%s class before calling" % c)
 
@@ -112,7 +112,7 @@ class BYMoveDots:
         medis = parser.fontfeatures.namedClasses["medis"]
         inits = parser.fontfeatures.namedClasses["inits"]
         behs = parser.fontfeatures.namedClasses["behs"]
-        below_dots = parser.fontfeatures.namedClasses["below_dots"]
+        below_dots = below_dots.resolve(parser.fontfeatures, parser.font)
         smallest_medi_width = min(
             [get_glyph_metrics(parser.font, g)["width"] for g in medis]
         )
@@ -177,7 +177,7 @@ class BYMoveDots:
             dropBYsRoutine.markFilteringSet = below_dots
 
             dropADotRoutine = fontFeatures.Routine()
-            # Substitute those number ending .yb with those ending .yb
+            # Substitute those not ending .yb with those ending .yb
             below_dots_non_yb = list(
                 sorted(filter(lambda x: not x.endswith(".yb"), below_dots))
             )
@@ -233,6 +233,7 @@ class BYMoveDots:
                     # disjoint sets and that means they can be expressed as a
                     # format 2 class-based rule! Wonderful!
                     dropBYsRoutine.addRule(chainrule)
+
                 for m in binned_medis:
                     queue.append([list(m)] + consideration)
 
