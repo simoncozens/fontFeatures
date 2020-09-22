@@ -2,6 +2,7 @@ from fontFeatures.feeLib import FeeParser, GlyphSelector
 import fontFeatures.feeLib.ClassDefinition as DefineClass
 from ometa.builder import writePython
 from ometa.grammar import OMeta
+from fontTools.ttLib import TTFont
 import pytest
 import os
 import re
@@ -17,7 +18,7 @@ def alltrim(a):
 def parser():
     path, _ = os.path.split(__file__)
     fontpath = os.path.join(path, "data", "LibertinusSans-Regular.otf")
-    return FeeParser(fontpath)
+    return FeeParser(TTFont(fontpath))
 
 
 def test_barename(parser):
