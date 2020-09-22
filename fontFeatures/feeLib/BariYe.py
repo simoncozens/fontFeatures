@@ -57,6 +57,7 @@ glyph preceding the sequence.
 
 import fontFeatures
 from fontFeatures.jankyPOS import JankyPos
+from fontFeatures.fontProxy import FontProxy
 from glyphtools import (
     categorize_glyph,
     get_glyph_metrics,
@@ -307,7 +308,7 @@ class BYMoveDots:
         behforms = list(
             filter(
                 lambda g: g.startswith("BEm") or g.startswith("BEi"),
-                parser.font.getGlyphOrder(),
+                FontProxy(parser.font).glyphs,
             )
         )
         if "mark" not in ff2.features:

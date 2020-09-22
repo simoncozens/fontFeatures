@@ -2,8 +2,8 @@ import re
 import parsley
 import importlib, inspect
 from fontFeatures import FontFeatures
+from fontFeatures.fontProxy import FontProxy
 from ometa.grammar import OMeta
-from fontTools.ttLib import TTFont
 import warnings
 from more_itertools import collapse
 
@@ -58,7 +58,7 @@ class GlyphSelector:
 
     def resolve(self, fontfeatures, font, mustExist=True):
         returned = []
-        glyphs = font.getGlyphOrder()
+        glyphs = FontProxy(font).glyphs
         if "barename" in self.selector:
             returned = [self.selector["barename"]]
         elif "inlineclass" in self.selector:
@@ -112,7 +112,7 @@ class FeeParser:
     The resulting object is stored in the parser's ``fontFeatures`` property.
 
     Args:
-        font: A TTFont object.
+        font: A TTFont object or glyphsLib GSFontMaster object.
     """
     basegrammar = """
 feefile = wsc statement+
@@ -151,7 +151,7 @@ integer = ('-'|'+')?:sign <digit+>:i -> (-int(i) if sign == "-" else int(i))
     def __init__(self, font):
         self.grammar = self._make_initial_grammar()
         self.grammar_generation = 1
-        self.font = TTFont(font)
+        self.font = font
         self.fontfeatures = FontFeatures()
         self.current_file = None
         self.plugin_classes = {}

@@ -13,19 +13,34 @@ parser.add_argument('--load', action='store_true',
                     help='Load features from font file')
 parser.add_argument('-O', nargs='?', const=1, type=int, default=1,
                     help='Optimization level')
+parser.add_argument("--master",
+                    help="Master name for .glyphs fonts", metavar="MASTER")
 
 parser.add_argument("font",
-                    help="Font file to process", metavar="FONT")
+                    help="Font file (.otf/.glyphs) to process", metavar="FONT")
 parser.add_argument("fee",
                     help="FEE file to process", metavar="FEE")
 
 args = parser.parse_args()
 
-font = TTFont(args.font)
-p = FeeParser(args.font)
-if args.load:
-	p.fontfeatures = unparse(font)
+if args.font.endswith("tf"):
+	font = TTFont(args.font)
+	if args.load:
+		p.fontfeatures = unparse(font)
+elif args.font.endswith(".glyphs"):
+	from glyphsLib import GSFont
 
+	gsfont = GSFont(args.font)
+	if args.master:
+		potential_masters = list(filter(lambda x: x.name == args.master, f.masters))
+		if len(potential_masters) != 1:
+			warnings.warn("Could not find master '%s'" % args.master)
+	else:
+		font = gsfont.masters[0]
+		if len(gsfont.masters) > 1:
+			warnings.warn("Multiple masters in file and --master not specified, selecting '%s'" % font.name)
+
+p = FeeParser(font)
 p.parseFile(args.fee)
 Optimizer(p.fontfeatures).optimize(level=args.O)
 print(p.fontfeatures.asFea())

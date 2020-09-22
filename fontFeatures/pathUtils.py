@@ -8,19 +8,23 @@ the outlines of glyphs.
 from beziers.path import BezierPath
 from beziers.line import Line
 from beziers.point import Point
-
+from glyphtools import isglyphs
 
 def get_bezier_paths(font, glyphname):
     """Retrieve beziers from a glyph
 
     Args:
-        font: A fontTools ``TTFont`` object
+        font: A fontTools ``TTFont`` object or glyphsLib ``GSFontMaster``.
         glyphname: The name of a single glyph
 
     Returns:
         An array of ``beziers.path.BezierPath`` objects representing the
         outlines of the glyph.
     """
+    if isglyphs(font):
+        layer = fontmaster.font.glyphs[glyphname].layers[fontmaster.id]
+        return BezierPath.fromGlyphsLayer(layer)
+
     return BezierPath.fromFonttoolsGlyph(font, glyphname)
 
 
