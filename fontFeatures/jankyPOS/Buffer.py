@@ -1,7 +1,10 @@
 from dataclasses import dataclass
 from fontFeatures import ValueRecord
 from glyphtools import get_glyph_metrics, categorize_glyph
-
+from fontFeatures.fontProxy import FontProxy
+import unicodedata
+from youseedee import ucd_data
+from fontFeatures.shaperLib.Shaper import _script_direction
 
 def _add_value_records(vr1, vr2):
     if vr1.xPlacement or vr2.xPlacement:
@@ -22,21 +25,47 @@ class BufferGlyph:
 
     def __init__(self, glyph, font):
         self.glyph = glyph
-        self.position = ValueRecord(xAdvance=get_glyph_metrics(font, glyph)["width"],)
+        self.position = ValueRecord(xAdvance=get_glyph_metrics(font.font, glyph)["width"],)
         self.recategorize(font)
 
     def recategorize(self, font):
-        self.category = categorize_glyph(font, self.glyph)
+        self.category = categorize_glyph(font.font, self.glyph)
 
     def add_position(self, vr2):
         _add_value_records(self.position, vr2)
 
 
 class Buffer:
-    def __init__(self, glyphstring, font):
+    def __init__(self, font, glyphs=[], unicodes=[], direction=None, script=None, language=None):
+        if not isinstance(font, FontProxy):
+            font = FontProxy(font)
         self.font = font
-        self.glyphs = [BufferGlyph(g, font) for g in glyphstring]
+        self.direction = direction
+        self.script = script
+        self.language = language
+        self.fallback_mark_positioning = False
+        self.fallback_glyph_classes = False
+        if glyphs:
+            self.glyphs = [BufferGlyph(g, font) for g in glyphs]
+        else:
+            self.create_buffer(unicodes)
         self.clear_mask()
+
+
+    def create_buffer(self, unistring):
+        glyphs = []
+        unicodes = [ord(char) for char in unicodedata.normalize("NFC", unistring)]
+        for u in unicodes:
+            glyphs.append(self.font.map_unicode_to_glyph(u))
+            # Guess segment properties
+            if not self.script:
+                thisScript = ucd_data(u)["Script"]
+                if thisScript not in ["Common", "Unknown", "Inherited"]:
+                    self.script = thisScript
+        if not self.direction:
+            self.direction = _script_direction(self.script)
+        self.glyphs = [BufferGlyph(g, self.font) for g in glyphs]
+
 
     def __getitem__(self, key):
         indexed = self.mask[key]

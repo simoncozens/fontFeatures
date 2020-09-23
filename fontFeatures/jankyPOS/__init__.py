@@ -41,7 +41,7 @@ class JankyPos:
             An array of positioning information, to be passed to
             positioning methods.
         """
-        return Buffer(glyphstring, self.font)
+        return Buffer(self.font, glyphstring)
 
     def process_fontfeatures(self, buf, ff):
         """Position a buffer based on the rules of a fontFeatures object.
