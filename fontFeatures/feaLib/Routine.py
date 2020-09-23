@@ -143,7 +143,8 @@ def feaPreamble(self, ff):
     preamble = []
     for r in self.rules:
         preamble.extend(r.feaPreamble(ff))
-    if self.markFilteringSet:
+    if self.flags & 0x10:
+        assert(self.markFilteringSet)
         self.markFilteringSetAsClass = ff.getNamedClassFor(self.markFilteringSet, gensym("markFilteringSet"))
     return preamble
 
@@ -179,7 +180,7 @@ def asFeaAST(self):
             )
         else:
             flags = feaast.LookupFlagStatement(self.flags)
-        if self.flags & 0x10 and self.markFilteringSetAsClass:
+        if self.flags & 0x10 and hasattr(self, "markFilteringSetAsClass"): # XXX
             # We only need the name, not the contents
             mfs = feaast.GlyphClassDefinition(self.markFilteringSetAsClass,
                 feaast.GlyphClass([])
