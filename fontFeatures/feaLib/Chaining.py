@@ -23,23 +23,6 @@ def glyphref(g):
     return feaast.GlyphClass([feaast.GlyphName(x) for x in g])
 
 
-def suborpos(lookups):
-    for l in lookups:
-        if not l:
-            continue
-        for aLookup in l:
-            if not aLookup:
-                continue
-            for r in aLookup.rules:
-                if isinstance(r, fontFeatures.Substitution):
-                    return "sub"
-                if isinstance(r, fontFeatures.Positioning):
-                    return "pos"
-                if isinstance(r, fontFeatures.Attachment):
-                    return "pos"
-                if isinstance(r, fontFeatures.Chaining):
-                    return suborpos(r.lookups)
-
 
 def gensym(ff):
     if not "index" in ff.scratch:
@@ -101,7 +84,7 @@ def _complex(self):
     import warnings
 
     if EXPERIMENTAL_FONTTOOLS:
-        if suborpos(self.lookups) == "sub":
+        if self.stage == "sub":
             routine = feaast.ChainContextSubstStatement
         else:
             routine = feaast.ChainContextPosStatement
@@ -120,7 +103,7 @@ def _complex(self):
 def asFeaAST(self):
     if len(self.lookups) > 0 and any([x is not None for x in self.lookups]):
         # Fill in the blanks
-        if suborpos(self.lookups) == "sub":
+        if self.stage == "sub":
             routine = feaast.ChainContextSubstStatement
         else:
             routine = feaast.ChainContextPosStatement

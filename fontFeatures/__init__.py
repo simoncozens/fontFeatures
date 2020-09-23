@@ -292,6 +292,7 @@ class Substitution(Rule):
         self.languages = languages
         self.flags = flags
         self.reverse = reverse
+        self.stage = "sub"
 
     @property
     def involved_glyphs(self):
@@ -344,6 +345,24 @@ class Chaining(Rule):
     from .feaLib.Chaining import asFeaAST, feaPreamble
 
     @property
+    def stage(self):
+        for l in self.lookups:
+            if not l:
+                continue
+            for aLookup in l:
+                if not aLookup:
+                    continue
+                for r in aLookup.rules:
+                    if isinstance(r, Substitution):
+                        return "sub"
+                    if isinstance(r, Positioning):
+                        return "pos"
+                    if isinstance(r, Attachment):
+                        return "pos"
+                    if isinstance(r, Chaining):
+                        return suborpos(r.lookups)
+
+    @property
     def involved_glyphs(self):
         i = set(chain.from_iterable(self.input))
         b = set(chain.from_iterable(self.precontext))
@@ -385,6 +404,7 @@ class Positioning(Rule):
         self.address = address
         self.languages = languages
         self.flags = flags
+        self.stage = "pos"
 
     @property
     def involved_glyphs(self):
@@ -422,6 +442,7 @@ class Attachment(Rule):
         self.flags = flags
         self.address = address
         self.font = font
+        self.stage = "pos"
 
     @property
     def is_cursive(self):
