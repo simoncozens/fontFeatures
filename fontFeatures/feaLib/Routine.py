@@ -188,7 +188,7 @@ def asFeaAST(self):
         f.statements.append(flags)
 
     for x in self.comments:
-        f.statements.append(Comment(x))
+        f.statements.append(feaast.Comment(x))
 
     lastaddress = self.address
     if lastaddress:
