@@ -350,6 +350,8 @@ class Chaining(Rule):
         a = set(chain.from_iterable(self.postcontext))
         return i | b | a
 
+    from .shaperLib.Chaining import shaper_inputs, _do_apply
+
 
 class Positioning(Rule):
     """Represents a Positioning rule.
