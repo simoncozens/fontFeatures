@@ -216,4 +216,4 @@ if __name__ == "__main__":
         janky.direction = args.direction
     buf = janky.positioning_buffer(glyphs)
     buf = janky.process_fontfeatures(buf, ff)
-    print(janky.serialize_buffer(buf))
+    print(buf.serialize())
