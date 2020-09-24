@@ -11,6 +11,16 @@ class FontProxy:
 		else:
 			self.setup_tt()
 
+	@classmethod
+	def opener(klass, fontfile):
+		if fontfile.endswith(".otf") or fontfile.endswith(".ttf"):
+			font = TTFont(fontfile)
+			return FontProxy(font)
+		if fontfile.endswith(".glyphs"):
+			import glyphsLib
+			return FontProxy(glyphsLib.GSFont(fontfile).masters[0])
+
+
 	def setup_glyphs(self):
 		list(sorted([x.name for x in self.font.font.glyphs]))
 		self.mapping = {}
