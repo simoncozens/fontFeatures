@@ -47,16 +47,17 @@ class Buffer:
         self.fallback_glyph_classes = False
         if glyphs:
             self.glyphs = [BufferGlyph(g, font) for g in glyphs]
+            self.clear_mask()
         else:
-            self.create_buffer(unicodes)
-        self.clear_mask()
+            self.normalize(unicodes)
+            self.guess_segment_properties()
 
 
-    def create_buffer(self, unistring):
-        glyphs = []
-        unicodes = [ord(char) for char in unicodedata.normalize("NFC", unistring)]
-        for u in unicodes:
-            glyphs.append(self.font.map_unicode_to_glyph(u))
+    def normalize(self, unistring):
+        self.unicodes = [ord(char) for char in unicodedata.normalize("NFC", unistring)]
+
+    def guess_segment_properties(self):
+        for u in self.unicodes:
             # Guess segment properties
             if not self.script:
                 thisScript = ucd_data(u)["Script"]
@@ -64,8 +65,13 @@ class Buffer:
                     self.script = thisScript
         if not self.direction:
             self.direction = _script_direction(self.script)
-        self.glyphs = [BufferGlyph(g, self.font) for g in glyphs]
 
+    def map_to_glyphs(self):
+        glyphs = []
+        for u in self.unicodes:
+            glyphs.append(self.font.map_unicode_to_glyph(u))
+        self.glyphs = [BufferGlyph(g, self.font) for g in glyphs]
+        self.clear_mask()
 
     def __getitem__(self, key):
         indexed = self.mask[key]
@@ -134,13 +140,16 @@ class Buffer:
 
     """
         outs = []
-        for info in self.glyphs:
-            position = info.position
-            outs.append("%s" % info.glyph)
-            outs[-1] = outs[-1] + "+%i" % position.xAdvance
-            if position.xPlacement != 0 or position.yPlacement != 0:
-                outs[-1] = outs[-1] + "@<%i,%i>" % (
-                    position.xPlacement or 0,
-                    position.yPlacement or 0,
-                )
+        if hasattr(self, "glyphs"):
+            for info in self.glyphs:
+                position = info.position
+                outs.append("%s" % info.glyph)
+                outs[-1] = outs[-1] + "+%i" % position.xAdvance
+                if position.xPlacement != 0 or position.yPlacement != 0:
+                    outs[-1] = outs[-1] + "@<%i,%i>" % (
+                        position.xPlacement or 0,
+                        position.yPlacement or 0,
+                    )
+        else:
+            outs = ["%04x" % x for x in self.unicodes]
         return "|".join(outs)
