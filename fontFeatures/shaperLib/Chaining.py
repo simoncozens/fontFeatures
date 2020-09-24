@@ -3,7 +3,7 @@ def shaper_inputs(self):
 
 def __find_masked_ix(buf, ix):
     # This probably could be done better...
-    for i in range(len(buf.glyphs)):
+    for i in range(len(buf.items)):
         if buf.mask[i] == ix: return i
     return -1
 

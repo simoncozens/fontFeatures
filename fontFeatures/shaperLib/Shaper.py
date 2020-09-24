@@ -3,14 +3,8 @@ from fontFeatures import FontFeatures
 import unicodedata
 from fontFeatures.jankyPOS import Buffer
 from .BaseShaper import BaseShaper
-
-class ArabicShaper(BaseShaper):
-    def substitute_default(self):
-        state = 0
-        prev = ~1
-        for g in self.buffer:
-            # this_type = 
-            pass
+from .ArabicShaper import ArabicShaper
+from youseedee import ucd_data
 
 
 class Shaper:

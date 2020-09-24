@@ -18,14 +18,31 @@ def _add_value_records(vr1, vr2):
 
 
 @dataclass
-class BufferGlyph:
-    glyph: str
-    position: ValueRecord
-    category: str
+class BufferItem:
+    # codepoint: int
+    # glyph: str
+    # position: ValueRecord
+    # category: str
 
-    def __init__(self, glyph, font):
+    @classmethod
+    def new_unicode(klass, codepoint):
+        self = BufferItem()
+        self.codepoint = codepoint
+        return self
+
+    @classmethod
+    def new_glyph(klass, glyph, font):
+        self = BufferItem()
         self.glyph = glyph
-        self.position = ValueRecord(xAdvance=get_glyph_metrics(font.font, glyph)["width"],)
+        self.prep_glyph(font)
+        return self
+
+    def map_to_glyph(self, font):
+        self.glyph = font.map_unicode_to_glyph(self.codepoint)
+        self.prep_glyph(font)
+
+    def prep_glyph(self, font):
+        self.position = ValueRecord(xAdvance=get_glyph_metrics(font.font, self.glyph)["width"],)
         self.recategorize(font)
 
     def recategorize(self, font):
@@ -46,7 +63,7 @@ class Buffer:
         self.fallback_mark_positioning = False
         self.fallback_glyph_classes = False
         if glyphs:
-            self.glyphs = [BufferGlyph(g, font) for g in glyphs]
+            self.items = [BufferItem.new_glyph(g, font) for g in glyphs]
             self.clear_mask()
         else:
             self.normalize(unicodes)
@@ -54,13 +71,13 @@ class Buffer:
 
 
     def normalize(self, unistring):
-        self.unicodes = [ord(char) for char in unicodedata.normalize("NFC", unistring)]
+        self.items = [BufferItem.new_unicode(ord(char)) for char in unicodedata.normalize("NFC", unistring)]
 
     def guess_segment_properties(self):
-        for u in self.unicodes:
+        for u in self.items:
             # Guess segment properties
             if not self.script:
-                thisScript = ucd_data(u)["Script"]
+                thisScript = ucd_data(u.codepoint)["Script"]
                 if thisScript not in ["Common", "Unknown", "Inherited"]:
                     self.script = thisScript
         if not self.direction:
@@ -68,9 +85,8 @@ class Buffer:
 
     def map_to_glyphs(self):
         glyphs = []
-        for u in self.unicodes:
-            glyphs.append(self.font.map_unicode_to_glyph(u))
-        self.glyphs = [BufferGlyph(g, self.font) for g in glyphs]
+        for u in self.items:
+            u.map_to_glyph(self.font)
         self.clear_mask()
 
     def __getitem__(self, key):
@@ -78,18 +94,18 @@ class Buffer:
         if isinstance(indexed, range) or isinstance(indexed, slice):
             indexed = slice(indexed.start, indexed.stop, indexed.step)
         if isinstance(indexed, list):
-            return [self.glyphs[g] for g in indexed]
-        return self.glyphs[indexed]
+            return [self.items[g] for g in indexed]
+        return self.items[indexed]
 
     def __setitem__(self, key, value):
         indexed = self.mask[key]
         if len(indexed) == 1:  # Easy
-            self.glyphs[indexed[0] : indexed[0] + 1] = value
+            self.items[indexed[0] : indexed[0] + 1] = value
             return
         if len(value) == 1:  # Also easy
-            self.glyphs[indexed[0]] = value[0]
+            self.items[indexed[0]] = value[0]
             for i in reversed(indexed[1:]):
-                del self.glyphs[i]
+                del self.items[i]
             return
         else:
             raise ValueError("Too hard :-(")
@@ -98,7 +114,7 @@ class Buffer:
         return len(self.mask)
 
     def update(self):
-        for g in self.glyphs:
+        for g in self.items:
             g.recategorize(self.font)
         self.recompute_mask()
 
@@ -112,20 +128,20 @@ class Buffer:
         self.recompute_mask()
 
     def recompute_mask(self):
-        mask = range(0, len(self.glyphs))
+        mask = range(0, len(self.items))
         if self.flags & 0x2:  # IgnoreBases
-            mask = list(filter(lambda ix: self.glyphs[ix].category[0] != "base", mask))
+            mask = list(filter(lambda ix: self.items[ix].category[0] != "base", mask))
         if self.flags & 0x4:  # IgnoreLigatures
             mask = list(
-                filter(lambda ix: self.glyphs[ix].category[0] != "ligature", mask)
+                filter(lambda ix: self.items[ix].category[0] != "ligature", mask)
             )
         if self.flags & 0x8:  # IgnoreMarks
-            mask = list(filter(lambda ix: self.glyphs[ix].category[0] != "mark", mask))
+            mask = list(filter(lambda ix: self.items[ix].category[0] != "mark", mask))
         if self.flags & 0x10:  # UseMarkFilteringSet
             mask = list(
                 filter(
-                    lambda ix: self.glyphs[ix].category[0] != "mark"
-                    or self.glyphs[ix].glyphs in self.markFilteringSet,
+                    lambda ix: self.items[ix].category[0] != "mark"
+                    or self.items[ix].items in self.markFilteringSet,
                     mask,
                 )
             )
@@ -140,8 +156,8 @@ class Buffer:
 
     """
         outs = []
-        if hasattr(self, "glyphs"):
-            for info in self.glyphs:
+        for info in self.items:
+            if hasattr(info, "glyph"):
                 position = info.position
                 outs.append("%s" % info.glyph)
                 outs[-1] = outs[-1] + "+%i" % position.xAdvance
@@ -150,6 +166,6 @@ class Buffer:
                         position.xPlacement or 0,
                         position.yPlacement or 0,
                     )
-        else:
-            outs = ["%04x" % x for x in self.unicodes]
+            else:
+                outs.append("%04x" % info.codepoint)
         return "|".join(outs)

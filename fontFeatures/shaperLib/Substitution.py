@@ -3,9 +3,9 @@ def shaper_inputs(self):
 
 
 def _do_apply(self, buf, ix):
-    from fontFeatures.jankyPOS.Buffer import BufferGlyph
+    from fontFeatures.jankyPOS.Buffer import BufferItem
 
     coverage = buf[ix : ix + len(self.input)]
     buf[ix : ix + len(self.input)] = [
-        BufferGlyph(g, buf.font) for g in self.replacement
+        BufferItem.new_glyph(g, buf.font) for g in self.replacement
     ]
