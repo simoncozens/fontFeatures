@@ -42,12 +42,14 @@ class Shaper:
                 outfeat.append({"tag": f, "value": True})
         return outfeat
 
-    def add_pause(self):
+    def add_pause(self, thing = None):
+        if thing:
+            self.stages.append(thing)
         self.stages.append([])
 
     def add_features(self, *tags):
         for t in tags:
-            if any([t in x for x in self.stages]):
+            if any([isinstance(x, list) and t in x for x in self.stages]):
                 continue
             self.stages[-1].append(t)
 
