@@ -10,7 +10,7 @@ def _do_apply_cursive(self, buf, ix):
     d = exit_x + (buf[ix].position.xPlacement or 0)
     buf[ix].position.xAdvance = (buf[ix].position.xAdvance or 0) - d
     buf[ix].position.xPlacement = (buf[ix].position.xPlacement or 0) - d
-    buf[ix].position.xAdvance = entry_x + (buf[ix + 1].position.xPlacement or 0)
+    buf[ix+1].position.xAdvance = entry_x + (buf[ix + 1].position.xPlacement or 0)
     child = ix
     parent = ix + 1
     x_offset = entry_x - exit_x
@@ -26,11 +26,11 @@ def _do_apply(self, buf, ix):
     if self.is_cursive:
         return _do_apply_cursive(self, buf, ix)
     from fontFeatures import ValueRecord
-
     mark = buf[ix].glyph
     base = buf[ix + 1].glyph
     xpos = self.bases[mark][0] - self.marks[base][0]
     ypos = self.bases[mark][1] - self.marks[base][1]
     vr = ValueRecord(xPlacement=xpos, yPlacement=ypos)
-    vr.xPlacement = vr.xPlacement - buf[ix].position.xAdvance
+    if buf.direction == "LTR":
+        vr.xPlacement = vr.xPlacement - buf[ix].position.xAdvance
     buf[ix + 1].add_position(vr)
