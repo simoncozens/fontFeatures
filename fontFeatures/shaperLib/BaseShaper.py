@@ -55,7 +55,7 @@ class BaseShaper():
                 r.apply_to_buffer(self.buffer, current_stage)
         else:
             # It's a pause
-            pass
+            stage(current_stage)
 
   def hide_default_ignorables(self):
     pass
