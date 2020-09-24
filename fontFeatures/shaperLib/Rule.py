@@ -2,7 +2,8 @@ __all__ = ["apply_to_buffer"]
 
 
 def glyphs_match(buffer_glyphs, routine_glyphs):
-    assert len(buffer_glyphs) == len(routine_glyphs)
+    if len(buffer_glyphs) != len(routine_glyphs):
+        return False
     for a, b in zip(buffer_glyphs, routine_glyphs):
         if a.glyph not in b:
             return False
@@ -14,6 +15,9 @@ def apply_to_buffer(self, buf):
     coverage = self.shaper_inputs()
     coverage_l = len(coverage)
     ix = 0
+    if hasattr(self, "is_cursive") and self.is_cursive:
+        coverage = list(reversed(coverage))
+    # Watch for reversed application here
     while ix < len(buf) - coverage_l + 1:
         buffer_glyphs = buf[ix : ix + coverage_l]
         ix = ix + 1
@@ -37,7 +41,8 @@ def apply_to_buffer(self, buf):
                 continue
         # We have a match
         self._do_apply(buf, ix - 1)
-        ix = ix + coverage_l
+        if self.stage == "sub":
+            ix = ix + coverage_l
         buf.update()
         applied = True
     return applied
