@@ -19,6 +19,5 @@ def _do_apply(self, buf, ix):
         new_glyph = copy.copy(buf[ix])
         new_glyph.glyph = g[0]
         new_glyph.prep_glyph(buf.font)
-        print(g[0], new_glyph.position.asFea())
         newstuff.append(new_glyph)
     buf[ix : ix + len(self.input)] = newstuff
