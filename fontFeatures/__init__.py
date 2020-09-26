@@ -234,6 +234,7 @@ class Routine:
 
     from .feaLib.Routine import asFea, asFeaAST, feaPreamble
     from .shaperLib.Routine import apply_to_buffer
+    from .xmlLib.Routine import toXML, fromXML
 
 
 class Rule:
@@ -246,6 +247,7 @@ class Rule:
         return []
 
     from .shaperLib.Rule import apply_to_buffer
+    from .xmlLib.Rule import fromXML, toXML, _makeglyphslots, _slotArray
 
 class Substitution(Rule):
     """Represents a Substitution rule.
@@ -304,6 +306,7 @@ class Substitution(Rule):
 
     from .feaLib.Substitution import asFeaAST
     from .shaperLib.Substitution import shaper_inputs, _do_apply
+    from .xmlLib.Substitution import _toXML, fromXML
 
 
 class Chaining(Rule):
@@ -342,8 +345,6 @@ class Chaining(Rule):
         self.languages = languages
         self.flags = flags
 
-    from .feaLib.Chaining import asFeaAST, feaPreamble
-
     @property
     def stage(self):
         for l in self.lookups:
@@ -369,6 +370,7 @@ class Chaining(Rule):
         a = set(chain.from_iterable(self.postcontext))
         return i | b | a
 
+    from .feaLib.Chaining import asFeaAST, feaPreamble
     from .shaperLib.Chaining import shaper_inputs, _do_apply
 
 
@@ -415,6 +417,7 @@ class Positioning(Rule):
 
     from .feaLib.Positioning import asFeaAST
     from .shaperLib.Positioning import shaper_inputs, _do_apply
+    from .xmlLib.Positioning import _toXML, fromXML
 
 
 class Attachment(Rule):
