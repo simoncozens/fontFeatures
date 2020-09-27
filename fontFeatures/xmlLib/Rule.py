@@ -24,6 +24,18 @@ def toXML(self):
         self._makeglyphslots(root, "precontext", self.precontext)
     if hasattr(self, "postcontext"):
         self._makeglyphslots(root, "postcontext", self.postcontext)
+    if hasattr(self, "lookups") and self.lookups:
+        wrapper = etree.SubElement(root, "lookups")
+        for slot in self.lookups:
+            xmlslot = etree.SubElement(wrapper, "slot")
+            if slot:
+                for lu in slot:
+                    # Might want to make this do the name, not the whole
+                    # routine, once we have sorted order-of-lookups issue
+                    xmlslot.append(lu.toXML())
+            else:
+                etree.SubElement(xmlslot, "lookup")
+
     return self._toXML(root)
 
 

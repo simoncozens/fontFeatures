@@ -372,6 +372,7 @@ class Chaining(Rule):
 
     from .feaLib.Chaining import asFeaAST, feaPreamble
     from .shaperLib.Chaining import shaper_inputs, _do_apply
+    from .xmlLib.Chaining import _toXML, fromXML
 
 
 class Positioning(Rule):
@@ -453,6 +454,7 @@ class Attachment(Rule):
 
     from .feaLib.Attachment import asFeaAST, feaPreamble
     from .shaperLib.Attachment import shaper_inputs, _do_apply
+    from .xmlLib.Attachment import _toXML, fromXML
 
     @property
     def involved_glyphs(self):
