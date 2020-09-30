@@ -14,6 +14,7 @@ def apply_to_buffer(self, buf):
     applied = False
     coverage = self.shaper_inputs()
     coverage_l = len(coverage)
+    if coverage_l < 1: return
     ix = 0
     if hasattr(self, "is_cursive") and self.is_cursive:
         coverage = list(reversed(coverage))
