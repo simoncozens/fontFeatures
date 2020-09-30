@@ -123,6 +123,7 @@ class Buffer:
 
     def clear_mask(self):
         self.flags = 0
+        self.markFilteringSet = None
         self.recompute_mask()
 
     def set_mask(self, flags, markFilteringSet=None):
