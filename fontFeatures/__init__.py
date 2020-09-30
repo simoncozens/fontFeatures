@@ -179,7 +179,7 @@ class FontFeatures:
 class Routine:
     """Represent a Routine (similar to OT Lookup).
 
-    A routine is a set of rules, sometimes but always with an explicit name.
+    A routine is a set of rules, sometimes but not always with an explicit name.
     It can apply to a set of language/script pairs.
     """
     def __init__(
