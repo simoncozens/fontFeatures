@@ -11,6 +11,8 @@ def glyphref(g):
 
 def asFeaAST(self):
     lut = lookup_type(self)
+    if not lut:
+        return feaast.Comment("")
     if lut == 3:
         return feaast.AlternateSubstStatement(
             [glyphref(x) for x in self.precontext],
