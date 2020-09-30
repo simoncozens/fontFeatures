@@ -55,7 +55,8 @@ class Shaper:
 
     def disable_feature(self, tag):
         for s in self.stages:
-            s.remove(tag)
+            if tag in s:
+                s.remove(tag)
 
     def collect_features(self, buf):
         self.add_features("rvrn")
