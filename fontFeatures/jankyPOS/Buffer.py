@@ -4,7 +4,6 @@ from glyphtools import get_glyph_metrics, categorize_glyph
 from fontFeatures.fontProxy import FontProxy
 import unicodedata
 from youseedee import ucd_data
-from fontFeatures.shaperLib.Shaper import _script_direction
 
 def _add_value_records(vr1, vr2):
     if vr1.xPlacement or vr2.xPlacement:
@@ -28,6 +27,7 @@ class BufferItem:
     def new_unicode(klass, codepoint):
         self = BufferItem()
         self.codepoint = codepoint
+        self.glyph = None
         return self
 
     @classmethod
@@ -38,7 +38,8 @@ class BufferItem:
         return self
 
     def map_to_glyph(self, font):
-        self.glyph = font.map_unicode_to_glyph(self.codepoint)
+        if not self.glyph:
+            self.glyph = font.map_unicode_to_glyph(self.codepoint)
         self.prep_glyph(font)
 
     def prep_glyph(self, font):
@@ -62,10 +63,11 @@ class Buffer:
         self.language = language
         self.fallback_mark_positioning = False
         self.fallback_glyph_classes = False
+        self.items = []
         if glyphs:
             self.items = [BufferItem.new_glyph(g, font) for g in glyphs]
             self.clear_mask()
-        else:
+        elif unicodes:
             self.normalize(unicodes)
             self.guess_segment_properties()
 
@@ -81,6 +83,7 @@ class Buffer:
                 if thisScript not in ["Common", "Unknown", "Inherited"]:
                     self.script = thisScript
         if not self.direction:
+            from fontFeatures.shaperLib.Shaper import _script_direction
             self.direction = _script_direction(self.script)
 
     def map_to_glyphs(self):
