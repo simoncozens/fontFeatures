@@ -19,7 +19,7 @@ def toXML(self):
     if hasattr(self, "reverse") and self.reverse:
         root.attrib["reverse"] = "true"
     if hasattr(self, "flags") and self.flags:
-        root.attrib["flags"] = self.flags
+        root.attrib["flags"] = str(self.flags)
     if hasattr(self, "precontext"):
         self._makeglyphslots(root, "precontext", self.precontext)
     if hasattr(self, "postcontext"):

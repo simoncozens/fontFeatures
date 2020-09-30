@@ -8,19 +8,18 @@ def _toXML(self, root):
 
 @classmethod
 def fromXML(klass, el):
+  from fontFeatures import Routine
   rule = klass(
-      klass._slotArray(klass, el.find("from")),
-      klass._slotArray(klass, el.find("to")),
+      klass._slotArray(klass, el.find("input")),
       precontext = klass._slotArray(klass, el.find("precontext")),
       postcontext = klass._slotArray(klass, el.find("postcontext")),
       address = el.get("address"),
       languages = el.get("languages"),
-      reverse = el.get("reverse"),
-      flags = el.get("flags")
+      flags = int(el.get("flags") or 0)
   )
-  if el.find("lookups"):
-    rule.lookups = []
-    for slot in list(el):
-      routines = [Routine.fromXML(x) for x in slot.findall("routine")]
-      rule.lookups.append(routines)
+  lookupsxml = el.find("lookups")
+  rule.lookups = []
+  for slot in lookupsxml:
+    routines = [Routine.fromXML(x) for x in slot.findall("routine")]
+    rule.lookups.append(routines)
   return rule

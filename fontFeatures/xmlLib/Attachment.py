@@ -19,14 +19,17 @@ def _toXML(self, root):
 
 @classmethod
 def fromXML(klass, el):
-    import code; code.interact(local=locals())
     rule = klass(
-        klass._slotArray(klass, el.find("glyphs")),
-        positions,
-        precontext=klass._slotArray(klass, el.find("precontext")),
-        postcontext=klass._slotArray(klass, el.find("postcontext")),
+        base_name = el.get("basename"),
+        mark_name = el.get("markname"),
         address=el.get("address"),
-        languages=el.get("languages"),
         flags=el.get("flags"),
     )
+    for baseormark in el:
+        key = baseormark.get("name")
+        value = (int(baseormark.get("anchorX")), int(baseormark.get("anchorY")))
+        if baseormark.tag == "base":
+            rule.bases[key] = value
+        elif baseormark.tag == "mark":
+            rule.marks[key] = value
     return rule
