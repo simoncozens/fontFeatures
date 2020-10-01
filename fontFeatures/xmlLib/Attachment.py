@@ -23,7 +23,7 @@ def fromXML(klass, el):
         base_name = el.get("basename"),
         mark_name = el.get("markname"),
         address=el.get("address"),
-        flags=el.get("flags"),
+        flags=int(el.get("flags") or 0),
     )
     for baseormark in el:
         key = baseormark.get("name")

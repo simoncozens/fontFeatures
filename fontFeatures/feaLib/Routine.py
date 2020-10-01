@@ -76,6 +76,8 @@ def arrange_by_flags(self):
 
     flagTypes = {}
     for r in self.rules:
+        if not r.flags:
+            r.flags = 0
         if not r.flags in flagTypes:
             flagTypes[r.flags] = []
         flagTypes[r.flags].append(r)
