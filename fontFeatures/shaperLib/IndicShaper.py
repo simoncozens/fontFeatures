@@ -38,7 +38,7 @@ class IndicShaper(BaseShaper):
             item.indic_position = IndicPositionalCategory2IndicPosition(item.indic_positional_category)
             reassign_category_and_position(item)
             serialized.append("<"+item.indic_syllabic_category+">("+item.indic_positional_category+")="+str(ix))
-        return "|".join(serialized)
+        return "".join(serialized)
 
     def setup_syllables(self, shaper):
         syllable_index = 0
