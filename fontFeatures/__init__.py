@@ -175,6 +175,10 @@ class FontFeatures:
 
         self.scripts_and_languages = scripts
 
+    def hasScriptSupport(self, script):
+        self.hoist_languages()
+        return script in self.scripts_and_languages
+
 
 class Routine:
     """Represent a Routine (similar to OT Lookup).

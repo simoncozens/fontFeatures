@@ -4,6 +4,7 @@ import unicodedata
 from fontFeatures.jankyPOS import Buffer
 from .BaseShaper import BaseShaper
 from .ArabicShaper import ArabicShaper
+from .IndicShaper import IndicShaper
 from youseedee import ucd_data
 
 
@@ -98,7 +99,8 @@ class Shaper:
             "Hanifi_Rohingya",
             "Sogdian",
         ]:
-            if buf.script == self.font.supported_script(buf.script).lower():
+            # This is wrong and will never match
+            if buf.script == self.fontfeatures.supported_script(buf.script).lower():
                 return ArabicShaper
             else:
                 return BaseShaper
@@ -121,7 +123,20 @@ class Shaper:
             "Telugu",
             "Sinhala",
         ]:
-            if self.font.supported_script(buf.script).endswith("3"):
+            indic23map = {
+                "Bengali": "bng",
+                "Devanagari": "dev",
+                "Gujarati": "gjr",
+                "Gurmukhi": "gur",
+                "Kannada": "knd",
+                "Malayalam": "mlm",
+                "Oriya": "ory",
+                "Tamil": "tml",
+                "Telugu": "tel",
+            }
+            # Sinhala is different
+            indic3 = indic23map[buf.script] + "3"
+            if self.fontfeatures.hasScriptSupport(indic3):
                 return USEShaper
             else:
                 return IndicShaper
@@ -129,62 +144,62 @@ class Shaper:
             return KhmerShaper
 
         if buf.script == "Mymanmar":
-            if self.font.supported_script(buf.script) == "mymr":
+            if self.fontfeatures.hasScriptSupport("mymr"):
                 return BaseShaper
             else:
                 return MyanmarShaper
 
         # if buf.script = "Qaag": return MyanmarZawgyiShaper
         if buf.script in [
-            "Tibt",
-            "Buhd",
-            "Hano",
-            "Tglg",
-            "Tagb",
-            "Limb",
-            "Tale",
-            "Bugi",
-            "Khar",
-            "Sylo",
-            "Tfng",
-            "Bali",
+            "Tibetan",
+            "Buhid",
+            "Hanunoo",
+            "Tagalog",
+            "Tagbanwa",
+            "Limbu",
+            "Tai_Le",
+            "Buginese",
+            "Kharoshthi",
+            "Syloti_Nagri",
+            "Tifinagh",
+            "Balinese",
             "Cham",
-            "Kali",
-            "Lepc",
-            "Rjng",
-            "Saur",
-            "Sund",
-            "Egyp",
-            "Java",
-            "Kthi",
-            "Mtei",
-            "Lana",
-            "Tavt",
-            "Batk",
-            "Brah",
-            "Cakm",
-            "Shrd",
-            "Takr",
-            "Dupl",
-            "Gran",
-            "Khoj",
-            "Sind",
-            "Mahj",
+            "Kayah_Li",
+            "Lepcha",
+            "Rejang",
+            "Saurashtra",
+            "Sundanese",
+            "Egyptian_Hieroglyphs",
+            "Javanese",
+            "Kaithi",
+            "Meetei_Mayek",
+            "Tai_Tham",
+            "Tai_Viet",
+            "Batak",
+            "Brahmi",
+            "Chakma",
+            "Sharada",
+            "Takri",
+            "Duployan",
+            "Grantha",
+            "Khojki",
+            "Khudawadi",
+            "Mahajani",
             "Modi",
-            "Hmng",
-            "Sidd",
-            "Tirh",
+            "Pahawh_Hmong",
+            "Siddham",
+            "Tirhuta",
             "Ahom",
-            "Bhks",
-            "Marc",
+            "Bhaiksuki",
+            "Marchen",
             "Newa",
-            "Gonm",
-            "Soyo",
-            "Zanb",
-            "Dogr",
-            "Gong",
-            "Maka",
-            "Nand",
+            "Masaram_Gondi",
+            "Soyombo",
+            "Zanabazar_Square",
+            "Dogra",
+            "Gunjala_Gondi",
+            "Makasar",
+            "Nandinagari",
         ]:
             return USEShaper
         return BaseShaper

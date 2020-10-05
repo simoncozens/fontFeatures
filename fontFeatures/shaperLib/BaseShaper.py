@@ -54,8 +54,9 @@ class BaseShaper():
             for r in lookups:
                 r.apply_to_buffer(self.buffer, current_stage)
         else:
-            # It's a pause
-            stage(current_stage)
+            # It's a pause. We only support GSUB pauses.
+            if current_stage == "sub":
+                stage(current_stage)
 
   def hide_default_ignorables(self):
     pass
