@@ -56,7 +56,7 @@ class Shaper:
 
     def disable_feature(self, tag):
         for s in self.stages:
-            if tag in s:
+            if isinstance(s, list) and tag in s:
                 s.remove(tag)
 
     def collect_features(self, buf):
