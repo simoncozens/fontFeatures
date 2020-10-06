@@ -58,7 +58,9 @@ class GlyphSelector:
 
     def resolve(self, fontfeatures, font, mustExist=True):
         returned = []
-        glyphs = FontProxy(font).glyphs
+        if not isinstance(font,FontProxy):
+            font = FontProxy(font)
+        glyphs = font.glyphs
         if "barename" in self.selector:
             returned = [self.selector["barename"]]
         elif "inlineclass" in self.selector:
