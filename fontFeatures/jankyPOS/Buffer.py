@@ -47,7 +47,17 @@ class BufferItem:
         self.recategorize(font)
 
     def recategorize(self, font):
-        self.category = categorize_glyph(font.font, self.glyph)
+        try:
+            self.category = categorize_glyph(font.font, self.glyph)
+        except Exception as e:
+            # Fallback
+            genCat = ucd_data(self.codepoint).get("General_Category", "L")
+            if genCat[0] == "M":
+                self.category = ("mark", None)
+            elif genCat == "Ll":
+                self.category = ("ligature", None)
+            else:
+                self.category = ("base", None)
 
     def add_position(self, vr2):
         _add_value_records(self.position, vr2)
