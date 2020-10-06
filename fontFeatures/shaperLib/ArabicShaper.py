@@ -30,12 +30,15 @@ state_table = [
   [ ("none","none",0), ("none","isol",2), ("none","isol",1), ("none","isol",2), ("none","fin3",5), ("none","isol",6),],
 ]
 
+arabic_features = ['isol', 'fina', 'fin2', 'fin3', 'medi', 'med2', 'init']
 
 class ArabicShaper(BaseShaper):
     def collect_features(self, shaper):
         # shaper.add_features("stch")
         shaper.add_features("ccmp", "locl")
-        shaper.add_pause(self.do_arabic_joining)
+        shaper.add_pause()
+        shaper.add_features(*arabic_features)
+        shaper.add_pause()
         shaper.add_features("rlig", "rclt", "calt")
         shaper.add_pause()
         shaper.add_features("mset")
@@ -56,21 +59,8 @@ class ArabicShaper(BaseShaper):
               prev_item.arabic_joining = prev
             item.arabic_joining = this
             prev_item = item
-
-    def do_arabic_joining(self, current_stage):
-        if current_stage != "sub":
-            return
-
-        for f in ['isol', 'fina', 'fin2', 'fin3', 'medi', 'med2', 'init']:
+        for f in arabic_features:
             if f not in self.plan.fontfeatures.features:
                 continue
-            for routine in self.plan.fontfeatures.features[f]:
-                self.buffer.set_mask(routine.flags, routine.markFilteringSet)
-                # Additional mask
-                self.buffer.mask = list(filter(lambda ix: self.buffer.items[ix].arabic_joining == f, self.buffer.mask))
-                for r in routine.rules:
-                    if r.stage != "sub":
-                        continue
-                    if r.apply_to_buffer(self.buffer):
-                        break
-
+            for item in self.buffer.items:
+                item.feature_masks[f] = item.arabic_joining != f

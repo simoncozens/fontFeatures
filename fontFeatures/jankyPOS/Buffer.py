@@ -28,12 +28,14 @@ class BufferItem:
         self = BufferItem()
         self.codepoint = codepoint
         self.glyph = None
+        self.feature_masks = {}
         return self
 
     @classmethod
     def new_glyph(klass, glyph, font):
         self = BufferItem()
         self.glyph = glyph
+        self.feature_masks = {}
         self.prep_glyph(font)
         return self
 
@@ -160,6 +162,15 @@ class Buffer:
                 )
             )
         self.mask = mask
+
+    def set_feature_mask(self, feature):
+        self.mask = list(
+            filter(
+                lambda ix: (feature not in self.items[ix].feature_masks)
+                    or (not self.items[ix].feature_masks[feature]),
+                self.mask
+            )
+        )
 
     def serialize(self, additional = None, position=True):
         """Serialize a buffer to a string.

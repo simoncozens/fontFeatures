@@ -50,9 +50,11 @@ class BaseShaper():
                 if f not in self.plan.fontfeatures.features:
                     continue
                 # XXX These should be ordered by ID
-                lookups.extend(self.plan.fontfeatures.features[f])
-            for r in lookups:
-                r.apply_to_buffer(self.buffer, current_stage)
+                lookups.extend(
+                    [(routine, f) for routine in self.plan.fontfeatures.features[f]]
+                )
+            for r, feature in lookups:
+                r.apply_to_buffer(self.buffer, stage=current_stage, feature=feature)
         else:
             # It's a pause. We only support GSUB pauses.
             if current_stage == "sub":
