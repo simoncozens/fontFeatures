@@ -151,7 +151,7 @@ class Buffer:
             )
         self.mask = mask
 
-    def serialize(self):
+    def serialize(self, additional = None, position=True):
         """Serialize a buffer to a string.
 
     Returns:
@@ -162,14 +162,17 @@ class Buffer:
         outs = []
         for info in self.items:
             if hasattr(info, "glyph"):
-                position = info.position
                 outs.append("%s" % info.glyph)
+            else:
+                outs.append("%04x" % info.codepoint)
+            if position and hasattr(info, "position"):
+                position = info.position
                 outs[-1] = outs[-1] + "+%i" % position.xAdvance
                 if position.xPlacement != 0 or position.yPlacement != 0:
                     outs[-1] = outs[-1] + "@<%i,%i>" % (
                         position.xPlacement or 0,
                         position.yPlacement or 0,
                     )
-            else:
-                outs.append("%04x" % info.codepoint)
+            if additional and hasattr(info, additional):
+                outs[-1] = outs[-1] + "(%s)" % getattr(info, additional)
         return "|".join(outs)

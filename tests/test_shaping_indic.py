@@ -24,4 +24,5 @@ class TestShapingIndic(unittest.TestCase):
       # Force buffer to codepoints
       for i in buf.items:
         delattr(i, "glyph")
+        delattr(i, "position")
       self.assertEqual(buf.serialize(), "093f|0939")
