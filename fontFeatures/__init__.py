@@ -365,7 +365,7 @@ class Chaining(Rule):
                     if isinstance(r, Attachment):
                         return "pos"
                     if isinstance(r, Chaining):
-                        return suborpos(r.lookups)
+                        return r.stage
 
     @property
     def involved_glyphs(self):
