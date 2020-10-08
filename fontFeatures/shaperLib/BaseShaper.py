@@ -1,3 +1,7 @@
+from fontFeatures.jankyPOS.Buffer import Buffer
+from copy import copy
+
+
 class BaseShaper():
   def __init__(self, plan, fontproxy, buf, features = []):
     self.plan = plan
@@ -67,3 +71,19 @@ class BaseShaper():
 
   def hide_default_ignorables(self):
     pass
+
+  def would_substitute(self, feature, subbuffer_items):
+    if not feature in self.plan.fontfeatures.features:
+        return False
+    subbuffer = Buffer(self.buffer.font, direction=self.buffer.direction, script=self.buffer.script, language=self.buffer.language)
+    subbuffer.clear_mask()
+    subbuffer.items = [copy(x) for x in subbuffer]
+    subbuffer.clear_mask()
+    routines = self.plan.fontfeatures.features[feature]
+    for r in routines:
+        for rule in r.rules:
+            if rule.stage == "pos":
+                continue
+            if rule.apply_to_buffer(subbuffer):
+                return True
+    return False

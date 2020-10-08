@@ -43,6 +43,7 @@ class IndicShaper(BaseShaper):
     def setup_syllables(self, shaper):
         syllable_index = 0
         category_string = self.assign_indic_categories()
+        self.plan.msg("Set up syllables: "+category_string)
         while len(category_string) > 0:
             state, end, matched_type = None, None, None
             for syllable_type in ["consonant_syllable", "vowel_syllable", "standalone_cluster","symbol_cluster","broken_cluster","other"]:
@@ -58,6 +59,7 @@ class IndicShaper(BaseShaper):
                 self.buffer.items[i].syllable_index = syllable_index
                 self.buffer.items[i].syllable = syllable_type
             syllable_index = syllable_index+1
+        self.plan.msg("Syllables", self.buffer, ["syllable_index", "syllable"])
 
     def iterate_syllables(self):
         ix = 0
@@ -70,11 +72,39 @@ class IndicShaper(BaseShaper):
                 ix = ix + 1
             yield index, syll_type, start, end
 
+    def consonant_position_from_face(self, consonant):
+        virama = self.config["virama"]
+        consonant_item = BufferItem.new_unicode(consonant)
+        virama_item = BufferItem.new_unicode(consonant)
+        consonant_item.map_to_glyph(self.buffer.font)
+        virama_item.map_to_glyph(self.buffer.font)
+
+        if self.would_substitute("blwf", [virama_item, consonant_item]):
+            return IndicPosition.BELOW_C
+        if self.would_substitute("blwf", [consonant_item, virama_item]):
+            return IndicPosition.BELOW_C
+        if self.would_substitute("vatu", [virama_item, consonant_item]):
+            return IndicPosition.BELOW_C
+        if self.would_substitute("vatu", [consonant_item, virama_item]):
+            return IndicPosition.BELOW_C
+
+        if self.would_substitute("pstf", [virama_item, consonant_item]):
+            return IndicPosition.POST_C
+        if self.would_substitute("pstf", [consonant_item, virama_item]):
+            return IndicPosition.POST_C
+
+        if self.would_substitute("pref", [virama_item, consonant_item]):
+            return IndicPosition.POST_C
+        if self.would_substitute("pref", [consonant_item, virama_item]):
+            return IndicPosition.POST_C
+        return IndicPosition.BASE_C
+
     def initial_reordering(self, shaper):
         # Update consonant positions
         if self.config["base_pos"] == "last": # Not Sinhala
             for item in self.buffer.items:
                 if item.indic_position == IndicPosition.BASE_C:
+                    item.indic_position = self.consonant_position_from_face(item.codepoint)
                     # XXX Consonant position from face
                     pass
         # Insert dotted circles
@@ -178,6 +208,7 @@ class IndicShaper(BaseShaper):
         if has_reph and base == start and limit - base <= 2:
             has_reph = False
 
+        self.plan.msg("Base consonant for syllable %i is %i" % (syllable_index, base))
         for i in range(start, base):
             self.buffer.items[i].indic_position = min(IndicPosition.PRE_C, pos(i))
         if base < end:
@@ -199,11 +230,14 @@ class IndicShaper(BaseShaper):
             disallow_double_halants = self.buffer.script == "Kannada"
             for i in range(base+1, end):
                 if cat(i) == "H":
-                    for j in range(end-1,i,-1):
+                    j = end - 1
+                    while j > i:
                         if is_consonant(j) or (disallow_double_halants and cat(j) == "H"):
                             break
+                        j = j - 1
                     if cat(j) != "H" and j > i:
                         self.buffer.items.insert(j, self.buffer.items.pop(i))
+                        self.plan.msg("Moved double halant", self.buffer)
                     break
 
         last_pos = IndicPosition.START
@@ -260,6 +294,7 @@ class IndicShaper(BaseShaper):
 
         for i in range(start, end+1):
             self.buffer.items[i].syllable_index = syllable_index
+        self.plan.msg("After initial reordering", self.buffer)
 
         # XXX set up masks
     def final_reordering(self, shaper):
