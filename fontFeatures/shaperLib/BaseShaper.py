@@ -28,6 +28,7 @@ class BaseShaper():
 
   def substitute_default(self):
     self.buffer.map_to_glyphs()
+    self.plan.msg("Initial glyph mapping", self.buffer)
     # Setup masks
     # if self.buf.fallback_mark_positioning:
       # self.fallback_mark_position_recategorize_marks()
@@ -43,6 +44,7 @@ class BaseShaper():
     self._run_stage("pos")
 
   def _run_stage(self, current_stage):
+    self.plan.msg("Running %s stage" % current_stage)
     for stage in self.plan.stages:
         lookups = []
         if isinstance(stage, list): # Features
@@ -53,8 +55,11 @@ class BaseShaper():
                 lookups.extend(
                     [(routine, f) for routine in self.plan.fontfeatures.features[f]]
                 )
+            self.plan.msg("Collected lookups from %s features" % ",".join(stage))
             for r, feature in lookups:
+                self.plan.msg("Before %s (%s)" % (r.name, feature), buffer=self.buffer)
                 r.apply_to_buffer(self.buffer, stage=current_stage, feature=feature)
+                self.plan.msg("After %s (%s)" % (r.name, feature), buffer=self.buffer)
         else:
             # It's a pause. We only support GSUB pauses.
             if current_stage == "sub":

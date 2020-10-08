@@ -59,6 +59,7 @@ class ArabicShaper(BaseShaper):
               prev_item.arabic_joining = prev
             item.arabic_joining = this
             prev_item = item
+        self.plan.msg("Assigned Arabic joining", self.buffer, serialize_options=["arabic_joining"])
         for f in arabic_features:
             if f not in self.plan.fontfeatures.features:
                 continue
