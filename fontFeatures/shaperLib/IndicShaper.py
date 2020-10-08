@@ -155,7 +155,7 @@ class IndicShaper(BaseShaper):
         has_reph = False
 
         limit = start
-        if "rphf" in self.plan.fontfeatures.features and start + 3 > end \
+        if "rphf" in self.plan.fontfeatures.features and start + 3 <= end \
             and ( \
                 (self.config["reph_mode"] == "implicit" and not is_joiner(start+2)) \
                 or (self.config["reph_mode"] == "explicit" and cat(start+2) == "ZWJ") \
@@ -208,7 +208,7 @@ class IndicShaper(BaseShaper):
         if has_reph and base == start and limit - base <= 2:
             has_reph = False
 
-        self.plan.msg("Base consonant for syllable %i is %i" % (syllable_index, base))
+        self.plan.msg("Base consonant for syllable %i is %s" % (syllable_index, self.buffer[base].glyph))
         for i in range(start, base):
             self.buffer.items[i].indic_position = min(IndicPosition.PRE_C, pos(i))
         if base < end:
