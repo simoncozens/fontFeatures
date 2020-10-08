@@ -181,11 +181,16 @@ class Buffer:
 
     """
         outs = []
+        if additional:
+            if not isinstance(additional, list):
+                additional = [additional]
+        else:
+            additional = []
         for info in self.items:
-            if hasattr(info, "glyph"):
+            if hasattr(info, "glyph") and info.glyph:
                 outs.append("%s" % info.glyph)
             else:
-                outs.append("%04x" % info.codepoint)
+                outs.append("U+%04x" % info.codepoint)
             if position and hasattr(info, "position"):
                 position = info.position
                 outs[-1] = outs[-1] + "+%i" % position.xAdvance
@@ -194,6 +199,9 @@ class Buffer:
                         position.xPlacement or 0,
                         position.yPlacement or 0,
                     )
-            if additional and hasattr(info, additional):
-                outs[-1] = outs[-1] + "(%s)" % getattr(info, additional)
+            relevant = list(filter(lambda a: hasattr(info,a), additional))
+            if relevant:
+                outs[-1] = outs[-1] + "(%s)" % ",".join(
+                    [str(getattr(info, a)) for a in relevant]
+                )
         return "|".join(outs)
