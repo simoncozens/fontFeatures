@@ -6,18 +6,24 @@ from .BaseShaper import BaseShaper
 from .ArabicShaper import ArabicShaper
 from .IndicShaper import IndicShaper
 from youseedee import ucd_data
+import logging
 
 
 class Shaper:
-    def __init__(self, ff, font):
+    def __init__(self, ff, font, message_function=None):
         assert isinstance(ff, FontFeatures)
         assert isinstance(font, FontProxy)
         self.fontfeatures = ff
         self.fontproxy = font
+        if message_function:
+            self.msg = message_function
+        else:
+            self.msg = self.default_message_function
 
     def execute(self, buf, features=[]):
         # Choose complex shaper
         self.complexshaper = self.categorize(buf)(self, self.fontproxy, buf, features)
+        self.msg("Using %s" % type(self.complexshaper).__name__)
         self.stages = [[]]
         if isinstance(features, str):
             self.user_features = self.parse_user_feature_string(features)
@@ -26,6 +32,13 @@ class Shaper:
         self.collect_features(buf)
         self.complexshaper.shape()
         return buf
+
+    def default_message_function(self, msg, buffer=None, serialize_options=None):
+        ser = ""
+        if buffer:
+            ser = buffer.serialize(additional=serialize_options)
+            msg = msg + " : " + ser
+        logging.getLogger("fontFeatures.shaperLib").info(msg)
 
     def parse_user_feature_string(self, features):
         features = features.split(",")
