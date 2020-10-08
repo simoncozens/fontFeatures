@@ -19,6 +19,7 @@ class FeaUnparser:
         self.ff = fontFeatures.FontFeatures()
         self.markclasses = {}
         self.currentFeature = None
+        self.gensym = 1
         self.language_systems = []
         glyphmap = ()
         if font:
@@ -40,6 +41,10 @@ class FeaUnparser:
     def _start_routine(self, location, name):
         location = "%s:%i:%i" % (location)
         self.currentRoutine = fontFeatures.Routine(name=name, address=location)
+        if not name:
+            self.currentRoutine.name = "unnamed_routine_%i" % self.gensym
+            self.gensym = self.gensym + 1
+            self.ff.addRoutine(self.currentRoutine)
         self.currentRoutineFlag = 0
 
     def start_lookup_block(self, location, name):
@@ -50,6 +55,12 @@ class FeaUnparser:
         self.currentFeature = name
         self._start_routine(location, "")
         self.ff.addFeature(name, [self.currentRoutine])
+
+    def set_font_revision(self, location, revision):
+        pass
+
+    def set_script(self, location, script):
+        pass
 
     def add_single_subst(self, location, prefix, suffix, mapping, forceChain):
         location = "%s:%i:%i" % (location)
