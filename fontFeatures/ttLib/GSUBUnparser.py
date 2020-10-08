@@ -131,7 +131,7 @@ class GSUBUnparser(GTableUnparser):
                     lookups = []
                     allinput = [glyph(x) for x in ([input_] + subrule.Input)]
                     lookups = self._unparse_lookups(subrule.SubstLookupRecord)
-                    if len(lookups) <= len(allinput):
+                    if len(lookups) < len(allinput):
                         lookups.extend([None] * (1 + len(allinput) - len(lookups)))
                     b.addRule(
                         fontFeatures.Chaining(

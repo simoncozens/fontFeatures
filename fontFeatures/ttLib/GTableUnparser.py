@@ -284,8 +284,9 @@ class GTableUnparser:
         if hasattr(sub, "LookAheadCoverage"):
             for i, coverage in enumerate(sub.LookAheadCoverage):
                 suffix.append(coverage.glyphs)
-        if len(lookups) <= len(inputs):
+        if len(lookups) < len(inputs):
             lookups.extend([None] * (1 + len(inputs) - len(lookups)))
+
         if len(prefix) > 0 or len(suffix) > 0 or any([x is not None for x in lookups]):
             b.addRule(
                 fontFeatures.Chaining(
