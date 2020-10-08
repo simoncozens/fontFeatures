@@ -42,8 +42,6 @@ def apply_to_buffer(self, buf):
                 continue
         # We have a match
         self._do_apply(buf, ix - 1)
-        if self.stage == "sub":
-            ix = ix + coverage_l
         buf.update()
         applied = True
     return applied
