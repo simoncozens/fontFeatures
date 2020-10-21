@@ -8,14 +8,18 @@ from fontFeatures.fontProxy import FontProxy
 from fontTools.ttLib import TTFont
 import argparse
 import logging
+import re
+
 
 parser = argparse.ArgumentParser(description='Shape text')
 parser.add_argument('font', metavar='OTF',
                     help='Font file')
-parser.add_argument('string', metavar='STRING',
-                    help='Text to shape')
 parser.add_argument('--verbose', '-V', dest='logging', action='store_true',
                     help='Output interim shaping results')
+group = parser.add_mutually_exclusive_group(required=True)
+group.add_argument('-u', help='Unicodes')
+group.add_argument('string', metavar='STRING',
+                    help='Text to shape', nargs="?")
 
 args = parser.parse_args()
 
@@ -25,6 +29,11 @@ if args.logging:
 
 font = TTFont(args.font)
 ff = unparse(font)
+if args.u:
+    args.u = re.sub("[uU]+|0x", "", args.u)
+    splitup = re.split(r"[\s,]", args.u)
+    args.string = "".join([chr(int(x,16)) for x in splitup])
+
 buf = Buffer(font, unicodes=args.string)
 shaper = Shaper(ff, FontProxy(font))
 shaper.execute(buf)
