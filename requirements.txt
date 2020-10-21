@@ -8,4 +8,4 @@ more_itertools
 bidict
 dataclasses
 lxml
-youseedee>=0.2.0
+youseedee>=0.3.0
