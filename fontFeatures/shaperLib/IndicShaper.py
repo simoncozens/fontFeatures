@@ -69,14 +69,14 @@ class IndicShaper(BaseShaper):
             index = self.buffer.items[ix].syllable_index
             start = ix
             while ix < len(self.buffer.items) and self.buffer.items[ix].syllable_index == index:
-                end = ix
                 ix = ix + 1
+                end = ix
             yield index, syll_type, start, end
 
     def consonant_position_from_face(self, consonant):
         virama = self.config["virama"]
         consonant_item = BufferItem.new_unicode(consonant)
-        virama_item = BufferItem.new_unicode(consonant)
+        virama_item = BufferItem.new_unicode(virama)
         consonant_item.map_to_glyph(self.buffer.font)
         virama_item.map_to_glyph(self.buffer.font)
 
@@ -264,11 +264,11 @@ class IndicShaper(BaseShaper):
                 last = i
 
         # As with Harfbuzz, temporarily abuse syllable index
-        for i in range(start, end+1):
+        for i in range(start, end):
             self.buffer.items[i].syllable_index = start - i
 
         # REORDER
-        self.buffer.items[start:end+1] = sorted(self.buffer.items[start:end+1], key=lambda x:x.indic_position)
+        self.buffer.items[start:end] = sorted(self.buffer.items[start:end], key=lambda x:x.indic_position)
 
         base = end
         for i in range(start, end):
@@ -293,13 +293,135 @@ class IndicShaper(BaseShaper):
                         # Merge clusters
                         pass
 
-        for i in range(start, end+1):
+        for i in range(start, end):
             self.buffer.items[i].syllable_index = syllable_index
         self.plan.msg("After initial reordering", self.buffer)
 
-        # XXX set up masks
+        # Set up masks now. Note that these masks have the opposite
+        # value to Harfbuzz - i.e. False means "not masked"
+        rphf_mask = False
+        for i in range(start, end):
+            if pos(i) != IndicPosition.RA_TO_BECOME_REPH:
+                rphf_mask = True
+            self.buffer.items[i].feature_masks["rphf"] = rphf_mask
+            self.buffer.items[i].feature_masks["half"] = i > base
+            if not self.config["old_spec"] and self.config["blwf_mode"] == "pre_and_post":
+                self.buffer.items[i].feature_masks["blwf"] = i > base
+            self.buffer.items[i].feature_masks["blwf"] = i < base
+            self.buffer.items[i].feature_masks["abvf"] = i < base
+            self.buffer.items[i].feature_masks["pstf"] = i < base
+
+        # We are not supporting old spec eyelash ra
+
+        # pref substitutes pairwise
+        pref_len = 2
+        i = base + 1
+        for j in range(0,i):
+            self.buffer.items[j].feature_masks["pref"] = True
+        while i < end-pref_len:
+            if self.would_substitute("pref", [self.buffer.items[i], self.buffer.items[i+1]]):
+                self.buffer.items[i].feature_masks["pref"] = False
+                self.buffer.items[i+1].feature_masks["pref"] = False
+                i = i + 2
+            else:
+                self.buffer.items[i].feature_masks["pref"] = True
+                i = i + 1
+
+        # ZWJ/ZWNJ
+        for i in range(start+1, end):
+            if cat(i) in ["ZWJ", "ZWNJ"]:
+                non_joiner == cat(i) == "ZWNJ"
+                j = i
+                while True:
+                    j = j - 1
+                    if non_joiner:
+                        self.buffer.items[j].feature_masks["half"] = True
+                    if not (j > start and not is_consonant(j)):
+                        break
+
     def final_reordering(self, shaper):
-        pass
+        for index,syll_type,start,end in self.iterate_syllables():
+            self.final_reordering_syllable(start,end)
+
+    def final_reordering_syllable(self, start, end):
+        def cat(i):
+            return self.buffer.items[i].indic_syllabic_category
+        def pos(i):
+            return self.buffer.items[i].indic_position
+        def swap(a,b):
+            self.buffer.items[b], self.buffer.items[a] = self.buffer.items[a], self.buffer.items[b]
+        def is_joiner(n):
+            return cat(n) == "ZWJ" or cat(n) == "ZWNJ"
+        def is_halant(n):
+            return cat(n) == "H"
+        def is_consonant(n):
+            isc = cat(n)
+            is_medial = isc == "CM"
+            return isc in ["C", "CS", "Ra", "V", "PLACEHOLDER", "DOTTEDCIRCLE"] or is_medial
+
+        virama = self.config["virama"]
+        virama_item = BufferItem.new_unicode(virama)
+        virama_item.map_to_glyph(self.buffer.font)
+        if virama_item.glyph != ".notdef":
+            for i in range(start, end):
+                if self.buffer.items[i].glyph == virama_item.glyph \
+                    and self.buffer.items[i].ligated \
+                    and self.buffer.items[i].multiplied:
+                    self.buffer.items[i].indic_syllabic_category = "H"
+                    self.buffer.items[i].ligated = False
+                    self.buffer.items[i].multiplied = False
+        try_pref = any(["pref" in item.feature_masks and item.feature_masks["pref"] == False for item in self.buffer.items])
+        base = start
+        while base < end:
+            if pos(base) >= IndicPosition.BASE_C:
+                if try_pref and base + 1 < end:
+                    for i in range(base+1, end):
+                        item = self.buffer.items[i]
+                        if not item.feature_masks.get("pref",True):
+                            if not (item.substituted and (item.ligated and not item.multiplied)):
+                                base = i
+                                while base < end and is_halant(base):
+                                    base = base + 1
+                                self.buffer.items[base].indic_positional_category = IndicPosition.BASE_C
+                                try_pref = false
+                            break
+                if self.buffer.script == "Malayalam":
+                    i = base + 1
+                    while i < end:
+                        while i < end and is_joiner(i):
+                            i = i + 1
+                        if i == end or not is_halant(i):
+                            break
+                        i = i + 1
+                        while i < end and is_joiner(i):
+                            i = i + 1
+                        if i < end and is_consonant(i) and pos(i) == IndicPosition.BELOW_C:
+                            base = i
+                            self.buffer.items[base].indic_positional_category = IndicPosition.BASE_C
+                        i = i + 1
+                if start < base and pos(base) > IndicPosition.BASE_C:
+                    base = base - 1
+                break
+            base = base + 1
+        if base == end and start < base and cat(base-i) == "ZWJ":
+            base = base - 1
+        if base < end:
+            while start < base and cat(base) in ["N","H"]:
+                base = base - 1
+
+        # Reorder matras
+        if start + 1 < end and start < base:
+            new_pos = base -1
+            if base == end:
+                new_pos = base - 2
+            # XXX
+
+        for i in range(start,end):
+            self.buffer.items[i].feature_masks["init"] = True
+        if pos(start) == IndicPosition.PRE_M:
+            if start == 0 or ucd_data(self.buffer.font.map_glyph_to_unicode(self.buffer.items[start-1].glyph))["General_Category"] not in ["Cf", "Cn", "Co", "Cs", "Ll", "Lm", "Lo", "Lt", "Lu", "Mc", "Me", "Mn"]:
+                self.buffer.items[start].feature_masks["init"] = False
+
 
     def normalize_unicode_buffer(self):
         unicodes = [item.codepoint for item in self.buffer.items]
