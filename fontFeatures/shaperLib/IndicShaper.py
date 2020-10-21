@@ -3,6 +3,7 @@ from .BaseShaper import BaseShaper
 import re
 from fontFeatures.jankyPOS.Buffer import BufferItem
 from .IndicShaperData import script_config, syllabic_category_map, syllabic_category_re, IndicPositionalCategory2IndicPosition, IndicPosition, reassign_category_and_position
+import unicodedata
 
 DOTTED_CIRCLE = 0x25CC
 
@@ -48,7 +49,7 @@ class IndicShaper(BaseShaper):
             state, end, matched_type = None, None, None
             for syllable_type in ["consonant_syllable", "vowel_syllable", "standalone_cluster","symbol_cluster","broken_cluster","other"]:
                 m = re.match(syllabic_category_re[syllable_type], category_string)
-                if m:
+                if m and len(m[0]):
                     matched_type = syllable_type
                     category_string = category_string[len(m[0]):]
                     indexes = re.findall("=(\\d+)", m[0])
@@ -299,3 +300,50 @@ class IndicShaper(BaseShaper):
         # XXX set up masks
     def final_reordering(self, shaper):
         pass
+
+    def normalize_unicode_buffer(self):
+        unicodes = [item.codepoint for item in self.buffer.items]
+        newunicodes = []
+        for cp in unicodes:
+            if cp in [0x0931, 0x09DC, 0x09DD, 0x0B94]:
+                newunicodes.append(cp)
+            elif cp in [0x0DDA, 0x0DDC, 0x0DDD, 0x0DDE]: # Sinhala split matras
+                glyph = BufferItem.new_unicode(cp)
+                glyph.map_to_glyph(self.buffer.font)
+                if self.would_substitute("pstf", [glyph]):
+                    newunicodes.append(0x0DD9, cp)
+                else:
+                    newunicodes.append(cp)
+            else:
+                newunicodes.extend([ord(x) for x in unicodedata.normalize("NFD", chr(cp)) ])
+        # Now recompose
+        newstring = ""
+        ix = 0
+        while ix < len(newunicodes):
+            a = newunicodes[ix]
+            if ix+1 == len(newunicodes):
+                newstring = newstring + chr(a)
+                break
+
+            b = newunicodes[ix+1]
+            s = chr(a) + chr(b)
+            composed = unicodedata.normalize("NFC", s)
+            if ucd_data(a)["General_Category"][0] == "M":
+                newstring = newstring + chr(a)
+                ix = ix + 1
+                continue
+            elif a == 0x9af and b == 0x9bc:
+                newstring = newstring + chr(0x9df)
+                ix = ix + 2
+                continue
+            elif composed != unicodedata.normalize("NFD", s):
+                assert(len(s) == 1)
+                newunicodes[ix] = ord(x)
+                del newunicodes[ix+1]
+                continue
+            else:
+                newstring = newstring + chr(a)
+                ix =ix + 1
+
+        self.buffer.store_unicode(newstring)
+

@@ -1,5 +1,6 @@
 from fontFeatures.jankyPOS.Buffer import Buffer
 from copy import copy
+import unicodedata
 
 
 class BaseShaper():
@@ -31,12 +32,17 @@ class BaseShaper():
     pass
 
   def substitute_default(self):
+    self.normalize_unicode_buffer()
     self.buffer.map_to_glyphs()
     self.plan.msg("Initial glyph mapping", self.buffer)
     # Setup masks
     # if self.buf.fallback_mark_positioning:
       # self.fallback_mark_position_recategorize_marks()
     pass
+
+  def normalize_unicode_buffer(self):
+    unistring = "".join([chr(item.codepoint) for item in self.buffer.items])
+    self.buffer.store_unicode(unicodedata.normalize("NFC", unistring))
 
   def collect_features(self, shaper):
     return []
@@ -59,7 +65,7 @@ class BaseShaper():
                 lookups.extend(
                     [(routine, f) for routine in self.plan.fontfeatures.features[f]]
                 )
-            self.plan.msg("Collected lookups from %s features" % ",".join(stage))
+            self.plan.msg("Processing features: %s" % ",".join(stage))
             for r, feature in lookups:
                 self.plan.msg("Before %s (%s)" % (r.name, feature), buffer=self.buffer)
                 r.apply_to_buffer(self.buffer, stage=current_stage, feature=feature)
