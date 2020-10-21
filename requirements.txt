@@ -7,3 +7,4 @@ booleanOperations
 more_itertools
 bidict
 dataclasses
+lxml
