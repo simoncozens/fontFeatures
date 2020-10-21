@@ -22,7 +22,7 @@ def get_bezier_paths(font, glyphname):
         outlines of the glyph.
     """
     if isglyphs(font):
-        layer = fontmaster.font.glyphs[glyphname].layers[fontmaster.id]
+        layer = font.font.glyphs[glyphname].layers[font.id]
         return BezierPath.fromGlyphsLayer(layer)
 
     return BezierPath.fromFonttoolsGlyph(font, glyphname)
