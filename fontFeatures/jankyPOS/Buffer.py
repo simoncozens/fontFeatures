@@ -54,6 +54,9 @@ class BufferItem:
                 pass
             else:
                 raise e
+        self.substituted = False
+        self.ligated = False
+        self.multiplied = False
         self.recategorize(font)
 
     def recategorize(self, font):
@@ -144,6 +147,7 @@ class Buffer:
     def clear_mask(self):
         self.flags = 0
         self.markFilteringSet = None
+        self.current_feature_mask = None
         self.recompute_mask()
 
     def set_mask(self, flags, markFilteringSet=None):
@@ -169,16 +173,20 @@ class Buffer:
                     mask,
                 )
             )
+        if self.current_feature_mask:
+            feature = self.current_feature_mask
+            mask = list(
+                filter(
+                    lambda ix: (feature not in self.items[ix].feature_masks)
+                        or (not self.items[ix].feature_masks[feature]),
+                    mask
+                )
+            )
         self.mask = mask
 
     def set_feature_mask(self, feature):
-        self.mask = list(
-            filter(
-                lambda ix: (feature not in self.items[ix].feature_masks)
-                    or (not self.items[ix].feature_masks[feature]),
-                self.mask
-            )
-        )
+        self.current_feature_mask = feature
+        self.recompute_mask()
 
     def serialize(self, additional = None, position=True):
         """Serialize a buffer to a string.

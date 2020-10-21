@@ -19,5 +19,10 @@ def _do_apply(self, buf, ix):
         new_glyph = copy.copy(buf[ix])
         new_glyph.glyph = g[0]
         new_glyph.prep_glyph(buf.font)
+        new_glyph.substituted = True
+        if len(self.replacement) > 1 and len(coverage) == 1:
+            new_glyph.multiplied = True
+        if len(self.replacement) == 1 and len(coverage) > 1:
+            new_glyph.ligated = True
         newstuff.append(new_glyph)
     buf[ix : ix + len(self.input)] = newstuff
