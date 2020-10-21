@@ -8,3 +8,4 @@ more_itertools
 bidict
 dataclasses
 lxml
+youseedee
