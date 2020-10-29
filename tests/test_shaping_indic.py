@@ -1,9 +1,10 @@
 from fontFeatures import FontFeatures
-from fontFeatures.jankyPOS.Buffer import Buffer
+from fontFeatures.shaperLib.Buffer import Buffer
 from fontFeatures.fontProxy import FontProxy
 from fontFeatures.shaperLib.Shaper import Shaper
 from fontFeatures.ttLib import unparse
 from fontTools.ttLib import TTFont
+from babelfont import Babelfont
 import pytest
 
 
@@ -77,17 +78,20 @@ test_data_glyphs = [  # fontname,string,serialization
 def test_shaping(fontname, string, serialization):
     font = TTFont("tests/data/" + fontname)
     ff = unparse(font)
-    buf = Buffer(FontProxy(font), unicodes=string)
-    shaper = Shaper(ff, FontProxy(font))
+    bbf = Babelfont.open("tests/data/" + fontname)
+    buf = Buffer(bbf, unicodes=string)
+    shaper = Shaper(ff, bbf)
     shaper.execute(buf)
     assert buf.serialize() == serialization
 
 
 def test_shaping_matra_reorder():
-    font = TTFont("tests/data/1735326da89f0818cd8c51a0600e9789812c0f94.ttf")
+    fontname = "1735326da89f0818cd8c51a0600e9789812c0f94.ttf"
+    font = TTFont("tests/data/" + fontname)
     ff = FontFeatures()
-    buf = Buffer(FontProxy(font), unicodes="हि")
-    shaper = Shaper(ff, FontProxy(font))
+    bbf = Babelfont.open("tests/data/" + fontname)
+    buf = Buffer(bbf, unicodes="हि")
+    shaper = Shaper(ff, bbf)
     shaper.execute(buf)
     # Force buffer to codepoints
     for i in buf.items:

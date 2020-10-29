@@ -1,5 +1,5 @@
 from fontFeatures import FontFeatures, Substitution
-from fontFeatures.jankyPOS.Buffer import Buffer
+from fontFeatures.shaperLib.Buffer import Buffer
 from fontFeatures.fontProxy import FontProxy
 from fontFeatures.shaperLib.Shaper import Shaper
 from fontTools.ttLib import TTFont

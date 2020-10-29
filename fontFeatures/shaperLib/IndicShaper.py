@@ -1,7 +1,7 @@
 from youseedee import ucd_data
 from .BaseShaper import BaseShaper
 import re
-from fontFeatures.jankyPOS.Buffer import BufferItem
+from fontFeatures.shaperLib.Buffer import BufferItem
 from .IndicShaperData import script_config, syllabic_category_map, syllabic_category_re, IndicPositionalCategory2IndicPosition, IndicPosition, reassign_category_and_position
 import unicodedata
 

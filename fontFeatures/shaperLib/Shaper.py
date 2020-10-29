@@ -1,7 +1,7 @@
-from fontFeatures.fontProxy import FontProxy
+from babelfont.font import Font
 from fontFeatures import FontFeatures
 import unicodedata
-from fontFeatures.jankyPOS import Buffer
+from fontFeatures.shaperLib import Buffer
 from .BaseShaper import BaseShaper
 from .ArabicShaper import ArabicShaper
 from .IndicShaper import IndicShaper
@@ -12,9 +12,9 @@ import logging
 class Shaper:
     def __init__(self, ff, font, message_function=None):
         assert isinstance(ff, FontFeatures)
-        assert isinstance(font, FontProxy)
+        assert isinstance(font, Font)
         self.fontfeatures = ff
-        self.fontproxy = font
+        self.babelfont = font
         if message_function:
             self.msg = message_function
         else:
@@ -22,7 +22,7 @@ class Shaper:
 
     def execute(self, buf, features=[]):
         # Choose complex shaper
-        self.complexshaper = self.categorize(buf)(self, self.fontproxy, buf, features)
+        self.complexshaper = self.categorize(buf)(self, self.babelfont, buf, features)
         self.msg("Using %s" % type(self.complexshaper).__name__)
         self.stages = [[]]
         if isinstance(features, str):

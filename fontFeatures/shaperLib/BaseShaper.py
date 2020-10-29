@@ -1,4 +1,4 @@
-from fontFeatures.jankyPOS.Buffer import Buffer
+from fontFeatures.shaperLib.Buffer import Buffer
 from copy import copy
 import unicodedata
 

@@ -56,7 +56,6 @@ glyph preceding the sequence.
 
 
 import fontFeatures
-from fontFeatures.jankyPOS import JankyPos
 from fontFeatures.fontProxy import FontProxy
 from glyphtools import (
     categorize_glyph,

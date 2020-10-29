@@ -42,12 +42,12 @@ class BufferItem:
 
     def map_to_glyph(self, font):
         if not self.glyph:
-            self.glyph = font.map_unicode_to_glyph(self.codepoint)
+            self.glyph = font.glyphForCodepoint(self.codepoint)
         self.prep_glyph(font)
 
     def prep_glyph(self, font):
         try:
-            self.position = ValueRecord(xAdvance=get_glyph_metrics(font.font, self.glyph)["width"],)
+            self.position = ValueRecord(xAdvance=font[self.glyph].width)
         except Exception as e:
             if "pytest" in sys.modules:
                 # We tolerate broken fonts in pytest
@@ -78,8 +78,6 @@ class BufferItem:
 
 class Buffer:
     def __init__(self, font, glyphs=[], unicodes=[], direction=None, script=None, language=None):
-        if not isinstance(font, FontProxy):
-            font = FontProxy(font)
         self.font = font
         self.direction = direction
         self.script = script

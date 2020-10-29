@@ -1,7 +1,7 @@
 from youseedee import ucd_data
 from .ArabicShaper import ArabicShaper
 import re
-from fontFeatures.jankyPOS.Buffer import BufferItem
+from fontFeatures.shaperLib.Buffer import BufferItem
 import unicodedata
 
 DOTTED_CIRCLE = 0x25CC
