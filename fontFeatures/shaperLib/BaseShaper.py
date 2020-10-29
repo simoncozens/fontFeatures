@@ -12,7 +12,7 @@ class BaseShaper():
 
   def shape(self):
     # self.buffer.set_unicode_props()
-    # self.buffer.insert_dotted_circle(self.font)
+    # self.insert_dotted_circles()
     # self.buffer.form_clusters()
     # self.buffer.ensure_native_direction()
     self.preprocess_text()
