@@ -95,7 +95,7 @@ def dropnone(a):
 # Accuracy of width detector
 accuracy1 = 5  # This creates O[(n • n+1)/2] lookups
 # Accuracy of rise detector
-accuracy2 = 10
+accuracy2 = 5
 
 
 class BYMoveDots:
@@ -243,7 +243,7 @@ class BYMoveDots:
                 medis_by_rise = bin_glyphs_by_metric(
                     parser.font, medis, "rise", bincount=accuracy2
                 )
-                queue = [[[[bariye], get_rise(parser.font, bariye)]]]
+                queue = [[[[bariye], get_glyph_metrics(parser.font, bariye)["rise"]]]]
                 ybClearance = self.get_yb_clearance(parser.font, bariye)
                 gapRequired = self.compute_threshold(parser, below_dots) - ybClearance
                 warnings.warn(
@@ -295,40 +295,45 @@ class BYMoveDots:
         for seg in path.asSegments():
             intersections.extend(seg.intersections(ray))
         intersections = list(sorted(intersections, key=lambda i: i.point.y))
-        i1, i2 = intersections[0:2]
-        return i2.point.y
+        i = intersections[-1]
+        return i.point.y
 
     @classmethod
     def compute_threshold(self, parser, below_dots):
         from fontFeatures.ttLib import unparse
 
         font = parser.font
-        # Find the anchors
-        ff2 = unparse(font)
         behforms = list(
             filter(
                 lambda g: g.startswith("BEm") or g.startswith("BEi"),
                 FontProxy(parser.font).glyphs,
             )
         )
-        if "mark" not in ff2.features:
-            raise ValueError("No mark positioning for font!")
-        rules = list(
-            filter(
-                lambda r: below_dots[0] in r.marks
-                and any([m in r.bases for m in behforms]),
-                [x for y in ff2.features["mark"] for x in y.rules],
-            )
-        )
-        if len(rules) < 1:
-            raise ValueError("No nukta positioning?")
-        r = rules[0]
-        anchor1_y = r.marks[below_dots[0]][1]
-        anchor2_y = statistics.mean([r.bases[x][1] for x in behforms if x in r.bases])
-        displacement = anchor2_y - anchor1_y
         bottomOfDot = statistics.mean(
             [get_glyph_metrics(font, x)["yMin"] for x in below_dots]
         )
+
+        if hasattr(parser.fontfeatures, "anchors"):
+            anchor1_y = statistics.mean([parser.fontfeatures.anchors[x]["_bottom"][1] for x in below_dots if x in parser.fontfeatures.anchors])
+            anchor2_y = statistics.mean([parser.fontfeatures.anchors[x]["bottom"][1] for x in behforms if x in parser.fontfeatures.anchors and "bottom" in parser.fontfeatures.anchors[x]])
+        else:
+            # Find the anchors
+            ff2 = unparse(font)
+            if "mark" not in ff2.features:
+                raise ValueError("No mark positioning for font!")
+            rules = list(
+                filter(
+                    lambda r: below_dots[0] in r.marks
+                    and any([m in r.bases for m in behforms]),
+                    [x for y in ff2.features["mark"] for x in y.rules],
+                )
+            )
+            if len(rules) < 1:
+                raise ValueError("No nukta positioning?")
+            r = rules[0]
+            anchor1_y = r.marks[below_dots[0]][1]
+            anchor2_y = statistics.mean([r.bases[x][1] for x in behforms if x in r.bases])
+        displacement = anchor2_y - anchor1_y
         return -(bottomOfDot + displacement)
 
 
@@ -366,7 +371,7 @@ class BYFixOverhang:
                 rules.append(
                     fontFeatures.Positioning(
                         [input_[0]],
-                        [fontFeatures.ValueRecord(xAdvance=adjustment)],
+                        [fontFeatures.ValueRecord(xAdvance=int(adjustment))],
                         postcontext=postcontext,
                     )
                 )
