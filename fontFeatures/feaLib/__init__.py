@@ -19,6 +19,7 @@ class FeaUnparser:
         self.ff = fontFeatures.FontFeatures()
         self.markclasses = {}
         self.currentFeature = None
+        self.currentRoutine = None
         self.gensym = 1
         self.language_systems = []
         glyphmap = ()
@@ -38,23 +39,28 @@ class FeaUnparser:
             raise ValueError("This can't happen")
         return candidates[0]
 
+    def _start_routine_if_necessary(self, location):
+        if not self.currentRoutine:
+            self._start_routine(location, "")
+
     def _start_routine(self, location, name):
         location = "%s:%i:%i" % (location)
+        # print("Starting routine at "+location)
+        self._discard_empty_routine()
         self.currentRoutine = fontFeatures.Routine(name=name, address=location)
         if not name:
             self.currentRoutine.name = "unnamed_routine_%i" % self.gensym
             self.gensym = self.gensym + 1
-            self.ff.addRoutine(self.currentRoutine)
         self.currentRoutineFlag = 0
+        self.ff.addRoutine(self.currentRoutine)
+        if self.currentFeature:
+            self.ff.addFeature(self.currentFeature, [self.currentRoutine])
 
     def start_lookup_block(self, location, name):
         self._start_routine(location, name)
-        self.ff.addRoutine(self.currentRoutine)
 
     def start_feature(self, location, name):
         self.currentFeature = name
-        self._start_routine(location, "")
-        self.ff.addFeature(name, [self.currentRoutine])
 
     def set_font_revision(self, location, revision):
         pass
@@ -63,6 +69,7 @@ class FeaUnparser:
         pass
 
     def add_single_subst(self, location, prefix, suffix, mapping, forceChain):
+        self._start_routine_if_necessary(location)
         location = "%s:%i:%i" % (location)
         s = fontFeatures.Substitution(
             input_=[list(mapping.keys())],
@@ -76,6 +83,7 @@ class FeaUnparser:
     def add_multiple_subst(
         self, location, prefix, glyph, suffix, replacements, forceChain
     ):
+        self._start_routine_if_necessary(location)
         location = "%s:%i:%i" % (location)
         s = fontFeatures.Substitution(
             input_=[[glyph]],
@@ -189,22 +197,21 @@ class FeaUnparser:
 
     def set_lookup_flag(self, location, value, markAttach, markFilter):
         # If we're mid-feature, start a new routine here
-        if self.currentFeature and len(self.currentRoutine.rules):
+        if self.currentFeature:
             self.end_lookup_block()
+            self._discard_empty_routine()
             self._start_routine(location, None)
-            self.ff.addFeature(self.currentFeature, [self.currentRoutine])
-
         self.currentRoutineFlag = value
 
     def add_language_system(self, location, script, language):
         self.language_systems.append((script, language))
 
     def add_lookup_call(self, lookup_name):
+
         routine = self.find_named_routine(lookup_name)
         if self.currentFeature:
+            self._discard_empty_routine()
             self.ff.addFeature(self.currentFeature, [routine])
-            self._start_routine((None, 0, 0), None)
-            self.ff.addFeature(self.currentFeature, [self.currentRoutine])
         else:
             raise ValueError("Huh?")
 
@@ -213,6 +220,19 @@ class FeaUnparser:
             rule.flags = self.currentRoutineFlag
 
     def end_feature(self):
+        self._discard_empty_routine()
         self.currentFeature = None
         for rule in self.currentRoutine.rules:
             rule.flags = self.currentRoutineFlag
+
+    def _discard_empty_routine(self):
+        if not self.currentFeature:
+            return
+        if self.currentRoutine and not self.currentRoutine.rules:
+            if self.currentRoutine not in  self.ff.routines:
+                # print("%s escaped!" % self.currentRoutine.name)
+                return
+            del(self.ff.routines[self.ff.routines.index(self.currentRoutine)])
+            if self.currentFeature in self.ff.features:
+                del(self.ff.features[self.currentFeature][-1])
+        pass
