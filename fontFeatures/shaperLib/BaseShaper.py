@@ -4,9 +4,9 @@ import unicodedata
 
 
 class BaseShaper():
-  def __init__(self, plan, fontproxy, buf, features = []):
+  def __init__(self, plan, font, buf, features = []):
     self.plan = plan
-    self.fontproxy = fontproxy
+    self.font = font
     self.buffer = buf
     self.features = features
 

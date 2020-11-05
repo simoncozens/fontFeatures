@@ -2,7 +2,7 @@ import re
 import parsley
 import importlib, inspect
 from fontFeatures import FontFeatures
-from fontFeatures.fontProxy import FontProxy
+from babelfont.font import Font
 from ometa.grammar import OMeta
 import warnings
 from more_itertools import collapse
@@ -58,9 +58,8 @@ class GlyphSelector:
 
     def resolve(self, fontfeatures, font, mustExist=True):
         returned = []
-        if not isinstance(font,FontProxy):
-            font = FontProxy(font)
-        glyphs = font.glyphs
+        assert isinstance(font, Font)
+        glyphs = font.keys()
         if "barename" in self.selector:
             returned = [self.selector["barename"]]
         elif "inlineclass" in self.selector:

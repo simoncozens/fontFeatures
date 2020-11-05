@@ -45,7 +45,6 @@ anchors, and using an ``Attach`` statement like the following::
 
 """
 
-from glyphtools import categorize_glyph
 import fontFeatures
 
 GRAMMAR = """
@@ -84,19 +83,19 @@ class Attach:
                 bases = {
                     k: v
                     for k, v in bases.items()
-                    if categorize_glyph(parser.font, k)[0] == "mark"
+                    if parser.font[k].category == "mark"
                 }
             else:
                 bases = {
                     k: v
                     for k, v in bases.items()
-                    if categorize_glyph(parser.font, k)[0] == "base"
+                    if parser.font[k].category == "base"
                 }
             if attachtype != "cursive":
                 marks = {
                     k: v
                     for k, v in marks.items()
-                    if categorize_glyph(parser.font, k)[0] == "mark"
+                    if parser.font[k].category == "mark"
                 }
         return [
             fontFeatures.Routine(

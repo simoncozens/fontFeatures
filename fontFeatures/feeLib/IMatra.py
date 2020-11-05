@@ -4,7 +4,7 @@ Matra selection
 
 In Devanagari fonts, it is common to have a basic glyph to represent the "i"
 matra, and then a set of variant glyphs of differing widths. The "arm" of the
-"i" matra should cover the following base consonant, which leads to an
+"i" matra should reach the stem of the following base consonant, which leads to an
 interesting font engineering question: how do we produce a set of substitution
 rules which replaces the basic glyph for each width-specific variant most
 appropriate to the widths of the each consonant?
@@ -26,7 +26,7 @@ For more on how this plugin actually operates, see :ref:`imatra`.
 """
 
 import fontFeatures
-from glyphtools import get_glyph_metrics
+import warnings
 
 GRAMMAR = """
 IMatra_Args = glyphselector:bases ws ':' ws glyphselector:matra ws '->' ws glyphselector:matras -> (bases,matra,matras)
@@ -45,10 +45,11 @@ class IMatra:
         # Organise matras into overhang widths
         matras2bases = {}
         matrasAndOverhangs = [
-            (m, -get_glyph_metrics(parser.font, m)["rsb"]) for m in matras
+            (m, -parser.font[m].rightMargin) for m in matras
         ]
         for b in bases:
-            w = get_glyph_metrics(parser.font, b)["width"]
+            w = self.find_stem(parser.font, b)
+            warnings.warn("Stem location for %s: %s" % (b,w))
             (bestMatra, _) = min(matrasAndOverhangs, key=lambda s: abs(s[1] - w))
             if not bestMatra in matras2bases:
                 matras2bases[bestMatra] = []
@@ -61,3 +62,17 @@ class IMatra:
                 )
             )
         return [fontFeatures.Routine(rules=rv)]
+
+    @classmethod
+    def find_stem(self, font, base):
+        glyph = font[base]
+        # Try stem anchors first
+        possible = [a.x for a in glyph.anchors if a.name == "abvm.e" or a.name == "abvm" ]
+        if possible:
+            return possible[0]
+        # Try a right margin
+        if "dvmE" in font:
+            margin = [a.x for a in font["dvmE"].anchors if a.name == "_abvm.e" or a.name == "_abvm" ]
+            if margin:
+                return glyph.width - margin[0]
+        return glyph.width / 2

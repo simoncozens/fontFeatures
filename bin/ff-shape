@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-from fontFeatures.jankyPOS.Buffer import Buffer
+from fontFeatures.shaperLib.Buffer import Buffer
 from fontFeatures.ttLib import unparse
 from fontTools.ttLib import TTFont
 from fontFeatures.shaperLib.Shaper import Shaper
 import sys
-from fontFeatures.fontProxy import FontProxy
+from babelfont import Babelfont
 from fontTools.ttLib import TTFont
 import argparse
 import logging
@@ -27,15 +27,16 @@ if args.logging:
     logging.basicConfig(format='%(message)s')
     logging.getLogger("fontFeatures.shaperLib").setLevel(logging.DEBUG)
 
-font = TTFont(args.font)
-ff = unparse(font)
+font = Babelfont.open(args.font)
+if args.font.endswith(".ttf") or args.font.endswith(".otf"):
+    ff = unparse(TTFont(args.font))
 if args.u:
     args.u = re.sub("[uU]+|0x", "", args.u)
     splitup = re.split(r"[\s,]", args.u)
     args.string = "".join([chr(int(x,16)) for x in splitup])
 
 buf = Buffer(font, unicodes=args.string)
-shaper = Shaper(ff, FontProxy(font))
+shaper = Shaper(ff, font)
 shaper.execute(buf)
 if buf.direction == "RTL":
     buf.items = list(reversed(buf.items))

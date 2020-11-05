@@ -419,7 +419,7 @@ class IndicShaper(BaseShaper):
         for i in range(start,end):
             self.buffer.items[i].feature_masks["init"] = True
         if pos(start) == IndicPosition.PRE_M:
-            if start == 0 or ucd_data(self.buffer.font.map_glyph_to_unicode(self.buffer.items[start-1].glyph))["General_Category"] not in ["Cf", "Cn", "Co", "Cs", "Ll", "Lm", "Lo", "Lt", "Lu", "Mc", "Me", "Mn"]:
+            if start == 0 or ucd_data(self.buffer.font.codepointForGlyph(self.buffer.items[start-1].glyph))["General_Category"] not in ["Cf", "Cn", "Co", "Cs", "Ll", "Lm", "Lo", "Lt", "Lu", "Mc", "Me", "Mn"]:
                 self.buffer.items[start].feature_masks["init"] = False
 
 

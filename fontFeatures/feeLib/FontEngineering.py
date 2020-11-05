@@ -35,8 +35,6 @@ advance width to be 50% of the width of `space`.
 
 """
 
-from babelfont.otf.font import OTFont
-import glyphtools
 import warnings
 
 
@@ -50,11 +48,9 @@ VERBS = ["SetWidth", "DuplicateGlyphs"]
 class SetWidth:
     @classmethod
     def action(self, parser, glyphs, width, is_relative):
-        f = OTFont(parser.font)
-
         glyphs = glyphs.resolve(parser.fontfeatures, parser.font)
         for g in glyphs:
-            glyph = f.layers[0][g]
+            glyph = parser.font[g]
             if is_relative:
                 glyph.width = glyph.width * width / 100
             else:
@@ -75,10 +71,11 @@ class DuplicateGlyphs:
             if n in parser.glyphs:
                 warnings.warn("Glyph '%s' already exists" % n)
                 continue
-            glyphtools.duplicate_glyph(parser.font, o, n)
-            if "GDEF" in parser.font:
-                oldcat, maclass = glyphtools.categorize_glyph(parser.font, o)
-                glyphtools.set_glyph_category(parser.font, n, oldcat, maclass)
+            oldglyph = parser.font[o]
+            newglyph = o.copy()
+            newglyph.name = n
+            newglyph.category = oldglyph.category
+            # XXX mark attachment class
             parser.font_modified = True
-        parser.glyphs = parser.font.getGlyphOrder()
+        parser.glyphs = list(parser.font.keys())
         return []

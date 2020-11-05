@@ -8,7 +8,8 @@ the outlines of glyphs.
 from beziers.path import BezierPath
 from beziers.line import Line
 from beziers.point import Point
-from glyphtools import isglyphs
+from beziers.path.representations.fontparts import FontParts
+
 
 def get_bezier_paths(font, glyphname):
     """Retrieve beziers from a glyph
@@ -21,11 +22,7 @@ def get_bezier_paths(font, glyphname):
         An array of ``beziers.path.BezierPath`` objects representing the
         outlines of the glyph.
     """
-    if isglyphs(font):
-        layer = font.font.glyphs[glyphname].layers[font.id]
-        return BezierPath.fromGlyphsLayer(layer)
-
-    return BezierPath.fromFonttoolsGlyph(font, glyphname)
+    return FontParts.fromFontpartsGlyph(font[glyphname])
 
 
 def find_largest_path(font, glyphname):

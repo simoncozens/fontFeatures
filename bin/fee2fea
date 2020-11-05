@@ -3,6 +3,7 @@ from fontFeatures.feeLib import FeeParser
 from fontFeatures.optimizer import Optimizer
 from fontFeatures.ttLib import unparse
 from fontTools.ttLib import TTFont
+from babelfont import Babelfont
 import sys
 import argparse
 import os
@@ -23,22 +24,10 @@ parser.add_argument("fee",
 
 args = parser.parse_args()
 
-if args.font.endswith("tf"):
+font = Babelfont.open(args.font,master=args.master)
+if args.font.endswith("tf") and args.load:
 	font = TTFont(args.font)
-	if args.load:
-		p.fontfeatures = unparse(font)
-elif args.font.endswith(".glyphs"):
-	from glyphsLib import GSFont
-
-	gsfont = GSFont(args.font)
-	if args.master:
-		potential_masters = list(filter(lambda x: x.name == args.master, f.masters))
-		if len(potential_masters) != 1:
-			warnings.warn("Could not find master '%s'" % args.master)
-	else:
-		font = gsfont.masters[0]
-		if len(gsfont.masters) > 1:
-			warnings.warn("Multiple masters in file and --master not specified, selecting '%s'" % font.name)
+	p.fontfeatures = unparse(font)
 
 p = FeeParser(font)
 p.parseFile(args.fee)

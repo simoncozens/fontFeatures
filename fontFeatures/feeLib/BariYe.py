@@ -56,7 +56,6 @@ glyph preceding the sequence.
 
 
 import fontFeatures
-from fontFeatures.fontProxy import FontProxy
 from glyphtools import (
     categorize_glyph,
     get_glyph_metrics,
@@ -305,7 +304,7 @@ class BYMoveDots:
         behforms = list(
             filter(
                 lambda g: g.startswith("BEm") or g.startswith("BEi"),
-                FontProxy(parser.font).glyphs,
+                parser.font.keys(),
             )
         )
         bottomOfDot = statistics.mean(

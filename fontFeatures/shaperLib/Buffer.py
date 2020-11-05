@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from fontFeatures import ValueRecord
-from glyphtools import get_glyph_metrics, categorize_glyph
-from fontFeatures.fontProxy import FontProxy
+from glyphtools import get_glyph_metrics
 from youseedee import ucd_data
 import sys
 
@@ -61,16 +60,21 @@ class BufferItem:
 
     def recategorize(self, font):
         try:
-            self.category = categorize_glyph(font.font, self.glyph)
+            self.category = font[self.glyph].category
+            if not self.category:
+                self._fallback_categorize()
         except Exception as e:
-            # Fallback
-            genCat = ucd_data(self.codepoint).get("General_Category", "L")
-            if genCat[0] == "M":
-                self.category = ("mark", None)
-            elif genCat == "Ll":
-                self.category = ("ligature", None)
-            else:
-                self.category = ("base", None)
+            warnings.warn("Error getting category: %s" % str(e))
+            self._fallback_categorize()
+
+    def _fallback_categorize(self):
+        genCat = ucd_data(self.codepoint).get("General_Category", "L")
+        if genCat[0] == "M":
+            self.category = ("mark", None)
+        elif genCat == "Ll":
+            self.category = ("ligature", None)
+        else:
+            self.category = ("base", None)
 
     def add_position(self, vr2):
         _add_value_records(self.position, vr2)

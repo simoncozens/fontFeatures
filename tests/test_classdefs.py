@@ -1,5 +1,6 @@
 from fontFeatures.feeLib import FeeParser
 from fontTools.ttLib import TTFont
+from babelfont import Babelfont
 
 import unittest
 import re
@@ -14,7 +15,7 @@ class TestFeeDefinitions(unittest.TestCase):
         self.assertEqual(alltrim(s1), alltrim(s2))
 
     def test_parse_to_ff(self):
-        p = FeeParser(TTFont("fonts/Roboto-Regular.ttf"))
+        p = FeeParser(Babelfont.open("fonts/Roboto-Regular.ttf"))
         p.parseString("""
         	DefineClass @vowels = /^[aeiou]$/;
         	DefineClass @consonants = /^[bcdfghjklmnpqrstvwxyz]$/;
