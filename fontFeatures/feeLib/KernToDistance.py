@@ -1,3 +1,5 @@
+# XXX This currently will not work. It requires porting to the new system.
+
 class KernToDistance:
     takesBlock = False
 
