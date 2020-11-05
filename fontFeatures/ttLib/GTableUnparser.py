@@ -267,8 +267,6 @@ class GTableUnparser:
         inputs = []
         lookups = []
         suffix = []
-        if hasattr(sub, "ChainSubRuleSet"):
-            raise ValueError
         if hasattr(sub, "BacktrackCoverage"):
             for coverage in reversed(sub.BacktrackCoverage):
                 prefix.append(coverage.glyphs)
