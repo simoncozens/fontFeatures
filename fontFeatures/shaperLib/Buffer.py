@@ -34,6 +34,7 @@ class BufferItem:
     @classmethod
     def new_glyph(klass, glyph, font):
         self = BufferItem()
+        self.codepoint = None
         self.glyph = glyph
         self.feature_masks = {}
         self.prep_glyph(font)
@@ -89,6 +90,7 @@ class Buffer:
         self.fallback_mark_positioning = False
         self.fallback_glyph_classes = False
         self.items = []
+        self.mask = []
         if glyphs:
             self.items = [BufferItem.new_glyph(g, font) for g in glyphs]
             self.clear_mask()
@@ -116,6 +118,14 @@ class Buffer:
         for u in self.items:
             u.map_to_glyph(self.font)
         self.clear_mask()
+
+    @property
+    def is_all_glyphs(self):
+        return all([x.glyph is not None for x in self.items])
+
+    @property
+    def is_all_unicodes(self):
+        return all([x.codepoint is not None for x in self.items])
 
     def __getitem__(self, key):
         indexed = self.mask[key]

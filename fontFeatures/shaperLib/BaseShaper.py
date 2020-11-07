@@ -15,9 +15,10 @@ class BaseShaper():
     # self.insert_dotted_circles()
     # self.buffer.form_clusters()
     # self.buffer.ensure_native_direction()
-    self.preprocess_text()
-    # Substitute pre
-    self.substitute_default()
+    if not self.buffer.is_all_glyphs:
+        self.preprocess_text()
+        # Substitute pre
+        self.substitute_default()
     self.substitute_complex()
     self.position()
     # Substitute post
