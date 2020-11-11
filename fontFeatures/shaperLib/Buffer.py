@@ -3,6 +3,7 @@ from fontFeatures import ValueRecord
 from glyphtools import get_glyph_metrics
 from youseedee import ucd_data
 import sys
+import warnings
 
 
 def _add_value_records(vr1, vr2):
@@ -69,6 +70,10 @@ class BufferItem:
             self._fallback_categorize()
 
     def _fallback_categorize(self):
+        if not self.codepoint:
+            # Now what?
+            self.category = ("base", None)
+            return
         genCat = ucd_data(self.codepoint).get("General_Category", "L")
         if genCat[0] == "M":
             self.category = ("mark", None)
@@ -91,6 +96,7 @@ class Buffer:
         self.fallback_glyph_classes = False
         self.items = []
         self.mask = []
+        self.current_feature_mask = None
         if glyphs:
             self.items = [BufferItem.new_glyph(g, font) for g in glyphs]
             self.clear_mask()
