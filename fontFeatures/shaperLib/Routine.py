@@ -9,5 +9,4 @@ def apply_to_buffer(self, buf, stage=None, feature=None):
     for r in self.rules:
         if stage and r.stage != stage:
             continue
-        if r.apply_to_buffer(buf):
-            return
+        r.apply_to_buffer(buf)
