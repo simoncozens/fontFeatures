@@ -52,6 +52,8 @@ class GTableUnparser:
         return str(self.index)
 
     def unparse(self, doLookups=True):
+        if not self.table.ScriptList:
+            return
         if doLookups:
             self.unparseLookups()
         self.collectFeatures()
@@ -186,6 +188,8 @@ class GTableUnparser:
             self.fontFeatures.addFeature(name, f)
 
     def unparseLookups(self):
+        if not self.table.LookupList:
+            return
         lookupOrder = range(0, len(self.table.LookupList.Lookup))
         # Reorder to check for dependencies
         newOrder = []

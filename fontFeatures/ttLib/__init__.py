@@ -12,6 +12,8 @@ from fontFeatures import FontFeatures
 def unparseLanguageSystems(tables):
     scripts = OrderedDict()
     for table in tables:
+        if not table.table.ScriptList:
+            continue
         for scriptRecord in table.table.ScriptList.ScriptRecord:
             scriptTag = scriptRecord.ScriptTag
             languages = scripts.get(scriptTag, [])
