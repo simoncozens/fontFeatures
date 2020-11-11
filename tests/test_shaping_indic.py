@@ -78,7 +78,7 @@ test_data_glyphs = [  # fontname,string,serialization
 def test_shaping(fontname, string, serialization):
     font = TTFont("tests/data/" + fontname)
     ff = unparse(font)
-    bbf = Babelfont.open("tests/data/" + fontname)
+    bbf = Babelfont.load("tests/data/" + fontname)
     buf = Buffer(bbf, unicodes=string)
     shaper = Shaper(ff, bbf)
     shaper.execute(buf)
@@ -89,7 +89,7 @@ def test_shaping_matra_reorder():
     fontname = "1735326da89f0818cd8c51a0600e9789812c0f94.ttf"
     font = TTFont("tests/data/" + fontname)
     ff = FontFeatures()
-    bbf = Babelfont.open("tests/data/" + fontname)
+    bbf = Babelfont.load("tests/data/" + fontname)
     buf = Buffer(bbf, unicodes="हि")
     shaper = Shaper(ff, bbf)
     shaper.execute(buf)

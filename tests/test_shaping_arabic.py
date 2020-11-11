@@ -16,7 +16,7 @@ class TestShapingArabic(unittest.TestCase):
     ff = unparse(font)
 
     def test_joining_1(self):
-      bbf = Babelfont.open(self.fontfile)
+      bbf = Babelfont.load(self.fontfile)
       buf = Buffer(bbf, unicodes=u(0x633,0x627))
       shaper = Shaper(self.ff, bbf)
       shaper.execute(buf)
@@ -24,7 +24,7 @@ class TestShapingArabic(unittest.TestCase):
       self.assertEqual(buf.serialize("arabic_joining", position=False), "uni0633.init(init)|uni0627.fina(fina)")
 
     def test_joining_2(self):
-      bbf = Babelfont.open(self.fontfile)
+      bbf = Babelfont.load(self.fontfile)
       buf = Buffer(bbf, unicodes=u(0x633,0x633,0x627))
       shaper = Shaper(self.ff, bbf)
       shaper.execute(buf)
