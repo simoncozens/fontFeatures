@@ -5,8 +5,10 @@ from fontFeatures.shaperLib import Buffer
 from .BaseShaper import BaseShaper
 from .ArabicShaper import ArabicShaper
 from .IndicShaper import IndicShaper
+from .USEShaper import USEShaper
 from youseedee import ucd_data
 import logging
+import re
 
 
 class Shaper:
@@ -45,11 +47,11 @@ class Shaper:
         outfeat = []
         for f in features:
             f = f.rstrip()
-            m = re.match("^([+\-]?)(\w+)", f)
+            m = re.match(r"^([+\-]?)(\w+)", f)
             if m:
-                outfeat.append({"tag": m[2], "value": m[1] == "+"})
+                outfeat.append({"tag": m[2], "value": m[1] != "-"})
                 continue
-            m = re.match("^(\w+)=([10])", f)
+            m = re.match(r"^(\w+)=([10])", f)
             if m:
                 outfeat.append({"tag": m[1], "value": m[2] == "1"})
             else:
