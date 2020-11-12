@@ -47,6 +47,10 @@ class BufferItem:
         self.prep_glyph(font)
 
     def prep_glyph(self, font):
+        if self.glyph in font.glyphOrder:
+            self.gid = font.glyphOrder.index(self.glyph)
+        else:
+            self.gid = -1 # ?
         try:
             self.position = ValueRecord(xAdvance=font[self.glyph].width)
         except Exception as e:
@@ -62,7 +66,7 @@ class BufferItem:
 
     def recategorize(self, font):
         try:
-            self.category = font[self.glyph].category
+            self.category = (font[self.glyph].category, None)
             if not self.category:
                 self._fallback_categorize()
         except Exception as e:
@@ -72,15 +76,17 @@ class BufferItem:
     def _fallback_categorize(self):
         if not self.codepoint:
             # Now what?
-            self.category = ("base", None)
+            self.category = ("unknown", None)
             return
         genCat = ucd_data(self.codepoint).get("General_Category", "L")
         if genCat[0] == "M":
             self.category = ("mark", None)
         elif genCat == "Ll":
             self.category = ("ligature", None)
-        else:
+        elif genCat[0] == "L":
             self.category = ("base", None)
+        else:
+            self.category = ("unknown", None)
 
     def add_position(self, vr2):
         _add_value_records(self.position, vr2)
@@ -206,7 +212,7 @@ class Buffer:
         self.current_feature_mask = feature
         self.recompute_mask()
 
-    def serialize(self, additional = None, position=True):
+    def serialize(self, additional = None, position=True, names=True, ned=False):
         """Serialize a buffer to a string.
 
     Returns:
@@ -220,15 +226,25 @@ class Buffer:
                 additional = [additional]
         else:
             additional = []
+        xcursor = 0
         for info in self.items:
             if hasattr(info, "glyph") and info.glyph:
-                outs.append("%s" % info.glyph)
+                if names:
+                    outs.append("%s" % info.glyph)
+                else:
+                    outs.append("%s" % info.gid)
             else:
                 outs.append("U+%04x" % info.codepoint)
-            if position and hasattr(info, "position"):
+            if ned:
                 position = info.position
-                outs[-1] = outs[-1] + "+%i" % position.xAdvance
-                if position.xPlacement != 0 or position.yPlacement != 0:
+                if xcursor + (position.xPlacement or 0):
+                    outs[-1] = outs[-1] + "@%i,%i" % (xcursor + (position.xPlacement or 0), position.yPlacement or 0)
+                xcursor = xcursor + position.xAdvance
+            elif position and hasattr(info, "position"):
+                position = info.position
+                cluster = 0
+                outs[-1] = outs[-1] + "=%i+%i" % (cluster, position.xAdvance)
+                if position.xPlacement or position.yPlacement:
                     outs[-1] = outs[-1] + "@<%i,%i>" % (
                         position.xPlacement or 0,
                         position.yPlacement or 0,
