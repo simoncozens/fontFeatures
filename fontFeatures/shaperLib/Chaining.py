@@ -11,8 +11,7 @@ def _do_apply(self, buf, ix):
     # Save buffer mask
     flags = buf.flags
     markFilteringSet = buf.markFilteringSet
-    old_unmasked_indexes = [ buf.mask[ix+i] for i in range(len(self.lookups)) if self.lookups[i] ]
-
+    old_unmasked_indexes = [ buf.mask[ix+i] for i in range(len(self.lookups)) ]
     for i,lookups in enumerate(self.lookups):
         if not lookups:
             continue

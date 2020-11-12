@@ -330,7 +330,7 @@ class IndicShaper(BaseShaper):
         # ZWJ/ZWNJ
         for i in range(start+1, end):
             if cat(i) in ["ZWJ", "ZWNJ"]:
-                non_joiner == cat(i) == "ZWNJ"
+                non_joiner = cat(i) == "ZWNJ"
                 j = i
                 while True:
                     j = j - 1

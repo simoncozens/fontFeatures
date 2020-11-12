@@ -15,6 +15,7 @@ def _do_apply(self, buf, ix):
         buf[ix].prep_glyph(buf.font)
         return
 
+    delta = len(self.replacement) - 1
     for g in self.replacement:
         new_glyph = copy.copy(buf[ix])
         new_glyph.glyph = g[0]
@@ -26,3 +27,5 @@ def _do_apply(self, buf, ix):
             new_glyph.ligated = True
         newstuff.append(new_glyph)
     buf[ix : ix + len(self.input)] = newstuff
+    if delta > 0:
+        return delta

@@ -5,8 +5,10 @@ def shaper_inputs(self):
 def _do_apply_cursive(self, buf, ix):
     mark = buf[ix].glyph
     base = buf[ix + 1].glyph
-    exit_x, exit_y = self.marks[mark]
-    entry_x, entry_y = self.bases[base]
+    if mark not in self.marks and base not in self.bases:
+        return
+    exit_x, exit_y = self.marks.get(mark, (0,0))
+    entry_x, entry_y = self.bases.get(base, (0,0))
     d = exit_x + (buf[ix].position.xPlacement or 0)
     buf[ix].position.xAdvance = (buf[ix].position.xAdvance or 0) - d
     buf[ix].position.xPlacement = (buf[ix].position.xPlacement or 0) - d
