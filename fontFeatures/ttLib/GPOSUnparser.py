@@ -11,14 +11,21 @@ class GPOSUnparser(GTableUnparser):
         4: "MarkToBase",
         5: "MarkToLigature",
         6: "MarkToMark",
-        7: "ContextualPositioning",
-        8: "ChainedContextualPositioning",
+        7: "Contextual",
+        8: "ChainedContextual",
         9: "Extension",
     }
-    _format2_attrs = {
-            "ruleset": "ChainPosClassSet",
-            "rule": "ChainPosClassRule",
-            "lookup": "PosLookupRecord"
+
+    _attrs = {
+        "lookup": "PosLookupRecord",
+        "format1_ruleset": "PosRuleSet",
+        "format1_rule": "PosRule",
+        "format2_classset": "PosClassSet",
+        "format2_rule": "PosClassRule",
+        "chain_format1_ruleset": "ChainPosRuleSet",
+        "chain_format1_rule": "ChainPosRule",
+        "chain_format2_classset": "ChainPosClassSet",
+        "chain_format2_rule": "ChainPosClassRule",
     }
 
     def makeValueRecord(self, valueRecord, valueFormat):
@@ -262,115 +269,3 @@ class GPOSUnparser(GTableUnparser):
                 )
             )
         return b, []
-
-    def unparseContextualPositioning(self, lookup):
-        b = fontFeatures.Routine(
-            name=self.getname("ContextualPositioning" + self.gensym())
-        )
-        for sub in lookup.SubTable:
-            if sub.Format == 1:
-                self._unparse_contextual_pos_format1(sub, b, lookup)
-            elif sub.Format == 3:
-                self._unparse_contextual_pos_format3(sub, b, lookup)
-            else:
-                try:
-                    inputs = self._invertClassDef(sub.ClassDef.classDefs, self.font)
-                    for classId, ruleset in enumerate(sub.PosClassSet):
-                        if not ruleset:
-                            continue
-                        rules = ruleset.PosClassRule
-                        inputclass = inputs[classId]
-                        for r in rules:
-                            input_ = [inputclass] + [inputs[x] for x in r.Class]
-                            lookups = self._unparse_lookups(r.PosLookupRecord)
-                            if len(lookups) <= len(input_):
-                                lookups.extend(
-                                    [None] * (1 + len(input_) - len(lookups))
-                                )
-                            if len(input_) == 0:
-                                raise ValueError
-                            b.addRule(
-                                fontFeatures.Chaining(
-                                    input_,
-                                    [],
-                                    [],
-                                    lookups=lookups,
-                                    address=self.currentLookup,
-                                    flags=lookup.LookupFlag,
-                                )
-                            )
-                except Exception as e:
-                    self.unparsable(b, "Lookup type 5 (" + str(e) + ")", sub)
-
-        return b, []
-
-    def _unparse_contextual_pos_format1(self, sub, b, lookup):
-        prefix = []
-        inputs = []
-        lookups = []
-        suffix = []
-        if hasattr(sub, "PosRuleSet"):
-            for subrulesets, input_ in zip(sub.PosRuleSet, sub.Coverage.glyphs):
-                for subrule in subrulesets.PosRule:
-                    lookups = self._unparse_lookups(subrule.PosLookupRecord, lookups)
-                b.addRule(
-                    fontFeatures.Chaining(
-                        inputs,
-                        prefix,
-                        suffix,
-                        lookups=lookups,
-                        address=self.currentLookup,
-                        flags=lookup.LookupFlag,
-                    )
-                )
-            return
-        if hasattr(sub, "BacktrackCoverage"):
-            for coverage in reversed(sub.BacktrackCoverage):
-                prefix.append(coverage.glyphs)
-        if hasattr(sub, "PosLookupRecord"):
-            lookups = self._unparse_lookups(sub.PosLookupRecord, lookups)
-        if hasattr(sub, "InputCoverage"):
-            for coverage in sub.InputCoverage:
-                inputs.append(coverage.glyphs)
-        if hasattr(sub, "LookAheadCoverage"):
-            for i, coverage in enumerate(sub.LookAheadCoverage):
-                suffix.append(coverage.glyphs)
-        b.addRule(
-            fontFeatures.Positioning(
-                inputs,
-                prefix,
-                suffix,
-                address=self.currentLookup,
-                flags=lookup.LookupFlag,
-            )
-        )
-
-    def _unparse_contextual_pos_format3(self, sub, b, lookup):
-        lookups = []
-        suffix = []
-        lookups = self._unparse_lookups(sub.PosLookupRecord, lookups)
-        inputs = [x.glyphs for x in sub.Coverage]
-        while len(lookups) < len(inputs):
-            lookups.append(None)
-        b.addRule(
-            fontFeatures.Chaining(
-                inputs,
-                lookups = lookups,
-                address=self.currentLookup,
-                flags=lookup.LookupFlag
-            )
-        )
-
-    def unparseChainedContextualPositioning(self, lookup):
-        b = fontFeatures.Routine(
-            name=self.getname("ChainedContextualPositioning" + self.gensym())
-        )
-        for sub in lookup.SubTable:
-            if sub.Format == 1 or sub.Format == 3:
-                self._unparse_contextual_chain_format1(sub, b, lookup)
-            elif sub.Format == 2:
-                self._unparse_contextual_format2(sub, b, lookup)
-            else:
-                raise ValueError
-        return b, []
-

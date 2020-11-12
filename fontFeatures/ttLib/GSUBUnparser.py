@@ -24,59 +24,26 @@ class GSUBUnparser(GTableUnparser):
         2: "MultipleSubstitution",
         3: "AlternateSubstitution",
         4: "LigatureSubstitution",
-        5: "ContextualSubstitution",
-        6: "ChainingContextualSubstitution",
+        5: "Contextual",
+        6: "ChainedContextual",
         7: "Extension",
         8: "ReverseContextualSubstitution",
     }
 
-    _format2_attrs = {
-            "ruleset": "ChainSubClassSet",
-            "rule": "ChainSubClassRule",
-            "lookup": "SubstLookupRecord"
+    _attrs = {
+        "lookup": "SubstLookupRecord",
+        "format1_ruleset": "SubRuleSet",
+        "format1_rule": "SubRule",
+        "format2_classset": "SubClassSet",
+        "format2_rule": "SubClassRule",
+        "chain_format1_ruleset": "ChainSubRuleSet",
+        "chain_format1_rule": "ChainSubRule",
+        "chain_format2_classset": "ChainSubClassSet",
+        "chain_format2_rule": "ChainSubClassRule",
     }
 
     def isChaining(self, lookupType):
         return lookupType >= 5
-
-    def unparseContextualSubstitution(self, lookup):
-        b = fontFeatures.Routine(
-            name=self.getname(self.getname("ContextualSubstitution" + self.gensym()))
-        )
-        for sub in lookup.SubTable:
-            if sub.Format == 1:
-                self._unparse_contextual_sub_format1(sub, b, lookup)
-            else:
-                try:
-                    inputs = self._invertClassDef(sub.ClassDef.classDefs, self.font)
-                    for classId, ruleset in enumerate(sub.SubClassSet):
-                        if not ruleset:
-                            continue
-                        rules = ruleset.SubClassRule
-                        inputclass = inputs[classId]
-                        for r in rules:
-                            input_ = [inputclass] + [inputs[x] for x in r.Class]
-                            lookups = self._unparse_lookups(r.SubstLookupRecord)
-                            if len(lookups) <= len(input_):
-                                lookups.extend(
-                                    [None] * (1 + len(input_) - len(lookups))
-                                )
-                            if len(input_) == 0:
-                                raise ValueError
-                            b.addRule(
-                                fontFeatures.Chaining(
-                                    input_,
-                                    [],
-                                    [],
-                                    lookups=lookups,
-                                    address=self.currentLookup,
-                                    flags=lookup.LookupFlag,
-                                )
-                            )
-                except Exception as e:
-                    self.unparsable(b, "Lookup type 5 (" + str(e) + ")", sub)
-
-        return b, []
 
     def unparseReverseContextualSubstitution(self, lookup):
         b = fontFeatures.Routine(
@@ -105,64 +72,6 @@ class GSUBUnparser(GTableUnparser):
                 )
             )
         return b,[]
-
-    def unparseChainingContextualSubstitution(self, lookup):
-        b = fontFeatures.Routine(
-            name=self.getname("ChainingContextualSubstitution" + self.gensym())
-        )
-        for sub in lookup.SubTable:
-            if sub.Format == 1 or sub.Format == 3:
-                self._unparse_contextual_chain_format1(sub, b, lookup)
-            elif sub.Format == 2:
-                self._unparse_contextual_format2(sub, b, lookup)
-            else:
-                raise ValueError
-        return b, []
-
-    def _unparse_contextual_sub_format1(self, sub, b, lookup):
-        prefix = []
-        inputs = []
-        lookups = []
-        suffix = []
-
-        if hasattr(sub, "SubRuleSet"):
-            for subrulesets, input_ in zip(sub.SubRuleSet, sub.Coverage.glyphs):
-                for subrule in subrulesets.SubRule:
-                    lookups = []
-                    allinput = [glyph(x) for x in ([input_] + subrule.Input)]
-                    lookups = self._unparse_lookups(subrule.SubstLookupRecord)
-                    if len(lookups) < len(allinput):
-                        lookups.extend([None] * (1 + len(allinput) - len(lookups)))
-                    b.addRule(
-                        fontFeatures.Chaining(
-                            allinput,
-                            prefix,
-                            suffix,
-                            lookups=lookups,
-                            address=self.currentLookup,
-                            flags=lookup.LookupFlag,
-                        )
-                    )
-            return
-        if hasattr(sub, "BacktrackCoverage"):
-            for coverage in reversed(sub.BacktrackCoverage):
-                prefix.append(coverage.glyphs)
-        assert not hasattr(sub, "SubstLookupRecord")
-        if hasattr(sub, "InputCoverage"):
-            for coverage in sub.InputCoverage:
-                inputs.append(coverage.glyphs)
-        if hasattr(sub, "LookAheadCoverage"):
-            for i, coverage in enumerate(sub.LookAheadCoverage):
-                suffix.append(coverage.glyphs)
-        b.addRule(
-            fontFeatures.Substitution(
-                inputs,
-                prefix,
-                suffix,
-                address=self.currentLookup,
-                flags=lookup.LookupFlag,
-            )
-        )
 
     def unparseLigatureSubstitution(self, lookup):
         b = fontFeatures.Routine(
