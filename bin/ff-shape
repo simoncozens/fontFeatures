@@ -16,6 +16,7 @@ parser.add_argument('font', metavar='OTF',
                     help='Font file')
 parser.add_argument('--verbose', '-V', dest='logging', action='store_true',
                     help='Output interim shaping results')
+parser.add_argument('--features', help='Feature string')
 group = parser.add_mutually_exclusive_group(required=True)
 group.add_argument('-u', help='Unicodes')
 group.add_argument('string', metavar='STRING',
@@ -37,7 +38,7 @@ if args.u:
 
 buf = Buffer(font, unicodes=args.string)
 shaper = Shaper(ff, font)
-shaper.execute(buf)
+shaper.execute(buf, features=args.features)
 if buf.direction == "RTL":
     buf.items = list(reversed(buf.items))
 print(buf.serialize())
