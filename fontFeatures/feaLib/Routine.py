@@ -145,6 +145,9 @@ def feaPreamble(self, ff):
     preamble = []
     for r in self.rules:
         preamble.extend(r.feaPreamble(ff))
+    if self.flags & 0xFF00:
+        assert(self.markAttachmentSet)
+        self.markAttachmentSetAsClass = ff.getNamedClassFor(self.markAttachmentSet, gensym("markAttachmentSet"))
     if self.flags & 0x10:
         assert(self.markFilteringSet)
         self.markFilteringSetAsClass = ff.getNamedClassFor(self.markFilteringSet, gensym("markFilteringSet"))
@@ -174,20 +177,19 @@ def asFeaAST(self):
             f.statements.append(feaast.LanguageStatement(l))
 
     if hasattr(self, "flags") and self.flags > 0:
-        if self.flags & 0xFF00:
-            # This is dirty and wrong and I feel bad.
-            flags = feaast.LookupFlagStatement(
-                self.flags,
-                markAttachment=feaast.Comment("@MarkClass%i" % (self.flags >> 8)),
-            )
-        else:
-            flags = feaast.LookupFlagStatement(self.flags)
+        flags = feaast.LookupFlagStatement(self.flags)
         if self.flags & 0x10 and hasattr(self, "markFilteringSetAsClass"): # XXX
             # We only need the name, not the contents
             mfs = feaast.GlyphClassDefinition(self.markFilteringSetAsClass,
                 feaast.GlyphClass([])
             )
             flags.markFilteringSet = feaast.GlyphClassName(mfs)
+        if self.flags & 0xFF00 and hasattr(self, "markAttachmentSetAsClass"): # XXX
+            mfs = feaast.GlyphClassDefinition(self.markAttachmentSetAsClass,
+                feaast.GlyphClass([])
+            )
+            flags.markAttachment=feaast.GlyphClassName(mfs)
+
         f.statements.append(flags)
 
     for x in self.comments:

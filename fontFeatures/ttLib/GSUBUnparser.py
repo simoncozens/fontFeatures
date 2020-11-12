@@ -49,6 +49,7 @@ class GSUBUnparser(GTableUnparser):
         b = fontFeatures.Routine(
             name=self.getname("ReverseContextualSubstitution" + self.gensym())
         )
+        self._fix_flags(b, lookup)
         for sub in lookup.SubTable:
             prefix  = []
             outputs = []
@@ -77,6 +78,7 @@ class GSUBUnparser(GTableUnparser):
         b = fontFeatures.Routine(
             name=self.getname("LigatureSubstitution" + self.gensym())
         )
+        self._fix_flags(b, lookup)
         for sub in lookup.SubTable:
             for first, ligatures in sub.ligatures.items():
                 for lig in ligatures:
@@ -97,6 +99,7 @@ class GSUBUnparser(GTableUnparser):
         b = fontFeatures.Routine(
             name=self.getname("MultipleSubstitution" + self.gensym())
         )
+        self._fix_flags(b, lookup)
 
         for sub in lookup.SubTable:
             for in_glyph, out_glyphs in sub.mapping.items():
@@ -114,6 +117,7 @@ class GSUBUnparser(GTableUnparser):
         b = fontFeatures.Routine(
             name=self.getname("AlternateSubstitution" + self.gensym())
         )
+        self._fix_flags(b, lookup)
         for sub in lookup.SubTable:
             for in_glyph, out_glyphs in sub.alternates.items():
                 b.addRule(
@@ -130,6 +134,7 @@ class GSUBUnparser(GTableUnparser):
         b = fontFeatures.Routine(
             name=self.getname("SingleSubstitution" + self.gensym())
         )
+        self._fix_flags(b, lookup)
         for sub in lookup.SubTable:
             if len(sub.mapping) > 5:
                 k = list(sub.mapping.keys())

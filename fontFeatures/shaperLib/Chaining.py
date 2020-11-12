@@ -11,6 +11,10 @@ def _do_apply(self, buf, ix):
     # Save buffer mask
     flags = buf.flags
     markFilteringSet = buf.markFilteringSet
+
+    if ix + len(self.lookups) -1 > len(buf.mask):
+        return
+
     old_unmasked_indexes = [ buf.mask[ix+i] for i in range(len(self.lookups)) ]
     for i,lookups in enumerate(self.lookups):
         if not lookups:
@@ -18,9 +22,9 @@ def _do_apply(self, buf, ix):
         for routine in lookups:
             # Adjust mask and recompute index?
             unmasked_ix = old_unmasked_indexes[i]
-            buf.set_mask(routine.flags, routine.markFilteringSet)
-            newix = __find_masked_ix(buf, unmasked_ix)
             for rule in routine.rules:
+                buf.set_mask(rule.flags, routine.markFilteringSet)
+                newix = __find_masked_ix(buf, unmasked_ix)
                 if rule._do_apply(buf, newix):
                     break
 

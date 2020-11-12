@@ -39,7 +39,8 @@ class GTableUnparser:
                 lookups[sl.SequenceIndex] = []
             lookups[sl.SequenceIndex].append(self.lookups[sl.LookupListIndex]["lookup"])
         if len(lookups) < len(inputs):
-            lookups.extend([None] * (1 + len(inputs) - len(lookups)))
+            lookups.extend([None] * (len(inputs) - len(lookups)))
+        assert(len(lookups) == len(inputs))
         return lookups
 
     def _invertClassDef(self, a, font):
@@ -193,6 +194,8 @@ class GTableUnparser:
                                     flags = routine.flags,
                                     name = routine.name
                                 )
+                                if hasattr(routine, "markAttachmentSet"):
+                                    newroutine.markAttachmentSet = routine.markAttachmentSet
                                 newroutine.rules.extend(routine.rules)
                                 f.append(newroutine)
                             else:
@@ -284,11 +287,22 @@ class GTableUnparser:
             b.addComment("# " + ln)
         b.addComment("# ----\n")
 
+    def _fix_flags(self, routine, lookup):
+        routine.flags = lookup.LookupFlag
+        mat = lookup.LookupFlag & 0xFF00
+        if mat:
+            mat = mat >> 8
+            classDefs = self.font["GDEF"].table.MarkAttachClassDef.classDefs
+            glyphs = [g for g in classDefs.keys() if classDefs[g] == mat]
+            routine.markAttachmentSet = glyphs
+        if lookup.LookupFlag & 0x10:
+            routine.markFilteringSet = lookup.MarkFilteringSet # Maybe?
 
     def unparseContextual(self, lookup):
         b = fontFeatures.Routine(
             name=self.getname("Contextual" + self._table + self.gensym())
         )
+        self._fix_flags(b, lookup)
         for sub in lookup.SubTable:
             if sub.Format == 1:
                 self._unparse_contextual_format1(sub, b, lookup)
@@ -309,8 +323,6 @@ class GTableUnparser:
                 lookups = []
                 allinput = [glyph(x) for x in ([input_] + subrule.Input)]
                 lookups = self._unparse_lookups(getattr(subrule, lookupattr), allinput)
-                if len(lookups) < len(allinput):
-                    lookups.extend([None] * (1 + len(allinput) - len(lookups)))
                 b.addRule(
                     fontFeatures.Chaining(
                         allinput,
@@ -331,6 +343,7 @@ class GTableUnparser:
         b = fontFeatures.Routine(
             name=self.getname("ChainedContextual" + self._table + self.gensym())
         )
+        self._fix_flags(b, lookup)
         for sub in lookup.SubTable:
             if sub.Format == 1:
                 self._unparse_contextual_chain_format1(sub, b, lookup)
@@ -386,7 +399,7 @@ class GTableUnparser:
             if not ruleset:
                 continue
             rules = getattr(ruleset, ruleattr)
-            inputclass = inputs[classId]
+            inputclass = inputs.get(classId,[])
             for r in rules:
                 if chain:
                     prefix = list(reversed([backtrack[x] for x in r.Backtrack]))
@@ -396,8 +409,6 @@ class GTableUnparser:
                     prefix, suffix = [], []
                     input_ = [inputclass] + [inputs[x] for x in r.Class]
                 lookups = self._unparse_lookups(getattr(r, lookupattr), input_)
-                if len(lookups) <= len(input_):
-                    lookups.extend([None] * (1 + len(input_) - len(lookups)))
                 b.addRule(
                     fontFeatures.Chaining(
                         input_,

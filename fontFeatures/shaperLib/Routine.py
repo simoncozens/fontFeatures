@@ -4,7 +4,7 @@ __all__ = ["apply_to_buffer"]
 
 
 def apply_to_buffer(self, buf, stage=None, feature=None):
-    buf.set_mask(self.flags, self.markFilteringSet)
+    buf.set_mask(self.flags, self.markFilteringSet, self.markAttachmentSet)
     if feature:
         buf.set_feature_mask(feature)
     i = 0
@@ -13,7 +13,7 @@ def apply_to_buffer(self, buf, stage=None, feature=None):
         for r in self.rules:
             if stage and r.stage != stage:
                 continue
-            buf.set_mask(r.flags, self.markFilteringSet)
+            buf.set_mask(r.flags, self.markFilteringSet, self.markAttachmentSet)
             if r.would_apply_at_position(buf, i):
                 logging.getLogger("fontFeatures.shaperLib").info("Applying rule %s at position %i\n" % (r.asFea(), i))
                 delta = r._do_apply(buf, i)

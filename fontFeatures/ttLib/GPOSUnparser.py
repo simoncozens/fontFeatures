@@ -98,6 +98,7 @@ class GPOSUnparser(GTableUnparser):
 
     def unparseSinglePositioning(self, lookup):
         b = fontFeatures.Routine(name=self.getname("SinglePositioning" + self.gensym()))
+        self._fix_flags(b, lookup)
 
         for subtable in lookup.SubTable:
             if subtable.Format == 1:
@@ -122,6 +123,7 @@ class GPOSUnparser(GTableUnparser):
 
     def unparsePairPositioning(self, lookup):
         b = fontFeatures.Routine(name=self.getname("PairPositioning" + self.gensym()))
+        self._fix_flags(b, lookup)
         for subtable in lookup.SubTable:
             if subtable.Format == 1:
                 for g, pair in zip(subtable.Coverage.glyphs, subtable.PairSet):
@@ -162,6 +164,7 @@ class GPOSUnparser(GTableUnparser):
 
     def unparseCursiveAttachment(self, lookup):
         b = fontFeatures.Routine(name=self.getname("CursiveAttachment" + self.gensym()))
+        self._fix_flags(b, lookup)
         entries = {}
         exits = {}
         for s in lookup.SubTable:
@@ -187,6 +190,7 @@ class GPOSUnparser(GTableUnparser):
 
     def unparseMarkToBase(self, lookup):
         b = fontFeatures.Routine(name=self.getname("MarkToBase" + self.gensym()))
+        self._fix_flags(b, lookup)
         for subtable in lookup.SubTable:  # fontTools.ttLib.tables.otTables.MarkBasePos
             assert subtable.Format == 1
             for classId in range(0,subtable.ClassCount):
@@ -245,11 +249,13 @@ class GPOSUnparser(GTableUnparser):
 
     def unparseMarkToLigature(self, lookup):
         b = fontFeatures.Routine(name=self.getname("MarkToLigature" + self.gensym()))
+        self._fix_flags(b, lookup)
         self.unparsable(b, "Mark to lig pos", lookup)
         return b, []
 
     def unparseMarkToMark(self, lookup):
         b = fontFeatures.Routine(name=self.getname("MarkToMark" + self.gensym()))
+        self._fix_flags(b, lookup)
         for subtable in lookup.SubTable:  # fontTools.ttLib.tables.otTables.MarkBasePos
             assert subtable.Format == 1
             anchorClassPrefix = "Anchor" + self.gensym()

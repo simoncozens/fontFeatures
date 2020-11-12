@@ -174,9 +174,10 @@ class Buffer:
         self.current_feature_mask = None
         self.recompute_mask()
 
-    def set_mask(self, flags, markFilteringSet=None):
+    def set_mask(self, flags, markFilteringSet=None, markAttachmentSet=None):
         self.flags = flags
         self.markFilteringSet = markFilteringSet
+        self.markAttachmentSet = markAttachmentSet
         self.recompute_mask()
 
     def recompute_mask(self):
@@ -193,10 +194,19 @@ class Buffer:
             mask = list(
                 filter(
                     lambda ix: self.items[ix].category[0] != "mark"
-                    or self.items[ix].items in self.markFilteringSet,
+                    or self.items[ix].glyph in self.markFilteringSet,
                     mask,
                 )
             )
+        if self.flags & 0xFF00:  # MarkAttachmentType
+            mask = list(
+                filter(
+                    lambda ix: self.items[ix].category[0] != "mark"
+                    or self.items[ix].glyph in self.markAttachmentSet,
+                    mask,
+                )
+            )
+
         if self.current_feature_mask:
             feature = self.current_feature_mask
             mask = list(
