@@ -25,4 +25,5 @@ def _do_apply(self, buf, ix):
                     break
 
     buf.set_mask(flags, markFilteringSet)
+    return len(self.input) - 1
 
