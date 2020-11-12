@@ -7,13 +7,10 @@ def apply_to_buffer(self, buf, stage=None, feature=None):
     buf.set_mask(self.flags, self.markFilteringSet)
     if feature:
         buf.set_feature_mask(feature)
-    # Longest input sequence goes first
-    sorted_rules = list(sorted(self.rules, key = lambda rule:-len(rule.shaper_inputs())))
-
     i = 0
     while i < len(buf): # (which may change!)
         logging.getLogger("fontFeatures.shaperLib").debug("\nPosition %i\n" % (i))
-        for r in sorted_rules:
+        for r in self.rules:
             if stage and r.stage != stage:
                 continue
             buf.set_mask(r.flags, self.markFilteringSet)
