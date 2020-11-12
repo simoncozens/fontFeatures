@@ -240,6 +240,23 @@ class Routine:
     from .shaperLib.Routine import apply_to_buffer
     from .xmlLib.Routine import toXML, fromXML
 
+class ExtensionRoutine(Routine):
+    def __init__(self, **kwargs):
+        if "routines" in kwargs:
+            self.routines = kwargs["routines"]
+            del kwargs["routines"]
+        super().__init__(**kwargs)
+
+    def apply_to_buffer(self, buf, stage=None, feature=None):
+        for r in self.routines:
+            r.apply_to_buffer(buf, stage, feature)
+
+    def asFeaAST(self):
+        import fontTools.feaLib.ast as feaast
+        f = feaast.Block()
+        for r in self.routines:
+            f.statements.append(r.asFeaAST())
+        return f
 
 class Rule:
     def asFea(self):
@@ -250,7 +267,7 @@ class Rule:
         """Computes any text that needs to go in the feature file header."""
         return []
 
-    from .shaperLib.Rule import apply_to_buffer
+    from .shaperLib.Rule import would_apply_at_position
     from .xmlLib.Rule import fromXML, toXML, _makeglyphslots, _slotArray
 
 class Substitution(Rule):

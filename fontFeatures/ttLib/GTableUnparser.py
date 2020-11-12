@@ -184,6 +184,8 @@ class GTableUnparser:
                             routine = self.lookups[lookupIdx]["lookup"]
                             if not (scriptname == "DFLT" and lang == "dflt"):
                                 self.lookups[lookupIdx]["inline"] = True
+                            if isinstance(routine, fontFeatures.ExtensionRoutine):
+                                self.lookups[lookupIdx]["inline"] = False
                             if self.lookups[lookupIdx]["inline"]:
                                 newroutine = fontFeatures.Routine(
                                     languages=[(scriptname, lang)],
@@ -242,11 +244,18 @@ class GTableUnparser:
         return unparser(lookup)
 
     def unparseExtension(self, lookup):
+        routines = []
+        dependencies = []
         for xt in lookup.SubTable:
             xt.SubTable = [xt.ExtSubTable]
             xt.LookupType = xt.ExtSubTable.LookupType
             xt.LookupFlag = lookup.LookupFlag
-            return self.unparseLookup(xt, self.currentLookup)
+            routine, deps = self.unparseLookup(xt, self.currentLookup)
+            routines.append(routine)
+            dependencies.extend(deps)
+        extension = fontFeatures.ExtensionRoutine(routines = routines)
+        return extension, dependencies
+
 
     def getDebugInfo(self, table, ix):
         if not self.font or 'Debg' not in self.font:
