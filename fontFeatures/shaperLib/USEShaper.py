@@ -40,7 +40,7 @@ class USEShaper(ArabicShaper):
     def cat(self,i):
         return self.buffer.items[i].use_category
 
-    def setup_syllables(self):
+    def setup_syllables(self, shaper):
         self.find_syllables()
         self.setup_rphf_mask()
         self.setup_topographical_masks()
@@ -53,3 +53,20 @@ class USEShaper(ArabicShaper):
                 limit = min(3, end-start)
             for i in range(start,end):
                 self.buffer.items[i].feature_masks["rphf"] = i > start+limit
+
+    def clear_substitution(self, shaper):
+        for i in self.buffer.items:
+            i.substituted = False
+
+    def record_pref_use(self, shaper):
+        pass
+    def record_rphf_use(self, shaper):
+        pass
+    def reorder_use(self, shaper):
+        pass
+    def find_syllables(self):
+        pass
+    def clear_syllables(self, shaper):
+        pass
+    def iterate_syllables(self):
+        pass
