@@ -25,7 +25,7 @@ def _do_apply(self, buf, ix):
             for rule in routine.rules:
                 buf.set_mask(rule.flags, routine.markFilteringSet)
                 newix = __find_masked_ix(buf, unmasked_ix)
-                if rule._do_apply(buf, newix):
+                if rule.would_apply_at_position(buf,newix) and rule._do_apply(buf, newix):
                     break
 
     buf.set_mask(flags, markFilteringSet)

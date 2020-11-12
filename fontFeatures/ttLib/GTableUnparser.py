@@ -400,6 +400,8 @@ class GTableUnparser:
                 continue
             rules = getattr(ruleset, ruleattr)
             inputclass = inputs.get(classId,[])
+            # The coverage filters the input class...
+            inputclass = [ g for g in inputclass if g in sub.Coverage.glyphs]
             for r in rules:
                 if chain:
                     prefix = list(reversed([backtrack[x] for x in r.Backtrack]))
