@@ -189,6 +189,7 @@ matra_pos_bottom = {
 
 def set_matra_position(item):
     script = ucd_data(item.codepoint)["Script"]
+    u = item.codepoint
     if item.indic_position == IndicPosition.PRE_C:
         selector = matra_pos_left
     elif item.indic_position == IndicPosition.POST_C:
