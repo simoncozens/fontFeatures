@@ -14,7 +14,7 @@ import re
 parser = argparse.ArgumentParser(description='Shape text')
 parser.add_argument('font', metavar='OTF',
                     help='Font file')
-parser.add_argument('--verbose', '-V', dest='logging', action='store_true',
+parser.add_argument('--verbose', '-V', action="count", dest='logging',
                     help='Output interim shaping results')
 parser.add_argument("--ned", "--no-extra-data", dest="ned", action='store_true', help="No Extra Data; Do not output clusters or advances")
 parser.add_argument("--no-glyph-names", dest="ngn", action='store_true', help="Output glyph indices instead of names")
@@ -28,9 +28,12 @@ group.add_argument('string', metavar='STRING',
 
 args = parser.parse_args()
 
-if args.logging:
-    logging.basicConfig(format='%(message)s')
+logging.basicConfig(format='%(message)s')
+
+if args.logging >= 1:
     logging.getLogger("fontFeatures.shaperLib").setLevel(logging.INFO)
+if args.logging >= 2:
+    logging.getLogger("fontFeatures.shaperLib").setLevel(logging.DEBUG)
 
 font = Babelfont.open(args.font)
 if args.font.endswith(".ttf") or args.font.endswith(".otf"):
