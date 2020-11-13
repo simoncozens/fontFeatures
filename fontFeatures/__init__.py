@@ -269,7 +269,7 @@ class Rule:
         """Computes any text that needs to go in the feature file header."""
         return []
 
-    from .shaperLib.Rule import would_apply_at_position
+    from .shaperLib.Rule import would_apply_at_position, pre_post_context_matches
     from .xmlLib.Rule import fromXML, toXML, _makeglyphslots, _slotArray
 
 class Substitution(Rule):
@@ -476,7 +476,7 @@ class Attachment(Rule):
         return self.base_name == "cursive_entry" or self.base_name == "entry" # XXX
 
     from .feaLib.Attachment import asFeaAST, feaPreamble
-    from .shaperLib.Attachment import shaper_inputs, _do_apply
+    from .shaperLib.Attachment import shaper_inputs, _do_apply, would_apply_at_position
     from .xmlLib.Attachment import _toXML, fromXML
 
     @property

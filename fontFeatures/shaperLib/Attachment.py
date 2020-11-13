@@ -1,6 +1,33 @@
+import logging
+
+
 def shaper_inputs(self):
     return [self.bases.keys(), self.marks.keys()]
 
+def find_base_backwards(buf, ix):
+    ix = ix - 1
+    while ix >= 0:
+        if buf[ix].category[0] != "mark":
+            return ix
+        ix = ix - 1
+    return None
+
+def would_apply_at_position(self, buf, ix):
+    # This is a bit different, as multiple marks can attach to a base
+    # so we search backwards for the preceding base glyph
+    logging.getLogger("fontFeatures.shaperLib").debug("Testing if %s would apply at position %i" % (self.asFea(), ix))
+    if buf[ix].glyph not in self.marks.keys():
+        logging.getLogger("fontFeatures.shaperLib").debug(" * No, %s is not in our mark list" % (buf[ix].glyph))
+        return False
+    base_ix = find_base_backwards(buf, ix)
+    if base_ix is None:
+        logging.getLogger("fontFeatures.shaperLib").debug(" * No, I couldn't find a base glyph")
+        return False
+    if buf[base_ix].glyph not in self.bases.keys():
+        logging.getLogger("fontFeatures.shaperLib").debug(" * No, %s is not in our base list" % buf[base_ix].glyph)
+        return False
+    logging.getLogger("fontFeatures.shaperLib").debug(" * Yes, attaching mark %s/%i to %s/%i" % (buf[ix].glyph, ix, buf[base_ix].glyph, base_ix))
+    return True
 
 def _do_apply_cursive(self, buf, ix):
     mark = buf[ix].glyph
@@ -28,11 +55,13 @@ def _do_apply(self, buf, ix):
     if self.is_cursive:
         return _do_apply_cursive(self, buf, ix)
     from fontFeatures import ValueRecord
+    base_ix = find_base_backwards(buf, ix)
     mark = buf[ix].glyph
-    base = buf[ix + 1].glyph
-    xpos = self.bases[mark][0] - self.marks[base][0]
-    ypos = self.bases[mark][1] - self.marks[base][1]
+    base = buf[base_ix].glyph
+    xpos = self.bases[base][0] - self.marks[mark][0]
+    ypos = self.bases[base][1] - self.marks[mark][1]
     vr = ValueRecord(xPlacement=xpos, yPlacement=ypos)
     if buf.direction == "LTR":
-        vr.xPlacement = vr.xPlacement - buf[ix].position.xAdvance
-    buf[ix + 1].add_position(vr)
+        vr.xPlacement = vr.xPlacement - buf[base_ix].position.xAdvance
+    buf[ix].add_position(vr)
+    buf[ix].position.xAdvance = 0
