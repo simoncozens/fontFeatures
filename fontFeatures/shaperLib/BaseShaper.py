@@ -1,6 +1,7 @@
 from fontFeatures.shaperLib.Buffer import Buffer
 from copy import copy
 import unicodedata
+from youseedee import ucd_data
 
 
 class BaseShaper():
@@ -45,6 +46,14 @@ class BaseShaper():
     unistring = "".join([chr(item.codepoint) for item in self.buffer.items])
     self.buffer.store_unicode(unicodedata.normalize("NFC", unistring))
 
+    # Some fix-ups from hb-ot-shape-normalize
+    for item in self.buffer.items:
+        if ucd_data(item.codepoint)["General_Category"] == "Zs" and self.font.glyphForCodepoint(0x20, False):
+            item.codepoint = 0x20
+            # Harfbuzz adjusts the width here, in _hb_ot_shape_fallback_spaces
+        if item.codepoint == 0x2011 and self.font.glyphForCodepoint(0x2010, False):
+            item.codepoint = 0x2010
+
   def collect_features(self, shaper):
     return []
 
@@ -63,6 +72,7 @@ class BaseShaper():
                 if f not in self.plan.fontfeatures.features:
                     continue
                 # XXX These should be ordered by ID
+                # XXX and filtered by language
                 lookups.extend(
                     [(routine, f) for routine in self.plan.fontfeatures.features[f]]
                 )
