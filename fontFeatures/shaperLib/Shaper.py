@@ -103,20 +103,20 @@ class Shaper:
         if buf.script == "Arabic":
             return ArabicShaper
 
-        if buf.script in [
-            "Mongolian",
-            "Syriac",
-            "Nko",
-            "Phags_Pa",
-            "Mandaic",
-            "Manichaean",
-            "Psalter_Pahlavi",
-            "Adlam",
-            "Hanifi_Rohingya",
-            "Sogdian",
-        ]:
-            # This is wrong and will never match
-            if buf.script == self.fontfeatures.supported_script(buf.script).lower():
+        connected_scripts = {
+            "Mongolian": "mong",
+            "Syriac": "syrc",
+            "Nko": "nko ",
+            "Phags_Pa": "phag",
+            "Mandaic": "mand",
+            "Manichaean": "mand",
+            "Psalter_Pahlavi": "phlp",
+            "Adlam": "adlm",
+            "Hanifi_Rohingya": "rohg",
+            "Sogdian": "sogd"
+        }
+        if buf.script in connected_scripts:
+            if self.fontfeatures.hasScriptSupport(connected_scripts[buf.script]):
                 return ArabicShaper
             else:
                 return BaseShaper
