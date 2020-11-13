@@ -252,7 +252,10 @@ class Buffer:
                 xcursor = xcursor + position.xAdvance
             elif position and hasattr(info, "position"):
                 position = info.position
-                cluster = 0
+                if hasattr(info, "syllable_index"):
+                    cluster = info.syllable_index
+                else:
+                    cluster = 0
                 outs[-1] = outs[-1] + "=%i+%i" % (cluster, position.xAdvance)
                 if position.xPlacement or position.yPlacement:
                     outs[-1] = outs[-1] + "@<%i,%i>" % (
