@@ -50,7 +50,12 @@ class ArabicShaper(BaseShaper):
         for item in self.buffer.items:
             item.arabic_joining = "NONE"
             ucd = ucd_data(item.codepoint)
-            joining = ucd.get("Joining_Type","U")
+            joining = ucd.get("Joining_Type")
+            if not joining:
+                if ucd.get("General_Category") in ["Mn", "Cf", "Em"]:
+                    joining = "T"
+                else:
+                    joining = "U"
             if joining == "T": continue
             if ucd.get("Joining_Group") == "ALAPH": joining = "ALAPH"
             if ucd.get("Joining_Group") == "DALATH RISH": joining = "DALATH_RISH"
