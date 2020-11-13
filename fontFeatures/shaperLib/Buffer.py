@@ -239,7 +239,7 @@ class Buffer:
         else:
             additional = []
         xcursor = 0
-        for info in self.items:
+        for ix,info in enumerate(self.items):
             if hasattr(info, "glyph") and info.glyph:
                 if names:
                     outs.append("%s" % info.glyph)
@@ -257,7 +257,7 @@ class Buffer:
                 if hasattr(info, "syllable_index"):
                     cluster = info.syllable_index
                 else:
-                    cluster = 0
+                    cluster = ix
                 outs[-1] = outs[-1] + "=%i+%i" % (cluster, position.xAdvance)
                 if position.xPlacement or position.yPlacement:
                     outs[-1] = outs[-1] + "@<%i,%i>" % (
