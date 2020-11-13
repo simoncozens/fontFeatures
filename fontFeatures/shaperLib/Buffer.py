@@ -24,6 +24,22 @@ class BufferItem:
     # position: ValueRecord
     # category: str
 
+    def __repr__(self):
+        s = ""
+        if self.glyph:
+            s = self.glyph
+            if self.category[0] == "base":
+                s = s + "_"
+            elif self.category[0] == "mark":
+                s = s + "^"
+            elif self.category[0] == "ligature":
+                s = s + "(ﬁ)"
+            else:
+                s = s + "?"
+        else:
+            s = "U+%04x" % self.unicode
+        return "BufferItem(%s)" % s
+
     @classmethod
     def new_unicode(klass, codepoint):
         self = BufferItem()
