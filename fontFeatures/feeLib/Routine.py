@@ -31,10 +31,10 @@ rl  = "RightToLeft"         -> 0x1
 ib  = "IgnoreBases"         -> 0x2
 il  = "IgnoreLigatures"     -> 0x4
 im  = "IgnoreMarks"         -> 0x8
-# mat = "MarkAttachmentType"  -> 0xFF00
+mat = "MarkAttachmentType"  -> 0xFF00
 umf = "UseMarkFilteringSet" -> 0x10
-flag = ( rl | ib | il | im | complexflag):f ws -> f
-complexflag = (umf):value ws glyphselector:gs -> (value,gs)
+flag = ( rl | ib | il | im |  complexflag):f ws -> f
+complexflag = (umf|mat):value ws glyphselector:gs -> (value,gs)
 """
 VERBS = ["Routine"]
 
@@ -58,6 +58,8 @@ class Routine:
             r.flags |= f[0]
             if f[0] == 0x10:
               r.markFilteringSet = f[1].resolve(parser.fontfeatures, parser.font)
+            elif f[0] == 0xFF00:
+              r.markAttachmentSet = f[1].resolve(parser.fontfeatures, parser.font)
           else:
             r.flags |= f
         if not parser.current_feature:
