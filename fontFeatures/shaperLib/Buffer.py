@@ -51,18 +51,20 @@ class BufferItem:
             self.gid = font.glyphOrder.index(self.glyph)
         else:
             self.gid = -1 # ?
+        self.substituted = False
+        self.ligated = False
+        self.multiplied = False
+        self.recategorize(font)
         try:
-            self.position = ValueRecord(xAdvance=font[self.glyph].width)
+            self.position = ValueRecord(xAdvance=0)
+            if self.category[0] != "mark":
+                self.position.xAdvance=font[self.glyph].width
         except Exception as e:
             if "pytest" in sys.modules:
                 # We tolerate broken fonts in pytest
                 pass
             else:
                 raise e
-        self.substituted = False
-        self.ligated = False
-        self.multiplied = False
-        self.recategorize(font)
 
     def recategorize(self, font):
         try:
