@@ -196,6 +196,9 @@ class GTableUnparser:
                                 )
                                 if hasattr(routine, "markAttachmentSet"):
                                     newroutine.markAttachmentSet = routine.markAttachmentSet
+                                if hasattr(routine, "markFilteringSet"):
+                                    newroutine.markFilteringSet = routine.markFilteringSet
+
                                 newroutine.rules.extend(routine.rules)
                                 f.append(newroutine)
                             else:
@@ -296,7 +299,7 @@ class GTableUnparser:
             glyphs = [g for g in classDefs.keys() if classDefs[g] == mat]
             routine.markAttachmentSet = glyphs
         if lookup.LookupFlag & 0x10:
-            routine.markFilteringSet = lookup.MarkFilteringSet # Maybe?
+            routine.markFilteringSet = self.font["GDEF"].table.MarkGlyphSetsDef.Coverage[lookup.MarkFilteringSet].glyphs
 
     def unparseContextual(self, lookup):
         b = fontFeatures.Routine(
