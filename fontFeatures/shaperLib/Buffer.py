@@ -68,7 +68,7 @@ class BufferItem:
         try:
             self.category = (font[self.glyph].category, None)
             if not self.category:
-                self._fallback_categorize()
+                return ("unknown", None)
         except Exception as e:
             warnings.warn("Error getting category: %s" % str(e))
             self._fallback_categorize()
