@@ -91,6 +91,6 @@ class BaseShaper():
         for rule in r.rules:
             if rule.stage == "pos":
                 continue
-            if rule.apply_to_buffer(subbuffer):
+            if any([rule.would_apply_at_position(subbuffer,i) for i in range(len(subbuffer))]):
                 return True
     return False
