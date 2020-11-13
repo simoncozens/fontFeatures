@@ -30,10 +30,10 @@ args = parser.parse_args()
 
 logging.basicConfig(format='%(message)s')
 
-if args.logging >= 1:
+if args.logging:
     logging.getLogger("fontFeatures.shaperLib").setLevel(logging.INFO)
-if args.logging >= 2:
-    logging.getLogger("fontFeatures.shaperLib").setLevel(logging.DEBUG)
+    if args.logging >= 2:
+        logging.getLogger("fontFeatures.shaperLib").setLevel(logging.DEBUG)
 
 font = Babelfont.open(args.font)
 if args.font.endswith(".ttf") or args.font.endswith(".otf"):
