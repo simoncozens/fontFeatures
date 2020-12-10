@@ -1,4 +1,5 @@
 import logging
+from fontFeatures import Rule
 
 
 def shaper_inputs(self):
@@ -13,9 +14,22 @@ def find_base_backwards(buf, ix):
     return None
 
 def would_apply_at_position(self, buf, ix):
-    # This is a bit different, as multiple marks can attach to a base
-    # so we search backwards for the preceding base glyph
     logging.getLogger("fontFeatures.shaperLib").debug("Testing if %s would apply at position %i" % (self.asFea(), ix))
+
+    if self.is_cursive:
+        if ix == 0:
+            logging.getLogger("fontFeatures.shaperLib").debug(" * No, it has no adjacent glyph")
+            return False
+        if buf[ix].glyph in self.marks.keys() and buf[ix-1].glyph in self.bases.keys():
+            logging.getLogger("fontFeatures.shaperLib").debug(" * No, %s/%s is not a pair" % (buf[ix].glyph, buf[ix-1].glyph))
+        logging.getLogger("fontFeatures.shaperLib").debug(" * Yes, %s/%s is a pair" % (buf[ix].glyph, buf[ix-1].glyph))
+        return True
+
+
+
+    # Mark to base is a bit different, as multiple marks can attach to a base
+    # so we search backwards for the preceding base glyph
+    # XXX mark to mark
     if buf[ix].glyph not in self.marks.keys():
         logging.getLogger("fontFeatures.shaperLib").debug(" * No, %s is not in our mark list" % (buf[ix].glyph))
         return False
@@ -31,20 +45,20 @@ def would_apply_at_position(self, buf, ix):
 
 def _do_apply_cursive(self, buf, ix):
     mark = buf[ix].glyph
-    base = buf[ix + 1].glyph
+    base = buf[ix - 1].glyph
     if mark not in self.marks or base not in self.bases:
         return
     exit_x, exit_y = self.marks.get(mark, (0,0))
     entry_x, entry_y = self.bases.get(base, (0,0))
-    d = exit_x + (buf[ix].position.xPlacement or 0)
-    buf[ix].position.xAdvance = (buf[ix].position.xAdvance or 0) - d
-    buf[ix].position.xPlacement = (buf[ix].position.xPlacement or 0) - d
-    buf[ix+1].position.xAdvance = entry_x + (buf[ix + 1].position.xPlacement or 0)
-    child = ix
-    parent = ix + 1
+    d = exit_x + (buf[ix-1].position.xPlacement or 0)
+    buf[ix-1].position.xAdvance = (buf[ix-1].position.xAdvance or 0) - d
+    buf[ix-1].position.xPlacement = (buf[ix-1].position.xPlacement or 0) - d
+    buf[ix].position.xAdvance = entry_x + (buf[ix].position.xPlacement or 0)
+    child = ix -1
+    parent = ix
     x_offset = entry_x - exit_x
     y_offset = entry_y - exit_y
-    if True or not (self.flags & 1):  # LeftToRight XXX
+    if not (self.flags & 1):  # LeftToRight XXX
         parent, child = child, parent
         x_offset = -x_offset
         y_offset = -y_offset
