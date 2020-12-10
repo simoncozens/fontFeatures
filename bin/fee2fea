@@ -16,11 +16,14 @@ parser.add_argument('-O', nargs='?', const=1, type=int, default=1,
                     help='Optimization level')
 parser.add_argument("--master",
                     help="Master name for .glyphs fonts", metavar="MASTER")
+parser.add_argument("-c",
+                    help="FEE string to execute")
 
 parser.add_argument("font",
                     help="Font file (.otf/.glyphs) to process", metavar="FONT")
+
 parser.add_argument("fee",
-                    help="FEE file to process", metavar="FEE")
+                    help="FEE file to process", metavar="FEE", nargs='?')
 
 args = parser.parse_args()
 
@@ -30,7 +33,11 @@ if args.font.endswith("tf") and args.load:
 	p.fontfeatures = unparse(font)
 
 p = FeeParser(font)
-p.parseFile(args.fee)
+if args.c:
+    if not args.c.endswith(";"): args.c = args.c + ";"
+    p.parseString(args.c)
+else:
+    p.parseFile(args.fee)
 Optimizer(p.fontfeatures).optimize(level=args.O)
 print(p.fontfeatures.asFea())
 if p.font_modified:
