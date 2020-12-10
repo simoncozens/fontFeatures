@@ -7,7 +7,6 @@ from .ArabicShaper import ArabicShaper
 from .IndicShaper import IndicShaper
 from .HangulShaper import HangulShaper
 from .USEShaper import USEShaper
-from youseedee import ucd_data
 import logging
 import re
 
