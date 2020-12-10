@@ -9,7 +9,6 @@ dist
 *.ttf
 *.ufo
 ?.py
-t*.py
 *.fea
 *.ttx
 *.test
