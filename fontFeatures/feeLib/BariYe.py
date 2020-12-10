@@ -61,6 +61,7 @@ from glyphtools import (
     get_glyph_metrics,
     bin_glyphs_by_metric,
     get_rise,
+    get_run
 )
 from fontFeatures.pathUtils import get_bezier_paths
 from beziers.line import Line
@@ -95,6 +96,9 @@ accuracy1 = 5  # This creates O[(n • n+1)/2] lookups
 # Accuracy of rise detector
 accuracy2 = 5
 
+failsafe_max_length = 5
+failsafe_min_run = 100
+
 
 class BYMoveDots:
     @classmethod
@@ -112,35 +116,36 @@ class BYMoveDots:
         inits = parser.fontfeatures.namedClasses["inits"]
         behs = parser.fontfeatures.namedClasses["behs"]
         below_dots = below_dots.resolve(parser.fontfeatures, parser.font)
-        smallest_medi_width = min([self.arabic_width(parser, g) for g in medis])
-        smallest_init_width = min([self.arabic_width(parser, g) for g in inits])
+        smallest_medi_width = max(failsafe_min_run, min([get_run(parser.font, g) for g in medis]))
         smallest_init_beh_width = min(
-            [self.arabic_width(parser, g) for g in (set(behs) & set(inits))]
+            [get_run(parser.font, g) for g in (set(behs) & set(inits))]
         )
         smallest_init_beh = min(
             (set(behs) & set(inits)),
-            key=lambda g: self.arabic_width(parser, g),
+            key=lambda g: get_run(parser.font, g),
         )
-        smallest_medi = min(medis, key=lambda g: self.arabic_width(parser, g))
+        warnings.warn("Smallest medi width is %i" % smallest_medi_width)
+        smallest_medi = min(medis, key=lambda g: get_run(parser.font, g))
 
         routines = []
         for bariye in parser.fontfeatures.namedClasses["bariye"]:
+            warnings.warn("BariYe computation for %s" % bariye)
             entry_anchor = parser.fontfeatures.anchors[bariye]["entry"]
             bariye_tail = max(
                 -get_glyph_metrics(parser.font, bariye)["rsb"],
                 get_glyph_metrics(parser.font, bariye)["xMax"] - entry_anchor[0],
             )
-            # Increase tail by half the width of the widest nukta
-            bariye_tail += (
-                max(
-                    [
-                        get_glyph_metrics(parser.font, g)["xMax"]
-                        - get_glyph_metrics(parser.font, g)["xMin"]
-                        for g in below_dots
-                    ]
-                )
-                / 2
-            )
+            # # Increase tail by half the width of the widest nukta
+            # bariye_tail += (
+            #     max(
+            #         [
+            #             get_glyph_metrics(parser.font, g)["xMax"]
+            #             - get_glyph_metrics(parser.font, g)["xMin"]
+            #             for g in below_dots
+            #         ]
+            #     )
+            #     / 2
+            # )
 
             # Consider two cases.
             # First, the case where the beh is init and full of short medis
@@ -157,10 +162,10 @@ class BYMoveDots:
             # Second, the case where the init is not beh, but there are a bunch of medis,
             # one (or more) of which is a medi beh
             smallest_init_nonbeh_width = min(
-                [self.arabic_width(parser, g) for g in (set(inits) - set(behs))]
+                [max(get_rise(parser.font, g),failsafe_min_run) for g in (set(inits) - set(behs))]
             )
             smallest_medi_beh_width = min(
-                [self.arabic_width(parser, g) for g in (set(medis) & set(behs))]
+                [max(get_rise(parser.font, g),failsafe_min_run) for g in (set(medis) & set(behs))]
             )
 
             maximum_sequence_length_2 = 2 + math.ceil(
@@ -168,9 +173,10 @@ class BYMoveDots:
                 / smallest_medi_width
             )
 
-            maximum_sequence_length = max(
+            maximum_sequence_length = min(failsafe_max_length, max(
                 maximum_sequence_length_1, maximum_sequence_length_2
-            )
+            ))
+            warnings.warn("Max sequence width is %i" % maximum_sequence_length)
 
             # Next, let's create a chain rule for all nukta sequences
             dropBYsRoutine = fontFeatures.Routine(flags=0x0010)
@@ -198,10 +204,10 @@ class BYMoveDots:
             maybeDropDotRoutine.markFilteringSet = below_dots
 
             binned_medis = bin_glyphs_by_metric(
-                parser.font, medis, "width", bincount=accuracy1
+                parser.font, medis, "run", bincount=accuracy1
             )
             binned_inits = bin_glyphs_by_metric(
-                parser.font, inits, "width", bincount=accuracy1
+                parser.font, inits, "run", bincount=accuracy1
             )
 
             queue = [[[[bariye]]]]
@@ -212,10 +218,11 @@ class BYMoveDots:
                 seq_length = sum([s[1] for s in consideration[:-1]])
                 repsequence = [(s[0][0], s[1]) for s in consideration[:-1]]
                 sequence = [s[0] for s in consideration]
-                # warnings.warn("Sequence %s total %i bariye_tail %i" % (repsequence, seq_length, bariye_tail))
+                warnings.warn("Sequence %s total %i bariye_tail %i" % (repsequence, seq_length, bariye_tail))
 
-                if seq_length > bariye_tail:
+                if seq_length > bariye_tail or len(consideration) > maximum_sequence_length:
                     continue
+
                 lu = [None] * len(sequence)
                 if alwaysDrop:
                     lu[0] = [dropADotRoutine]
@@ -286,7 +293,7 @@ class BYMoveDots:
         paths = get_bezier_paths(font, bariye)
         path = paths[0]
         bounds = path.bounds()
-        x_of_tail = self.arabic_width(font, bariye)
+        x_of_tail = get_rise(font.font, bariye)
         ray = Line(
             Point(x_of_tail - 0.1, bounds.bottom - 5),
             Point(x_of_tail + 0.1, bounds.top + 5),
@@ -351,19 +358,6 @@ class BYMoveDots:
         displacement = anchor2_y - anchor1_y
         return -(bottomOfDot + displacement)
 
-    @classmethod
-    def arabic_width(self, parser, g):
-        fullwidth = get_glyph_metrics(parser.font, g)["width"]
-        if g not in parser.fontfeatures.anchors:
-            return fullwidth
-        anchors = parser.fontfeatures.anchors[g]
-        if "entry" in anchors:
-            fullwidth = anchors["entry"][0]
-        if "exit" in anchors:
-            return fullwidth - anchors["exit"][0]
-        return fullwidth
-
-
 class BYFixOverhang:
     @classmethod
     def action(self, parser, overhang_padding, glyphs):
@@ -375,9 +369,8 @@ class BYFixOverhang:
         inits = parser.fontfeatures.namedClasses["inits"]
         overhangers = glyphs.resolve(parser.fontfeatures, parser.font)
 
-        # These really should be arabic_width. :-(
-        binned_medis = bin_glyphs_by_metric(parser.font, medis, "width", bincount=8)
-        binned_inits = bin_glyphs_by_metric(parser.font, inits, "width", bincount=8)
+        binned_medis = bin_glyphs_by_metric(parser.font, medis, "run", bincount=8)
+        binned_inits = bin_glyphs_by_metric(parser.font, inits, "run", bincount=8)
         rules = []
         maxchainlength = 0
         longeststring = []
@@ -391,8 +384,8 @@ class BYFixOverhang:
             workqueue = [[x] for x in binned_inits]
             while workqueue:
                 string = workqueue.pop(0)
-                totalwidth = sum([x[1] for x in string])
-                if totalwidth > overhang:
+                totalwidth = sum([ max(x[1],failsafe_min_run) for x in string])
+                if totalwidth > overhang or len(string) > failsafe_max_length:
                     continue
 
                 adjustment = overhang - totalwidth + int(overhang_padding)
