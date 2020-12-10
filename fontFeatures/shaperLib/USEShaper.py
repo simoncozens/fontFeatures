@@ -68,5 +68,18 @@ class USEShaper(ArabicShaper):
         pass
     def clear_syllables(self, shaper):
         pass
-    def iterate_syllables(self):
+    def setup_topographical_masks(self):
         pass
+
+    def iterate_syllables(self):
+        ix = 0
+        while ix < len(self.buffer.items):
+            if not hasattr(self.buffer.items[ix], "syllable_index"):
+                break
+            syll_type = self.buffer.items[ix].syllable
+            index = self.buffer.items[ix].syllable_index
+            start = ix
+            while ix < len(self.buffer.items) and self.buffer.items[ix].syllable_index == index:
+                ix = ix + 1
+                end = ix
+            yield index, syll_type, start, end
