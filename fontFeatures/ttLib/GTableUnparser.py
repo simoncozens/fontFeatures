@@ -298,7 +298,8 @@ class GTableUnparser:
             classDefs = self.font["GDEF"].table.MarkAttachClassDef.classDefs
             glyphs = [g for g in classDefs.keys() if classDefs[g] == mat]
             routine.markAttachmentSet = glyphs
-        if lookup.LookupFlag & 0x10:
+        if lookup.LookupFlag & 0x10 and hasattr(lookup, "MarkFilteringSet"):
+            # It might not have one if it's an Extension lookup
             routine.markFilteringSet = self.font["GDEF"].table.MarkGlyphSetsDef.Coverage[lookup.MarkFilteringSet].glyphs
 
     def unparseContextual(self, lookup):
