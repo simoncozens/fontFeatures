@@ -274,12 +274,13 @@ class Buffer:
                     cluster = info.syllable_index
                 else:
                     cluster = ix
-                outs[-1] = outs[-1] + "=%i+%i" % (cluster, position.xAdvance)
+                outs[-1] = outs[-1] + "=%i" % (cluster)
                 if position.xPlacement or position.yPlacement:
-                    outs[-1] = outs[-1] + "@<%i,%i>" % (
+                    outs[-1] = outs[-1] + "@%i,%i" % (
                         position.xPlacement or 0,
                         position.yPlacement or 0,
                     )
+                outs[-1] = outs[-1] + "+%i" % (position.xAdvance)
             relevant = list(filter(lambda a: hasattr(info,a), additional))
             if relevant:
                 outs[-1] = outs[-1] + "(%s)" % ",".join(
