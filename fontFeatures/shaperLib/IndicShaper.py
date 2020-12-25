@@ -2,6 +2,7 @@ from youseedee import ucd_data
 from .BaseShaper import BaseShaper
 import re
 from fontFeatures.shaperLib.Buffer import BufferItem
+from fontFeatures.shaperLib.VowelConstraints import preprocess_text_vowel_constraints
 from .IndicShaperData import script_config, syllabic_category_map, syllabic_category_re, IndicPositionalCategory2IndicPosition, IndicPosition, reassign_category_and_position
 import unicodedata
 
@@ -29,6 +30,8 @@ class IndicShaper(BaseShaper):
     def override_features(self, shaper):
         shaper.disable_feature("liga")
 
+    def preprocess_text(self):
+        preprocess_text_vowel_constraints(self.buffer)
 
     def assign_indic_categories(self):
         serialized = []
