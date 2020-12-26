@@ -73,8 +73,7 @@ class BufferItem:
         self.recategorize(font)
         try:
             self.position = ValueRecord(xAdvance=0)
-            if self.category[0] != "mark":
-                self.position.xAdvance=font[self.glyph].width
+            self.position.xAdvance=font[self.glyph].width
         except Exception as e:
             if "pytest" in sys.modules:
                 # We tolerate broken fonts in pytest
