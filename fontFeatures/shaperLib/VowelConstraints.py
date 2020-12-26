@@ -13,7 +13,7 @@ def _insert_dotted_circle(buf, index):
 def preprocess_text_vowel_constraints(buffer):
     if buffer.script == "Devanagari":
         i = 0
-        while i < len(buffer.items):
+        while i < len(buffer.items)-1:
             matched = False
             if buffer.items[i].codepoint == 0x0905:
                     if buffer.items[i+1].codepoint in [0x093A, 0x093B, 0x093E, 0x0945, 0x0946, 0x0949, 0x094A, 0x094B, 0x094C, 0x094F, 0x0956, 0x0957]:
@@ -35,7 +35,7 @@ def preprocess_text_vowel_constraints(buffer):
             if matched: _insert_dotted_circle(buffer, i)
     if buffer.script == "Bengali":
         i = 0
-        while i < len(buffer.items):
+        while i < len(buffer.items)-1:
             matched = False
             if buffer.items[i].codepoint == 0x0985:
                 matched = 0x09BE == buffer.items[i+1].codepoint
@@ -47,7 +47,7 @@ def preprocess_text_vowel_constraints(buffer):
             if matched: _insert_dotted_circle(buffer, i)
     if buffer.script == "Gurmukhi":
         i = 0
-        while i < len(buffer.items):
+        while i < len(buffer.items)-1:
             matched = False
             if buffer.items[i].codepoint == 0x0A05:
                     if buffer.items[i+1].codepoint in [0x0A3E, 0x0A48, 0x0A4C]:
@@ -62,7 +62,7 @@ def preprocess_text_vowel_constraints(buffer):
             if matched: _insert_dotted_circle(buffer, i)
     if buffer.script == "Gujarati":
         i = 0
-        while i < len(buffer.items):
+        while i < len(buffer.items)-1:
             matched = False
             if buffer.items[i].codepoint == 0x0A85:
                     if buffer.items[i+1].codepoint in [0x0ABE, 0x0AC5, 0x0AC7, 0x0AC8, 0x0AC9, 0x0ACB, 0x0ACC]:
@@ -73,7 +73,7 @@ def preprocess_text_vowel_constraints(buffer):
             if matched: _insert_dotted_circle(buffer, i)
     if buffer.script == "Oriya":
         i = 0
-        while i < len(buffer.items):
+        while i < len(buffer.items)-1:
             matched = False
             if buffer.items[i].codepoint == 0x0B05:
                 matched = 0x0B3E == buffer.items[i+1].codepoint
@@ -83,16 +83,16 @@ def preprocess_text_vowel_constraints(buffer):
             if matched: _insert_dotted_circle(buffer, i)
     if buffer.script == "Tamil":
         i = 0
-        while i < len(buffer.items):
+        while i < len(buffer.items)-1:
             matched = False
             if (0x0B85 == buffer.items[i].codepoint and
-                0x0BC2 == buffer.items[i+1].codepoint):
+                    0x0BC2 == buffer.items[i+1].codepoint):
                 matched = True
             i = i + 1
             if matched: _insert_dotted_circle(buffer, i)
     if buffer.script == "Telugu":
         i = 0
-        while i < len(buffer.items):
+        while i < len(buffer.items)-1:
             matched = False
             if buffer.items[i].codepoint == 0x0C12:
                     if buffer.items[i+1].codepoint in [0x0C4C, 0x0C55]:
@@ -103,7 +103,7 @@ def preprocess_text_vowel_constraints(buffer):
             if matched: _insert_dotted_circle(buffer, i)
     if buffer.script == "Kannada":
         i = 0
-        while i < len(buffer.items):
+        while i < len(buffer.items)-1:
             matched = False
             if buffer.items[i].codepoint in [0x0C89, 0x0C8B]:
                 matched = 0x0CBE == buffer.items[i+1].codepoint
@@ -113,7 +113,7 @@ def preprocess_text_vowel_constraints(buffer):
             if matched: _insert_dotted_circle(buffer, i)
     if buffer.script == "Malayalam":
         i = 0
-        while i < len(buffer.items):
+        while i < len(buffer.items)-1:
             matched = False
             if buffer.items[i].codepoint in [0x0D07, 0x0D09]:
                 matched = 0x0D57 == buffer.items[i+1].codepoint
@@ -126,7 +126,7 @@ def preprocess_text_vowel_constraints(buffer):
             if matched: _insert_dotted_circle(buffer, i)
     if buffer.script == "Sinhala":
         i = 0
-        while i < len(buffer.items):
+        while i < len(buffer.items)-1:
             matched = False
             if buffer.items[i].codepoint == 0x0D85:
                     if buffer.items[i+1].codepoint in [0x0DCF, 0x0DD0, 0x0DD1]:
@@ -142,7 +142,7 @@ def preprocess_text_vowel_constraints(buffer):
             if matched: _insert_dotted_circle(buffer, i)
     if buffer.script == "Brahmi":
         i = 0
-        while i < len(buffer.items):
+        while i < len(buffer.items)-1:
             matched = False
             if buffer.items[i].codepoint == 0x11005:
                 matched = 0x11038 == buffer.items[i+1].codepoint
@@ -154,7 +154,7 @@ def preprocess_text_vowel_constraints(buffer):
             if matched: _insert_dotted_circle(buffer, i)
     if buffer.script == "Khudawadi":
         i = 0
-        while i < len(buffer.items):
+        while i < len(buffer.items)-1:
             matched = False
             if buffer.items[i].codepoint == 0x112B0:
                     if buffer.items[i+1].codepoint in [0x112E0, 0x112E5, 0x112E6, 0x112E7, 0x112E8]:
@@ -163,7 +163,7 @@ def preprocess_text_vowel_constraints(buffer):
             if matched: _insert_dotted_circle(buffer, i)
     if buffer.script == "Tirhuta":
         i = 0
-        while i < len(buffer.items):
+        while i < len(buffer.items)-1:
             matched = False
             if buffer.items[i].codepoint == 0x11481:
                 matched = 0x114B0 == buffer.items[i+1].codepoint
@@ -176,7 +176,7 @@ def preprocess_text_vowel_constraints(buffer):
             if matched: _insert_dotted_circle(buffer, i)
     if buffer.script == "Modi":
         i = 0
-        while i < len(buffer.items):
+        while i < len(buffer.items)-1:
             matched = False
             if buffer.items[i].codepoint in [0x11600, 0x11601]:
                     if buffer.items[i+1].codepoint in [0x11639, 0x1163A]:
@@ -185,7 +185,7 @@ def preprocess_text_vowel_constraints(buffer):
             if matched: _insert_dotted_circle(buffer, i)
     if buffer.script == "Takri":
         i = 0
-        while i < len(buffer.items):
+        while i < len(buffer.items)-1:
             matched = False
             if buffer.items[i].codepoint == 0x11680:
                     if buffer.items[i+1].codepoint in [0x116AD, 0x116B4, 0x116B5]:

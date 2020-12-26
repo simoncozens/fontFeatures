@@ -148,7 +148,7 @@ print ('def preprocess_text_vowel_constraints(buffer):')
 for script, constraints in sorted (constraints.items (), key=lambda s_c: script_order[s_c[0]]):
     print(f'    if buffer.script == "{script}":')
     print ('        i = 0')
-    print ('        while i < len(buffer.items):')
+    print ('        while i < len(buffer.items)-1:')
     print ('            matched = False')
     write (str (constraints))
     print ('            i = i + 1')
