@@ -212,7 +212,7 @@ class IndicShaper(BaseShaper):
         if has_reph and base == start and limit - base <= 2:
             has_reph = False
 
-        self.plan.msg("Base consonant for syllable %i is %s" % (syllable_index, self.buffer[base].glyph))
+        self.plan.msg("Base consonant for syllable %i is %s" % (syllable_index, self.buffer.items[base].glyph))
         for i in range(start, base):
             self.buffer.items[i].indic_position = min(IndicPosition.PRE_C, pos(i))
         if base < end:
