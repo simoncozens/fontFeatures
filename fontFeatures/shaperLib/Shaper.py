@@ -7,6 +7,7 @@ from .ArabicShaper import ArabicShaper
 from .IndicShaper import IndicShaper
 from .MyanmarShaper import MyanmarShaper
 from .HangulShaper import HangulShaper
+from .KhmerShaper import KhmerShaper
 from .USEShaper import USEShaper
 import logging
 import re
