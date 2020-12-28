@@ -39,7 +39,7 @@ myanmar_category_reassignments = {
     0x25FB: "GB",
     0x25FC: "GB",
     0x25FD: "GB",
-    0x25FE: "GB"
+    0x25FE: "GB",
     0xAA74: "C",
     0xAA75: "C",
     0xAA76: "C",  # https://github.com/harfbuzz/harfbuzz/issues/218
@@ -49,41 +49,59 @@ for cp in range(0x1041, 0x1049 + 1):
     myanmar_category_reassignments[cp] = "D"
 for cp in range(0x1090, 0x1099 + 1):
     myanmar_category_reassignments[cp] = "D"
-
 for cp in range(0xF300, 0xFE0F + 1):
     myanmar_category_reassignments[cp] = "VS"
-
 for cp in range(0x1087, 0x108F + 1):
     myanmar_category_reassignments[cp] = "SM"
-
 for cp in [0x1063, 0x1064, 0x1069, 0x106A, 0x106B, 0x106C, 0x106D, 0xAA7B]:
     myanmar_category_reassignments[cp] = "PT"
 
 
 states = OrderedDict(
-    j = "ZWJ|ZWNJ",  # Joiners
-    k = "(Ra As H)", # Kinzi
-    c = "C|Ra",      # is_consonant
-    medial_group = "MY? As? MR? ((MW MH? | MH) As?)?",
-    main_vowel_group = "(VPre VS?)* VAbv* VBlw* A* (DB As?)?",
-    post_vowel_group = "VPst MH? As* VAbv* A* (DB As?)?",
-    pwo_tone_group = "PT A* DB? As?",
-    complex_syllable_tail = "As* medial_group main_vowel_group post_vowel_group* pwo_tone_group* V* j?",
-    syllable_tail = "(H (c|IV) VS?)* (H | complex_syllable_tail)",
-    consonant_syllable = "(k|CS)? (c|IV|D|GB) VS? syllable_tail",
-    punctuation_cluster = "P V",
-    broken_cluster =  "k? VS? syllable_tail",
+    j="ZWJ|ZWNJ",  # Joiners
+    k="(Ra As H)",  # Kinzi
+    c="C|Ra",  # is_consonant
+    medial_group="MY? As? MR? ((MW MH? | MH) As?)?",
+    main_vowel_group="(VPre VS?)* VAbv* VBlw* A* (DB As?)?",
+    post_vowel_group="VPst MH? As* VAbv* A* (DB As?)?",
+    pwo_tone_group="PT A* DB? As?",
+    complex_syllable_tail="As* medial_group main_vowel_group post_vowel_group* pwo_tone_group* V* j?",
+    syllable_tail="(H (c|IV) VS?)* (H | complex_syllable_tail)",
+    consonant_syllable="(k|CS)? (c|IV|D|GB) VS? syllable_tail",
+    punctuation_cluster="P V",
+    broken_cluster="k? VS? syllable_tail",
 )
-additional_categories = ['VS', 'MW', 'P', 'As', 'PT', 'MY', 'MH', 'D', 'GB', 'MR', 'VPre', 'VAbv', 'VBlw', 'VPst']
 
 
 class MyanmarShaper(SyllabicShaper):
     basic_features = ["rphf", "pref", "blwf", "pstf"]
     other_features = ["pres", "abvs", "blws", "psts"]
     repha = None
-    syllable_machine = make_syllable_machine(states, additional_categories=additional_categories)
-    syllable_types = ["consonant_syllable", "punctuation_cluster","broken_cluster","other"]
-
+    syllable_machine = make_syllable_machine(
+        states,
+        additional_categories=[
+            "VS",
+            "MW",
+            "P",
+            "As",
+            "PT",
+            "MY",
+            "MH",
+            "D",
+            "GB",
+            "MR",
+            "VPre",
+            "VAbv",
+            "VBlw",
+            "VPst",
+        ],
+    )
+    syllable_types = [
+        "consonant_syllable",
+        "punctuation_cluster",
+        "broken_cluster",
+        "other",
+    ]
 
     def reassign_category(self, item):
         cp = item.codepoint
@@ -177,6 +195,5 @@ class MyanmarShaper(SyllabicShaper):
 
     initial_reordering_syllable = {
         "broken_cluster": initial_reordering_consonant_syllable,
-        "consonant_syllable": initial_reordering_consonant_syllable
+        "consonant_syllable": initial_reordering_consonant_syllable,
     }
-
