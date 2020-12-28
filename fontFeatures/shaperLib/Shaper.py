@@ -5,6 +5,7 @@ from fontFeatures.shaperLib import Buffer
 from .BaseShaper import BaseShaper
 from .ArabicShaper import ArabicShaper
 from .IndicShaper import IndicShaper
+from .MyanmarShaper import MyanmarShaper
 from .HangulShaper import HangulShaper
 from .USEShaper import USEShaper
 import logging
@@ -158,7 +159,7 @@ class Shaper:
         if buf.script == "Khmer":
             return KhmerShaper
 
-        if buf.script == "Mymanmar":
+        if buf.script == "Myanmar":
             if self.fontfeatures.hasScriptSupport("mymr"):
                 return BaseShaper
             else:
