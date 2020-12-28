@@ -4,6 +4,9 @@ from collections import OrderedDict
 
 
 myanmar_category_reassignments = {
+    0x002D: "GB",
+    0x00A0: "GB",
+    0x00D7: "GB",
     0x1004: "Ra",
     0x101B: "Ra",
     0x1032: "A",
@@ -27,27 +30,20 @@ myanmar_category_reassignments = {
     0x109A: "SM",
     0x109B: "SM",
     0x109C: "SM",
+    0x2012: "GB",
+    0x2013: "GB",
+    0x2014: "GB",
+    0x2015: "GB",
+    0x2022: "GB",
+    0x25CC: "GB",
+    0x25FB: "GB",
+    0x25FC: "GB",
+    0x25FD: "GB",
+    0x25FE: "GB"
     0xAA74: "C",
     0xAA75: "C",
     0xAA76: "C",  # https://github.com/harfbuzz/harfbuzz/issues/218
 }
-
-for cp in [
-    0x002D,
-    0x00A0,
-    0x00D7,
-    0x2012,
-    0x2013,
-    0x2014,
-    0x2015,
-    0x2022,
-    0x25CC,
-    0x25FB,
-    0x25FC,
-    0x25FD,
-    0x25FE,
-]:
-    myanmar_category_reassignments[cp] = "GB"
 
 for cp in range(0x1041, 0x1049 + 1):
     myanmar_category_reassignments[cp] = "D"
