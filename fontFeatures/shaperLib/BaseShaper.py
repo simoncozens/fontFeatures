@@ -78,6 +78,37 @@ class BaseShaper:
 
     def position(self):
         self._run_stage("pos")
+        # zero width default ignorables
+        for i in range(0,len(self.buffer.items)):
+            self.propagate_attachment_offsets(i)
+
+    def propagate_attachment_offsets(self, i):
+        if not hasattr(self.buffer.items[i], "attach_type"):
+            return
+        attach_type = self.buffer.items[i].attach_type
+        attach_chain = self.buffer.items[i].attach_chain
+        if not attach_chain:
+            return
+        self.buffer.items[i].attach_chain = None
+        j = i + attach_chain
+        if j >= len(self.buffer.items):
+            return
+        self.propagate_attachment_offsets(j)
+        if attach_type == "cursive":
+            self.buffer.items[i].position.yPlacement = (self.buffer.items[i].position.yPlacement or 0) + (self.buffer.items[j].position.yPlacement or 0) # XXX Horizontal only
+        else:
+            self.buffer.items[i].position.xPlacement += self.buffer.items[j].position.xPlacement or 0
+            self.buffer.items[i].position.yPlacement += self.buffer.items[j].position.yPlacement or 0
+            assert j < i
+            if self.buffer.direction == "LTR":
+                for k in range(j,i):
+                    self.buffer.items[i].position.xPlacement -= self.buffer.items[k].position.xAdvance
+                    self.buffer.items[i].position.yPlacement -= self.buffer.items[k].position.yAdvance or 0
+            else:
+                for k in range(j+1,i+1):
+                    self.buffer.items[i].position.xPlacement += self.buffer.items[k].position.xAdvance
+                    self.buffer.items[i].position.yPlacement += self.buffer.items[k].position.yAdvance or 0
+
 
     def _run_stage(self, current_stage):
         self.plan.msg("Running %s stage" % current_stage)

@@ -5,10 +5,17 @@ from fontFeatures import Rule
 def shaper_inputs(self):
     return [self.bases.keys(), self.marks.keys()]
 
-def find_base_backwards(buf, ix):
+def find_base_backwards(self, buf, ix):
+    start_ix = ix
     ix = ix - 1
     while ix >= 0:
-        if buf[ix].category[0] != "mark":
+        if buf[ix].glyph in self.bases.keys():
+            # Check for unhelpful stuff in between
+            my_category = buf[ix].category[0]
+            for i in range(ix+1, start_ix):
+                if buf[i].category[0] == my_category:
+                    # Oops, we skipped over another %s to get here
+                    return None
             return ix
         ix = ix - 1
     return None
@@ -33,7 +40,7 @@ def would_apply_at_position(self, buf, ix):
     if buf[ix].glyph not in self.marks.keys():
         logging.getLogger("fontFeatures.shaperLib").debug(" * No, %s is not in our mark list" % (buf[ix].glyph))
         return False
-    base_ix = find_base_backwards(buf, ix)
+    base_ix = find_base_backwards(self, buf, ix)
     if base_ix is None:
         logging.getLogger("fontFeatures.shaperLib").debug(" * No, I couldn't find a base glyph")
         return False
@@ -62,20 +69,21 @@ def _do_apply_cursive(self, buf, ix):
         parent, child = child, parent
         x_offset = -x_offset
         y_offset = -y_offset
-    buf[child].position.yPlacement = (buf[parent].position.yPlacement or 0) + y_offset
+    buf[child].position.xPlacement = x_offset
+    buf[ix].attach_type = "cursive"
+    buf[ix].attach_chain = parent - child
 
 
 def _do_apply(self, buf, ix):
     if self.is_cursive:
         return _do_apply_cursive(self, buf, ix)
     from fontFeatures import ValueRecord
-    base_ix = find_base_backwards(buf, ix)
+    base_ix = find_base_backwards(self, buf, ix)
     mark = buf[ix].glyph
     base = buf[base_ix].glyph
     xpos = self.bases[base][0] - self.marks[mark][0]
     ypos = self.bases[base][1] - self.marks[mark][1]
-    vr = ValueRecord(xPlacement=xpos, yPlacement=ypos)
-    if buf.direction == "LTR":
-        vr.xPlacement = vr.xPlacement - buf[base_ix].position.xAdvance
-    buf[ix].add_position(vr)
-    buf[ix].position.xAdvance = 0
+    buf[ix].position.xPlacement = xpos
+    buf[ix].position.yPlacement = ypos
+    buf[ix].attach_type = "mark"
+    buf[ix].attach_chain = base_ix - ix
