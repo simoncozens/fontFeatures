@@ -84,8 +84,8 @@ class BufferItem:
     def recategorize(self, font):
         try:
             self.category = (font[self.glyph].category, None)
-            if not self.category:
-                return ("unknown", None)
+            if not self.category[0]:
+                self.category = ("unknown", None)
         except Exception as e:
             warnings.warn("Error getting category: %s" % str(e))
             self._fallback_categorize()
