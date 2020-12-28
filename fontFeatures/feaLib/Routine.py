@@ -146,10 +146,10 @@ def feaPreamble(self, ff):
     for r in self.rules:
         preamble.extend(r.feaPreamble(ff))
     if self.flags & 0xFF00:
-        assert(self.markAttachmentSet)
+        assert(self.markAttachmentSet is not None)
         self.markAttachmentSetAsClass = ff.getNamedClassFor(self.markAttachmentSet, gensym("markAttachmentSet"))
     if self.flags & 0x10:
-        assert(self.markFilteringSet)
+        assert(self.markFilteringSet is not None)
         self.markFilteringSetAsClass = ff.getNamedClassFor(self.markFilteringSet, gensym("markFilteringSet"))
     return preamble
 
