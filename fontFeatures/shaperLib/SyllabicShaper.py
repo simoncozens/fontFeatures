@@ -13,6 +13,7 @@ class SyllabicShaper(BaseShaper):
     basic_features = ['nukt', 'akhn', 'rphf', 'rkrf', 'pref', 'blwf', 'abvf', 'half', 'pstf', 'vatu', 'cjct']
     after_syllable_features = [ "ccmp", "locl" ]
     other_features = [ "init", "pres", "abvs", "blws", "psts", "haln", "calt", "clig" ]
+    repha = "Repha"
 
     def collect_features(self, shaper):
         shaper.add_pause(self.setup_syllables)
@@ -86,14 +87,17 @@ class SyllabicShaper(BaseShaper):
                 dotted_circle.syllable = i.syllable
                 self.assign_category(dotted_circle)
                 dotted_circle.map_to_glyph(self.buffer.font)
-                if repha and i.syllabic_category == repha:
+                if self.repha is not None and i.syllabic_category == repha:
                     self.buffer.items.insert(ix+1, dotted_circle)
                 else:
                     self.buffer.items.insert(ix, dotted_circle)
 
+    def initial_reordering_pre(self):
+        pass
+
     def initial_reordering(self, shaper):
         self.initial_reordering_pre()
-        self.insert_dotted_circles("Repha")
+        self.insert_dotted_circles(self.repha)
         for index,syll_type,start,end in self.iterate_syllables():
             reorder = self.initial_reordering_syllable.get(syll_type, None)
             if reorder:
