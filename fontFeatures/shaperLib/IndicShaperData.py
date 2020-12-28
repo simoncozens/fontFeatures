@@ -65,40 +65,46 @@ syllabic_category_map = {
 ## Set up the state machine for syllable matching and syllabic
 ## categories using composed regular expressions
 
-syllable_machine_indic = {}
-for value in set(syllabic_category_map.values()):
-    syllable_machine_indic[value] = f'<{value}>\\([^\\)]+\\)=\\d+'
-
-syllable_machine_indic["other"] = f'<[^\\>]+>\\([^\\)]+\\)=\\d+'
-
 
 states = OrderedDict(
     c = "C|Ra",
-    n = "(ZWNJ?RS)?(N()N?)?",
+    n = "(ZWNJ?RS)?(N N?)?",
     z = "ZWJ|ZWNJ",
-    reph = "Ra()H|Repha",
-    cn = "c()ZWJ?n?",
-    forced_rakar = "ZWJ()H()ZWJ()Ra",
-    symbol = "Symbol()N?",
-    matra_group = "z*M()N?(H|forced_rakar)?",
-    syllable_tail = "(z?SM()SM?ZWNJ?)?A*",
-    halant_group = "z?H(ZWJ()N?)?",
-    final_halant_group = "halant_group|H()ZWNJ",
+    reph = "Ra H|Repha",
+    cn = "c ZWJ?n?",
+    forced_rakar = "ZWJ H ZWJ Ra",
+    symbol = "Symbol N?",
+    matra_group = "z*M N?(H|forced_rakar)?",
+    syllable_tail = "(z?SM SM?ZWNJ?)?A*",
+    halant_group = "z?H(ZWJ N?)?",
+    final_halant_group = "halant_group|H ZWNJ",
     medial_group = "CM?",
     halant_or_matra_group = "final_halant_group|matra_group*",
-    complex_syllable_tail = "(halant_group()cn)*medial_group()halant_or_matra_group()syllable_tail",
-    consonant_syllable = "((Repha|CS)?cn()complex_syllable_tail)",
-    vowel_syllable = "(reph?V()n?(complex_syllable_tail|ZWJ))",
-    standalone_cluster = "((Repha|CS)?PLACEHOLDER|reph?DOTTEDCIRCLE)n?()complex_syllable_tail",
-    symbol_cluster = "symbol()syllable_tail",
-    broken_cluster = "reph?()n?()complex_syllable_tail",
+    complex_syllable_tail = "(halant_group cn)*medial_group halant_or_matra_group syllable_tail",
+    consonant_syllable = "((Repha|CS)?cn complex_syllable_tail)",
+    vowel_syllable = "(reph?V n?(complex_syllable_tail|ZWJ))",
+    standalone_cluster = "((Repha|CS)?PLACEHOLDER|reph?DOTTEDCIRCLE)n? complex_syllable_tail",
+    symbol_cluster = "symbol syllable_tail",
+    broken_cluster = "reph? n? complex_syllable_tail",
 )
 
-for k,v in states.items():
-    keys = "\\b("+"|".join(sorted(syllable_machine_indic.keys(),key=len, reverse=True))+")\\b"
-    v = re.sub(keys, lambda match: "("+syllable_machine_indic[match[1]]+")", v)
-    v = v.replace("()", "")
-    syllable_machine_indic[k] = v
+def make_syllable_machine(states, additional_categories=[]):
+    categories = set(syllabic_category_map.values()) | set(additional_categories)
+    syllable_machine = {}
+    tail = r'\([^\)]+\)=\d+'
+    for value in categories:
+        syllable_machine[value] = f'<{value}>' + tail
+    syllable_machine["other"] = r'<[^\>]+>' + tail
+
+    for category,definition in states.items():
+        # Recursively replace any known states with their definitions:
+        states = "\\b("+"|".join(sorted(syllable_machine.keys(),key=len, reverse=True))+")\\b"
+        definition = re.sub(states, lambda match: "("+syllable_machine[match[1]]+")", definition)
+        definition = definition.replace(" ", "")
+        syllable_machine[category] = definition
+    return syllable_machine
+
+syllable_machine_indic = make_syllable_machine(states)
 
 class IndicPosition(IntEnum):
   START = 0
