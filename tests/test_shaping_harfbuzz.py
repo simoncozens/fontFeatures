@@ -10,6 +10,10 @@ import os
 import re
 import logging
 
+script_map = {
+    "Qaag": "Myanmar_Zawgyi"
+}
+
 # logging.getLogger("fontFeatures.shaperLib").setLevel(logging.DEBUG)
 
 def tounicode(s):
@@ -63,9 +67,14 @@ def test_shaping(request, fontname, hb_args, input_string, expectation):
     if "fraction" in request.node.name:
         return pytest.skip("Not planning to support automatic fractions")
 
-    m = re.match(r'--features="([^"]+)"', hb_args)
+    m = re.search(r'--features="([^"]+)"', hb_args)
     if m:
         feature_string = m[1]
+
+    if "--script" in hb_args:
+        m = re.search(r"--script=(\w+)", hb_args)
+        buf.script = script_map[m[1]]
+
     shaper.execute(buf, features=feature_string)
     serialize_options = {}
     if "--no-glyph-names" in hb_args:
