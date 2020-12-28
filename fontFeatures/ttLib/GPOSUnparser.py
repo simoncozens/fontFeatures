@@ -215,12 +215,12 @@ class GPOSUnparser(GTableUnparser):
         id2Name = markCoverage.glyphs
         marks = {}
         for i, markRecord in enumerate(markArray.MarkRecord):
-            if markRecord.Class == classId:
-                marks[id2Name[i]] = (
-                    markRecord.MarkAnchor.XCoordinate,
-                    markRecord.MarkAnchor.YCoordinate,
-                    markRecord.Class
-                )
+            # if markRecord.Class == classId:
+            marks[id2Name[i]] = (
+                markRecord.MarkAnchor.XCoordinate,
+                markRecord.MarkAnchor.YCoordinate,
+                markRecord.Class
+            )
         return marks
 
     def formatMark2Array(self, markArray, markCoverage, anchorClassPrefix):

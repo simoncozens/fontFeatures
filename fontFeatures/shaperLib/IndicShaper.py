@@ -361,7 +361,7 @@ class IndicShaper(SyllabicShaper):
                 glyph = BufferItem.new_unicode(cp)
                 glyph.map_to_glyph(self.buffer.font)
                 if self.would_substitute("pstf", [glyph]):
-                    newunicodes.append(0x0DD9, cp)
+                    newunicodes.extend([0x0DD9, cp])
                 else:
                     newunicodes.append(cp)
             else:

@@ -102,6 +102,7 @@ class SyllabicShaper(BaseShaper):
             reorder = self.initial_reordering_syllable.get(syll_type, None)
             if reorder:
                 reorder(self, start,end)
+        self.plan.msg("After initial reordering", self.buffer, ["syllable_index", "syllable"])
 
     def final_reordering(self, shaper):
         for index,syll_type,start,end in self.iterate_syllables():
