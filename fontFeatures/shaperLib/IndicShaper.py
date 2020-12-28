@@ -3,78 +3,23 @@ from .BaseShaper import BaseShaper
 import re
 from fontFeatures.shaperLib.Buffer import BufferItem
 from fontFeatures.shaperLib.VowelConstraints import preprocess_text_vowel_constraints
-from .IndicShaperData import script_config, syllabic_category_map, syllabic_category_re, IndicPositionalCategory2IndicPosition, IndicPosition, reassign_category_and_position
+from .IndicShaperData import script_config, syllabic_category_map, syllable_machine_indic, IndicPositionalCategory2IndicPosition, IndicPosition, reassign_category_and_position_indic
+from .SyllabicShaper import SyllabicShaper
 import unicodedata
 
 DOTTED_CIRCLE = 0x25CC
 
-class IndicShaper(BaseShaper):
+class IndicShaper(SyllabicShaper):
 
-    basic_features = ['nukt', 'akhn', 'rphf', 'rkrf', 'pref', 'blwf', 'abvf', 'half', 'pstf', 'vatu', 'cjct']
+    syllable_machine = syllable_machine_indic
+    syllable_types = ["consonant_syllable", "vowel_syllable", "standalone_cluster","symbol_cluster","broken_cluster","other"]
 
     @property
     def config(self):
         return script_config.get(self.buffer.script, script_config["Invalid"])
 
-    def collect_features(self, shaper):
-        shaper.add_pause(self.setup_syllables)
-        shaper.add_features("ccmp", "locl")
-        shaper.add_pause(self.initial_reordering)
-        for i in self.basic_features:
-            shaper.add_features(i)
-            shaper.add_pause()
-        shaper.add_pause(self.final_reordering)
-        shaper.add_features("init", "pres", "abvs", "blws", "psts", "haln")
-        shaper.add_features("calt", "clig")
-
     def override_features(self, shaper):
         shaper.disable_feature("liga")
-
-    def preprocess_text(self):
-        preprocess_text_vowel_constraints(self.buffer)
-
-    def assign_indic_categories(self):
-        serialized = []
-        for ix,item in enumerate(self.buffer.items):
-            ucd = ucd_data(item.codepoint)
-            item.indic_syllabic_category = syllabic_category_map.get(ucd.get("Indic_Syllabic_Category", "Other"),"X")
-            item.indic_positional_category = ucd.get("Indic_Positional_Category", "x")
-            item.indic_position = IndicPositionalCategory2IndicPosition(item.indic_positional_category)
-            reassign_category_and_position(item)
-            serialized.append("<"+item.indic_syllabic_category+">("+item.indic_positional_category+")="+str(ix))
-        return "".join(serialized)
-
-    def setup_syllables(self, shaper):
-        syllable_index = 0
-        category_string = self.assign_indic_categories()
-        self.plan.msg("Set up syllables: "+category_string)
-        while len(category_string) > 0:
-            state, end, matched_type = None, None, None
-            for syllable_type in ["consonant_syllable", "vowel_syllable", "standalone_cluster","symbol_cluster","broken_cluster","other"]:
-                m = re.match(syllabic_category_re[syllable_type], category_string)
-                if m and len(m[0]):
-                    matched_type = syllable_type
-                    category_string = category_string[len(m[0]):]
-                    indexes = re.findall("=(\\d+)", m[0])
-                    start, end = int(indexes[0]), int(indexes[-1])
-                    break
-            assert(matched_type)
-            for i in range(start, end+1):
-                self.buffer.items[i].syllable_index = syllable_index
-                self.buffer.items[i].syllable = syllable_type
-            syllable_index = syllable_index+1
-        self.plan.msg("Syllables", self.buffer, ["syllable_index", "syllable"])
-
-    def iterate_syllables(self):
-        ix = 0
-        while ix < len(self.buffer.items):
-            syll_type = self.buffer.items[ix].syllable
-            index = self.buffer.items[ix].syllable_index
-            start = ix
-            while ix < len(self.buffer.items) and self.buffer.items[ix].syllable_index == index:
-                ix = ix + 1
-                end = ix
-            yield index, syll_type, start, end
 
     def consonant_position_from_face(self, consonant):
         virama = self.config["virama"]
@@ -103,44 +48,21 @@ class IndicShaper(BaseShaper):
             return IndicPosition.POST_C
         return IndicPosition.BASE_C
 
-    def initial_reordering(self, shaper):
-        # Update consonant positions
+    def initial_reordering_pre(self):
         if self.config["base_pos"] == "last": # Not Sinhala
             for item in self.buffer.items:
-                if item.indic_position == IndicPosition.BASE_C:
-                    item.indic_position = self.consonant_position_from_face(item.codepoint)
-                    # XXX Consonant position from face
+                if item.syllabic_position == IndicPosition.BASE_C:
+                    item.syllabic_position = self.consonant_position_from_face(item.codepoint)
                     pass
-        # Insert dotted circles
-        for ix,i in enumerate(self.buffer.items):
-            if i.syllable == "broken_cluster" and (ix == 0 or i.syllable_index != self.buffer.items[ix-1].syllable_index):
-                # Need to insert dotted circle.
-                dotted_circle = BufferItem.new_unicode(DOTTED_CIRCLE)
-                dotted_circle.syllable_index = i.syllable_index
-                dotted_circle.syllable = i.syllable
-                dotted_circle.indic_syllabic_category = "DOTTEDCIRCLE"
-                dotted_circle.indic_position = IndicPosition.END
-                dotted_circle.map_to_glyph(self.buffer.font)
-                if i.indic_syllabic_category == "Repha":
-                    self.buffer.items.insert(ix+1, dotted_circle)
-                else:
-                    self.buffer.items.insert(ix, dotted_circle)
-        # Syllable-specific
-        for index,syll_type,start,end in self.iterate_syllables():
-            if syll_type in ["vowel_syllable", "consonant_syllable"]:
-                self.initial_reordering_consonant_syllable(start,end)
-            elif syll_type in ["broken_cluster", "standalone_cluster"]:
-                self.initial_reordering_standalone_cluster(start,end)
 
-    def initial_reordering_standalone_cluster(self, start, end):
-        # We could emulate a Uniscribe bug here, but we won't.
-        return self.initial_reordering_consonant_syllable(start, end)
+    def reassign_category(self, item):
+        reassign_category_and_position_indic(item)
 
     def initial_reordering_consonant_syllable(self, start, end):
         def cat(i):
-            return self.buffer.items[i].indic_syllabic_category
+            return self.buffer.items[i].syllabic_category
         def pos(i):
-            return self.buffer.items[i].indic_position
+            return self.buffer.items[i].syllabic_position
         def swap(a,b):
             self.buffer.items[b], self.buffer.items[a] = self.buffer.items[a], self.buffer.items[b]
         def is_joiner(n):
@@ -207,28 +129,28 @@ class IndicShaper(BaseShaper):
                         base = i
             for i in range(base+1, end):
                 if is_consonant(i):
-                    self.buffer.items[i].indic_position = IndicPosition.BELOW_C
+                    self.buffer.items[i].syllabic_position = IndicPosition.BELOW_C
 
         if has_reph and base == start and limit - base <= 2:
             has_reph = False
 
         self.plan.msg("Base consonant for syllable %i is %s" % (syllable_index, self.buffer.items[base].glyph))
         for i in range(start, base):
-            self.buffer.items[i].indic_position = min(IndicPosition.PRE_C, pos(i))
+            self.buffer.items[i].syllabic_position = min(IndicPosition.PRE_C, pos(i))
         if base < end:
-            self.buffer.items[i].indic_position = IndicPosition.BASE_C
+            self.buffer.items[i].syllabic_position = IndicPosition.BASE_C
 
         # Mark final consonants
         for i in range(base+1, end):
             if cat(i) == "M":
                 for j in range(i, end):
                     if is_consonant(j):
-                        self.buffer.items[j].indic_position = IndicPosition.FINAL_C
+                        self.buffer.items[j].syllabic_position = IndicPosition.FINAL_C
                         break
                 break
 
         if has_reph:
-            self.buffer.items[start].indic_syllabic_category = IndicPosition.RA_TO_BECOME_REPH
+            self.buffer.items[start].syllabic_category = IndicPosition.RA_TO_BECOME_REPH
 
         if self.config["old_spec"]:
             disallow_double_halants = self.buffer.script == "Kannada"
@@ -247,11 +169,11 @@ class IndicShaper(BaseShaper):
         last_pos = IndicPosition.START
         for i in range(start, end):
             if cat(i) in ["ZWJ", "ZWNJ", "N", "RS", "CM", "H"]:
-                self.buffer.items[i].indic_position = last_pos
+                self.buffer.items[i].syllabic_position = last_pos
                 if cat(i) == "H" and pos(i) == IndicPosition.PRE_M:
                     for j in range(i,start,-1):
                         if pos(j-1) != IndicPosition.PRE_M:
-                            self.buffer.items[i].indic_position = pos(j-1)
+                            self.buffer.items[i].syllabic_position = pos(j-1)
                             break
             elif pos(i) != IndicPosition.SMVD:
                 last_pos = pos(i)
@@ -261,7 +183,7 @@ class IndicShaper(BaseShaper):
             if is_consonant(i):
                 for j in range(last+1, i):
                     if pos(j) < IndicPosition.SMVD:
-                        self.buffer.items[j].indic_position = pos(i)
+                        self.buffer.items[j].syllabic_position = pos(i)
                 last = i
             elif cat(i) == "M":
                 last = i
@@ -271,7 +193,7 @@ class IndicShaper(BaseShaper):
             self.buffer.items[i].syllable_index = start - i
 
         # REORDER
-        self.buffer.items[start:end] = sorted(self.buffer.items[start:end], key=lambda x:x.indic_position)
+        self.buffer.items[start:end] = sorted(self.buffer.items[start:end], key=lambda x:x.syllabic_position)
 
         base = end
         for i in range(start, end):
@@ -342,15 +264,18 @@ class IndicShaper(BaseShaper):
                     if not (j > start and not is_consonant(j)):
                         break
 
-    def final_reordering(self, shaper):
-        for index,syll_type,start,end in self.iterate_syllables():
-            self.final_reordering_syllable(start,end)
+
+    initial_reordering_syllable = {
+        "standalone_cluster": initial_reordering_consonant_syllable,
+        "consonant_syllable": initial_reordering_consonant_syllable
+    }
+
 
     def final_reordering_syllable(self, start, end):
         def cat(i):
-            return self.buffer.items[i].indic_syllabic_category
+            return self.buffer.items[i].syllabic_category
         def pos(i):
-            return self.buffer.items[i].indic_position
+            return self.buffer.items[i].syllabic_position
         def swap(a,b):
             self.buffer.items[b], self.buffer.items[a] = self.buffer.items[a], self.buffer.items[b]
         def is_joiner(n):
@@ -370,7 +295,7 @@ class IndicShaper(BaseShaper):
                 if self.buffer.items[i].glyph == virama_item.glyph \
                     and self.buffer.items[i].ligated \
                     and self.buffer.items[i].multiplied:
-                    self.buffer.items[i].indic_syllabic_category = "H"
+                    self.buffer.items[i].syllabic_category = "H"
                     self.buffer.items[i].ligated = False
                     self.buffer.items[i].multiplied = False
         try_pref = any(["pref" in item.feature_masks and item.feature_masks["pref"] == False for item in self.buffer.items])
@@ -385,7 +310,7 @@ class IndicShaper(BaseShaper):
                                 base = i
                                 while base < end and is_halant(base):
                                     base = base + 1
-                                self.buffer.items[base].indic_positional_category = IndicPosition.BASE_C
+                                self.buffer.items[base].syllabic_positional_category = IndicPosition.BASE_C
                                 try_pref = false
                             break
                 if self.buffer.script == "Malayalam":
@@ -400,7 +325,7 @@ class IndicShaper(BaseShaper):
                             i = i + 1
                         if i < end and is_consonant(i) and pos(i) == IndicPosition.BELOW_C:
                             base = i
-                            self.buffer.items[base].indic_positional_category = IndicPosition.BASE_C
+                            self.buffer.items[base].syllabic_positional_category = IndicPosition.BASE_C
                         i = i + 1
                 if start < base and pos(base) > IndicPosition.BASE_C:
                     base = base - 1

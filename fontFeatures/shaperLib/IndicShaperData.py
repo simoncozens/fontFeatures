@@ -65,11 +65,11 @@ syllabic_category_map = {
 ## Set up the state machine for syllable matching and syllabic
 ## categories using composed regular expressions
 
-syllabic_category_re = {}
+syllable_machine_indic = {}
 for value in set(syllabic_category_map.values()):
-    syllabic_category_re[value] = f'<{value}>\\([^\\)]+\\)=\\d+'
+    syllable_machine_indic[value] = f'<{value}>\\([^\\)]+\\)=\\d+'
 
-syllabic_category_re["other"] = f'<[^\\>]+>\\([^\\)]+\\)=\\d+'
+syllable_machine_indic["other"] = f'<[^\\>]+>\\([^\\)]+\\)=\\d+'
 
 
 states = OrderedDict(
@@ -95,10 +95,10 @@ states = OrderedDict(
 )
 
 for k,v in states.items():
-    keys = "\\b("+"|".join(sorted(syllabic_category_re.keys(),key=len, reverse=True))+")\\b"
-    v = re.sub(keys, lambda match: "("+syllabic_category_re[match[1]]+")", v)
+    keys = "\\b("+"|".join(sorted(syllable_machine_indic.keys(),key=len, reverse=True))+")\\b"
+    v = re.sub(keys, lambda match: "("+syllable_machine_indic[match[1]]+")", v)
     v = v.replace("()", "")
-    syllabic_category_re[k] = v
+    syllable_machine_indic[k] = v
 
 class IndicPosition(IntEnum):
   START = 0
@@ -190,66 +190,66 @@ matra_pos_bottom = {
 def set_matra_position(item):
     script = ucd_data(item.codepoint)["Script"]
     u = item.codepoint
-    if item.indic_position == IndicPosition.PRE_C:
+    if item.syllabic_position == IndicPosition.PRE_C:
         selector = matra_pos_left
-    elif item.indic_position == IndicPosition.POST_C:
+    elif item.syllabic_position == IndicPosition.POST_C:
         selector = matra_pos_right
         if script == "Telugu":
             if u <= 0x0C42:
-                item.indic_position = IndicPosition.BEFORE_SUB
+                item.syllabic_position = IndicPosition.BEFORE_SUB
             else:
-                item.indic_position = IndicPosition.AFTER_SUB
+                item.syllabic_position = IndicPosition.AFTER_SUB
             return
         if script == "Kannada":
             if u < 0x0CC3 or u > 0xCD6:
-                item.indic_position = IndicPosition.BEFORE_SUB
+                item.syllabic_position = IndicPosition.BEFORE_SUB
             else:
-                item.indic_position = IndicPosition.AFTER_SUB
+                item.syllabic_position = IndicPosition.AFTER_SUB
             return
-    elif item.indic_position == IndicPosition.ABOVE_C:
+    elif item.syllabic_position == IndicPosition.ABOVE_C:
         selector = matra_pos_top
-    elif item.indic_position == IndicPosition.BELOW_C:
+    elif item.syllabic_position == IndicPosition.BELOW_C:
         selector = matra_pos_bottom
     else:
         return
-    item.indic_position = selector.get(script, selector["Default"])
+    item.syllabic_position = selector.get(script, selector["Default"])
 
-def reassign_category_and_position(item):
+def reassign_category_and_position_indic(item):
     cp = item.codepoint
     if 0x0953 <= cp <= 0x0954:
-        item.indic_syllabic_category = "SM"
+        item.syllabic_category = "SM"
     elif 0x0A72 <= cp <= 0x0A73 or 0x1CF5 <= cp <= 0x1CF6:
-        item.indic_syllabic_category = "C"
+        item.syllabic_category = "C"
     elif 0x1CE2 <= cp <= 0x1CE8 or cp == 0x1CED:
-        item.indic_syllabic_category = "A"
+        item.syllabic_category = "A"
     elif 0xA8F2 <= cp <= 0xA8F7 or 0x1CE9 <= cp <= 0x1CEC or 0x1CEE <= cp <= 0x1CF1:
-        item.indic_syllabic_category = "Symbol"
+        item.syllabic_category = "Symbol"
     elif cp == 0x0A51: # https://github.com/harfbuzz/harfbuzz/issues/524
-        item.indic_syllabic_category = "M"
-        item.indic_position = IndicPosition.BELOW_C
+        item.syllabic_category = "M"
+        item.syllabic_position = IndicPosition.BELOW_C
     elif cp == 0x11301 or cp == 0x11303:
-        item.indic_syllabic_category = "SM"
+        item.syllabic_category = "SM"
     elif cp == 0x1133B or cp == 0x1133C:
-        item.indic_syllabic_category = "N"
+        item.syllabic_category = "N"
     elif cp == 0x0AFB:
-        item.indic_syllabic_category = "N"
+        item.syllabic_category = "N"
     elif cp == 0x0980 or cp == 0x09FC or cp == 0x0C80 or cp == 0x2010 or cp == 0x2011:
-        item.indic_syllabic_category = "PLACEHOLDER"
+        item.syllabic_category = "PLACEHOLDER"
     elif cp == 0x25CC:
-        item.indic_syllabic_category = "DOTTEDCIRCLE"
+        item.syllabic_category = "DOTTEDCIRCLE"
 
-    isc = item.indic_syllabic_category
+    isc = item.syllabic_category
 
     is_medial = isc == "CM"
     is_consonant = isc in ["C", "CS", "Ra", "V", "PLACEHOLDER", "DOTTEDCIRCLE"] or is_medial
 
     if is_consonant:
-        item.indic_position = IndicPosition.BASE_C
+        item.syllabic_position = IndicPosition.BASE_C
         if is_ra(cp):
-            item.indic_syllabic_category = "Ra"
+            item.syllabic_category = "Ra"
     elif isc == "M":
         set_matra_position(item)
     elif isc in ["SM", "A", "Symbol"]:
-        item.indic_position = IndicPosition.SMVD
+        item.syllabic_position = IndicPosition.SMVD
     if cp == 0x0B01:
-        item.indic_position = IndicPosition.BEFORE_SUB
+        item.syllabic_position = IndicPosition.BEFORE_SUB
