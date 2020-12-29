@@ -35,9 +35,10 @@ class BaseShaper:
             # Substitute pre
             self.substitute_default()
         self.substitute_complex()
-        self.position()
         # Substitute post
-        self.hide_default_ignorables()
+        self.delete_default_ignorables()
+
+        self.position()
         self.postprocess_glyphs()
         # self.buffer.propagate_flags()
 
@@ -78,7 +79,12 @@ class BaseShaper:
 
     def position(self):
         self._run_stage("pos")
+        # zero width marks
+        # for i in self.buffer.items:
+        #     if i.category[0] == "mark":
+        #         i.position.xAdvance = 0
         # zero width default ignorables
+        self.zero_width_default_ignorables()
         for i in range(0,len(self.buffer.items)):
             self.propagate_attachment_offsets(i)
 
@@ -137,7 +143,10 @@ class BaseShaper:
                 if current_stage == "sub":
                     stage(current_stage)
 
-    def hide_default_ignorables(self):
+    def delete_default_ignorables(self):
+        self.buffer.items = [x for x in self.buffer.items if not _is_default_ignorable(x.codepoint)]
+
+    def zero_width_default_ignorables(self):
         space = BufferItem.new_unicode(0x20)
         space.map_to_glyph(self.buffer.font)
         if space.glyph == -1:
