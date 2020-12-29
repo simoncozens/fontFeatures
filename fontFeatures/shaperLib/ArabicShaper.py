@@ -57,6 +57,7 @@ class ArabicShaper(BaseShaper):
                 else:
                     joining = "U"
             if joining == "T": continue
+            if joining == "C": joining = "D"  # Mongolian
             if ucd.get("Joining_Group") == "ALAPH": joining = "ALAPH"
             if ucd.get("Joining_Group") == "DALATH RISH": joining = "DALATH_RISH"
             prev, this, state = state_table[state][jts[joining]]
@@ -64,9 +65,16 @@ class ArabicShaper(BaseShaper):
               prev_item.arabic_joining = prev
             item.arabic_joining = this
             prev_item = item
+        if self.buffer.script == "Mongolian":
+            self.mongolian_variation_selectors()
         self.plan.msg("Assigned Arabic joining", self.buffer, serialize_options=["arabic_joining"])
         for f in arabic_features:
             if f not in self.plan.fontfeatures.features:
                 continue
             for item in self.buffer.items:
                 item.feature_masks[f] = item.arabic_joining != f
+
+    def mongolian_variation_selectors(self):
+        for ix,item in enumerate(self.buffer.items):
+            if 0x180B <= item.codepoint <= 0x180D and ix > 0:
+                item.arabic_joining = self.buffer.items[ix-1].arabic_joining
