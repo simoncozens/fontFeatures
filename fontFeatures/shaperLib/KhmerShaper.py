@@ -98,7 +98,7 @@ class KhmerShaper(SyllabicShaper):
                     ro = self.buffer.items.pop(i+1)
                     coeng = self.buffer.items.pop(i)
                     self.buffer.items = self.buffer.items[:start] + [coeng, ro] + self.buffer.items[start:]
-                    mask_allow([i+2, end], "cfar")
+                    mask_allow(range(i+2, end), "cfar")
                     num_coengs = 2
             elif cat(i) == "VPre":
                 # XXX merge_clusters
