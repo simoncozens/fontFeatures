@@ -37,7 +37,7 @@ class USEShaper(SyllabicShaper):
     topographical_features = ["isol", "init", "medi", "fina"]
     other_features = ["abvs", "blws", "haln", "pres", "psts"]
     repha = "R"
-    syllable_machine = make_syllable_machine(states, additional_categories=[])
+    syllable_machine = make_syllable_machine(states, additional_categories=use_categories)
     syllable_types = [
         "independent_cluster",
         "virama_terminated_cluster",
