@@ -28,8 +28,9 @@ def preprocess_text_vowel_constraints(buffer):
                         matched = True
             if buffer.items[i].codepoint == 0x0930:
                 if (0x094D == buffer.items[i+1].codepoint and
-                        i + 2 < len(buffer.items)-1 and
+                        i + 2 < len(buffer.items) and
                         0x0907 == buffer.items[i+2].codepoint):
+                    i = i + 1
                     matched = True
             i = i + 1
             if matched: _insert_dotted_circle(buffer, i)
