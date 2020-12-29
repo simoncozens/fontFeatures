@@ -239,8 +239,8 @@ class Buffer:
         self.current_feature_mask = feature
         self.recompute_mask()
 
-    def move_item(self, src, dst):
-        self.items[dst:dst] = self.items.pop(src)
+    def move_item(self, src, dest):
+        self.items[dest:dest] = [ self.items.pop(src) ]
 
     def merge_clusters(self, start, end):
         pass  # XXX
