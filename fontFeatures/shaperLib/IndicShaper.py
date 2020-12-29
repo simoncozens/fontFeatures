@@ -89,10 +89,10 @@ class IndicShaper(SyllabicShaper):
             if self.would_substitute("rphf", self.buffer.items[start:start+2]) \
                 or self.would_substitute("rphf", self.buffer.items[start:start+3]):
                 limit = limit + 2
-            while limit < end and is_joiner(limit):
-                limit = limit + 1
-            base = start
-            has_reph = True
+                while limit < end and is_joiner(limit):
+                    limit = limit + 1
+                base = start
+                has_reph = True
         elif self.config["reph_mode"] == "log_repha" and cat(start) == "Repha":
             limit = limit + 1
             while limit < end and is_joiner(limit):
