@@ -152,8 +152,7 @@ class Shaper:
                 "Telugu": "tel",
             }
             # Sinhala is different
-            indic3 = indic23map[buf.script] + "3"
-            if self.fontfeatures.hasScriptSupport(indic3):
+            if buf.script in indic23map and self.fontfeatures.hasScriptSupport(indic23map[buf.script] + "3"):
                 return USEShaper
             else:
                 return IndicShaper
