@@ -118,6 +118,7 @@ class BaseShaper:
 
     def _run_stage(self, current_stage):
         self.plan.msg("Running %s stage" % current_stage)
+        self.plan.fontfeatures.hoist_languages()
         for stage in self.plan.stages:
             lookups = []
             if isinstance(stage, list):  # Features
@@ -125,9 +126,8 @@ class BaseShaper:
                     if f not in self.plan.fontfeatures.features:
                         continue
                     # XXX These should be ordered by ID
-                    # XXX and filtered by language
                     lookups.extend(
-                        [(routine, f) for routine in self.plan.fontfeatures.features[f]]
+                        [(routine, f) for routine in self._filter_by_lang(self.plan.fontfeatures.features[f])]
                     )
                 self.plan.msg("Processing features: %s" % ",".join(stage))
                 for r, feature in lookups:
@@ -142,6 +142,18 @@ class BaseShaper:
                 # It's a pause. We only support GSUB pauses.
                 if current_stage == "sub":
                     stage(current_stage)
+
+    def _filter_by_lang(self, routines):
+        script = self.script_to_opentype.get(self.buffer.script,"DFLT")
+        s_l = self.plan.fontfeatures.scripts_and_languages
+        if not self.buffer.script or len(s_l.values()) < 2 and len(list(s_l.values())[0]) < 2:
+            return routines # !
+        return routines
+        language = self.buffer.language or "dflt"
+        if script in s_l and (script, language) != ("DFLT", "dflt"):
+            return [x for x in routines if x.languages and (script, language) in x.languages]
+        else:
+            return [x for x in routines if not x.languages or ("DFLT", language) in x.languages]
 
     def delete_default_ignorables(self):
         self.buffer.items = [x for x in self.buffer.items if not _is_default_ignorable(x.codepoint)]
@@ -184,3 +196,164 @@ class BaseShaper:
                 ):
                     return True
         return False
+
+    script_to_opentype = {
+        "Common": "zyyy",
+        "Inherited": "zinh",
+        "Unknown": "zzzz",
+        "Arabic": "arab",
+        "Armenian": "armn",
+        "Bengali": "bng2", # Not beng
+        "Cyrillic": "cyrl",
+        "Devanagari": "dev2", # Not deva
+        "Georgian": "geor",
+        "Greek": "grek",
+        "Gujarati": "gjr2", # Not gujr
+        "Gurmukhi": "gur2", # Not guru
+        "Hangul": "hang",
+        "Han": "hani",
+        "Hebrew": "hebr",
+        "Hiragana": "hira",
+        "Kannada": "knd2", # Not knda
+        "Katakana": "kana",
+        "Lao": "laoo",
+        "Latin": "latn",
+        "Malayalam": "mlm2", # Not mlym
+        "Oriya": "ory2", # Not orya
+        "Tamil": "tml2", # Not taml
+        "Telugu": "tel2", # Not telu
+        "Thai": "thai",
+        "Tibetan": "tibt",
+        "Bopomofo": "bopo",
+        "Braille": "brai",
+        "Canadian_Syllabics": "cans",
+        "Cherokee": "cher",
+        "Ethiopic": "ethi",
+        "Khmer": "khmr",
+        "Mongolian": "mong",
+        "Myanmar": "mym2", # Not mymr
+        "Ogham": "ogam",
+        "Runic": "runr",
+        "Sinhala": "sinh",
+        "Syriac": "syrc",
+        "Thaana": "thaa",
+        "Yi": "yiii",
+        "Deseret": "dsrt",
+        "Gothic": "goth",
+        "Old_Italic": "ital",
+        "Buhid": "buhd",
+        "Hanunoo": "hano",
+        "Tagalog": "tglg",
+        "Tagbanwa": "tagb",
+        "Cypriot": "cprt",
+        "Limbu": "limb",
+        "Linear_B": "linb",
+        "Osmanya": "osma",
+        "Shavian": "shaw",
+        "Tai_Le": "tale",
+        "Ugaritic": "ugar",
+        "Buginese": "bugi",
+        "Coptic": "copt",
+        "Glagolitic": "glag",
+        "Kharoshthi": "khar",
+        "New_Tai_Lue": "talu",
+        "Old_Persian": "xpeo",
+        "Syloti_Nagri": "sylo",
+        "Tifinagh": "tfng",
+        "Balinese": "bali",
+        "Cuneiform": "xsux",
+        "Nko": "nkoo",
+        "Phags_Pa": "phag",
+        "Phoenician": "phnx",
+        "Carian": "cari",
+        "Cham": "cham",
+        "Kayah_Li": "kali",
+        "Lepcha": "lepc",
+        "Lycian": "lyci",
+        "Lydian": "lydi",
+        "Ol_Chiki": "olck",
+        "Rejang": "rjng",
+        "Saurashtra": "saur",
+        "Sundanese": "sund",
+        "Vai": "vaii",
+        "Avestan": "avst",
+        "Bamum": "bamu",
+        "Egyptian_Hieroglyphs": "egyp",
+        "Imperial_Aramaic": "armi",
+        "Inscriptional_Pahlavi": "phli",
+        "Inscriptional_Parthian": "prti",
+        "Javanese": "java",
+        "Kaithi": "kthi",
+        "Lisu": "lisu",
+        "Meetei_Mayek": "mtei",
+        "Old_South_Arabian": "sarb",
+        "Old_Turkic": "orkh",
+        "Samaritan": "samr",
+        "Tai_Tham": "lana",
+        "Tai_Viet": "tavt",
+        "Batak": "batk",
+        "Brahmi": "brah",
+        "Mandaic": "mand",
+        "Chakma": "cakm",
+        "Meroitic_Cursive": "merc",
+        "Meroitic_Hieroglyphs": "mero",
+        "Miao": "plrd",
+        "Sharada": "shrd",
+        "Sora_Sompeng": "sora",
+        "Takri": "takr",
+        "Bassa_Vah": "bass",
+        "Caucasian_Albanian": "aghb",
+        "Duployan": "dupl",
+        "Elbasan": "elba",
+        "Grantha": "gran",
+        "Khojki": "khoj",
+        "Khudawadi": "sind",
+        "Linear_A": "lina",
+        "Mahajani": "mahj",
+        "Manichaean": "mani",
+        "Mende_Kikakui": "mend",
+        "Modi": "modi",
+        "Mro": "mroo",
+        "Nabataean": "nbat",
+        "Old_North_Arabian": "narb",
+        "Old_Permic": "perm",
+        "Pahawh_Hmong": "hmng",
+        "Palmyrene": "palm",
+        "Pau_Cin_Hau": "pauc",
+        "Psalter_Pahlavi": "phlp",
+        "Siddham": "sidd",
+        "Tirhuta": "tirh",
+        "Warang_Citi": "wara",
+        "Ahom": "ahom",
+        "Anatolian_Hieroglyphs": "hluw",
+        "Hatran": "hatr",
+        "Multani": "mult",
+        "Old_Hungarian": "hung",
+        "Signwriting": "sgnw",
+        "Adlam": "adlm",
+        "Bhaiksuki": "bhks",
+        "Marchen": "marc",
+        "Osage": "osge",
+        "Tangut": "tang",
+        "Newa": "newa",
+        "Masaram_Gondi": "gonm",
+        "Nushu": "nshu",
+        "Soyombo": "soyo",
+        "Zanabazar_Square": "zanb",
+        "Dogra": "dogr",
+        "Gunjala_Gondi": "gong",
+        "Hanifi_Rohingya": "rohg",
+        "Makasar": "maka",
+        "Medefaidrin": "medf",
+        "Old_Sogdian": "sogo",
+        "Sogdian": "sogd",
+        "Elymaic": "elym",
+        "Nandinagari": "nand",
+        "Nyiakeng_Puachue_Hmong": "hmnp",
+        "Wancho": "wcho",
+        "Chorasmian": "chrs",
+        "Dives_Akuru": "diak",
+        "Khitan_Small_Script": "kits",
+        "Yezidi": "yezi",
+    }
+
