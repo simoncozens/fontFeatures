@@ -125,6 +125,7 @@ class BaseShaper:
                 for f in stage:
                     if f not in self.plan.fontfeatures.features:
                         continue
+
                     # XXX These should be ordered by ID
                     lookups.extend(
                         [(routine, f) for routine in self._filter_by_lang(self.plan.fontfeatures.features[f])]
@@ -148,7 +149,6 @@ class BaseShaper:
         s_l = self.plan.fontfeatures.scripts_and_languages
         if not self.buffer.script or len(s_l.values()) < 2 and len(list(s_l.values())[0]) < 2:
             return routines # !
-        return routines
         language = self.buffer.language or "dflt"
         if script in s_l and (script, language) != ("DFLT", "dflt"):
             return [x for x in routines if x.languages and (script, language) in x.languages]
