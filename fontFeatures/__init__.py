@@ -167,11 +167,11 @@ class FontFeatures:
                     for l in thing.languages:
                         add_language(l)
 
-        if count > 0 and not "DFLT" in scripts:
-            scripts["DFLT"] = []
-            scripts.move_to_end("DFLT", last=False)
-        if count > 0 and not "dflt" in scripts["DFLT"]:
-            scripts["DFLT"].insert(0, "dflt")
+        # if count > 0 and not "DFLT" in scripts:
+        #     scripts["DFLT"] = []
+        #     scripts.move_to_end("DFLT", last=False)
+        # if count > 0 and not "dflt" in scripts["DFLT"]:
+        #     scripts["DFLT"].insert(0, "dflt")
 
         self.scripts_and_languages = scripts
 
