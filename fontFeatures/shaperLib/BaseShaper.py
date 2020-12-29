@@ -160,7 +160,7 @@ class BaseShaper:
             language=self.buffer.language,
         )
         subbuffer.clear_mask()
-        subbuffer.items = [copy(x) for x in subbuffer]
+        subbuffer.items = [copy(x) for x in subbuffer_items]
         subbuffer.clear_mask()
         routines = self.plan.fontfeatures.features[feature]
         for r in routines:
