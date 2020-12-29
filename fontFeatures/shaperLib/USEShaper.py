@@ -156,22 +156,6 @@ class USEShaper(SyllabicShaper):
         # Right now we don't actually send joining scripts through the USE
         pass
 
-    def iterate_syllables(self):
-        ix = 0
-        while ix < len(self.buffer.items):
-            if not hasattr(self.buffer.items[ix], "syllable_index"):
-                break
-            syll_type = self.buffer.items[ix].syllable
-            index = self.buffer.items[ix].syllable_index
-            start = ix
-            while (
-                ix < len(self.buffer.items)
-                and self.buffer.items[ix].syllable_index == index
-            ):
-                ix = ix + 1
-                end = ix
-            yield index, syll_type, start, end
-
     def normalize_unicode_buffer(self):
         unicodes = [item.codepoint for item in self.buffer.items]
         newunicodes = []
