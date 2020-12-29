@@ -68,7 +68,7 @@ class GTableUnparser:
         if doLookups:
             self.unparseLookups()
         self.collectFeatures()
-        self.tidyFeatures()
+        # self.tidyFeatures()
         if doLookups:
             self.inlineFeatures()
             # self.addGlyphClasses()
