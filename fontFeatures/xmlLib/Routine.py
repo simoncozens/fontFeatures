@@ -20,7 +20,7 @@ def fromXML(klass, el):
     from fontFeatures import Rule
 
     rule = klass(
-        address=el.get("address"), name=el.get("name"), flags=(int(el.get("flags") or 0))
+        address=[el.get("address")], name=el.get("name"), flags=(int(el.get("flags") or 0))
     )
     for r in el:
         rule.addRule(Rule.fromXML(r))

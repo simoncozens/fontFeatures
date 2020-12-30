@@ -32,8 +32,9 @@ def asFeaAST(self):
         if not k.name:
             k.name = self.gensym("Routine_")
         pre = k.feaPreamble(self)
-        for s in pre:
-            ff.statements.append(s)
+        if k.rules:
+            for s in pre:
+                ff.statements.append(s)
     for k, v in self.features.items():
         for r in v:
             pre = r.feaPreamble(self)
@@ -47,7 +48,7 @@ def asFeaAST(self):
     ff.statements.append(feaast.Comment(""))
 
     for k in self.routines:
-        if not k.inlined:
+        if not k.inlined and k.rules:
             ff.statements.append(k.asFeaAST())
 
     for k, v in self.features.items():
@@ -55,6 +56,8 @@ def asFeaAST(self):
         for n in v:
             # If it's a routine and it's in self.routines, use a reference
             if isinstance(n, Routine) and n in self.routines:
+                if not n.rules:
+                    continue
                 f.statements.append(feaast.LookupReferenceStatement(n.asFeaAST()))
             elif not isinstance(n, Routine):
                 r = Routine(rules=[n], parent=self)
@@ -63,5 +66,6 @@ def asFeaAST(self):
                 f.statements.append(r.asFeaAST())
             else:
                 f.statements.append(n.asFeaAST())
-        ff.statements.append(f)
+        if f.statements:
+            ff.statements.append(f)
     return ff

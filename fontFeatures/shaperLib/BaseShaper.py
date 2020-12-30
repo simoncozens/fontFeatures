@@ -147,7 +147,8 @@ class BaseShaper:
     def _filter_by_lang(self, routines):
         script = self.script_to_opentype.get(self.buffer.script,"DFLT")
         s_l = self.plan.fontfeatures.scripts_and_languages
-        if not self.buffer.script or len(s_l.values()) < 2 and len(list(s_l.values())[0]) < 2:
+        if not self.buffer.script or len(s_l.values()) < 2 and (
+            len(s_l.values()) == 0 or len(list(s_l.values())[0]) < 2):
             return routines # !
         language = self.buffer.language or "dflt"
         if script in s_l and (script, language) != ("DFLT", "dflt"):

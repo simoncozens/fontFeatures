@@ -159,7 +159,6 @@ def asFeaAST(self):
         f = feaast.LookupBlock(name=self.name)
     else:
         f = feaast.Block()
-
     arranged = arrange(self)
 
     if arranged:
