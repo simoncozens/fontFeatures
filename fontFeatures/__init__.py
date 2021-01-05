@@ -260,6 +260,14 @@ class ExtensionRoutine(Routine):
             f.statements.append(r.asFeaAST())
         return f
 
+    @property
+    def rules(self):
+        return  list(chain(*[routine.rules for routine in self.routines]))
+
+    @rules.setter
+    def rules(self, foo):
+        pass
+
 class Rule:
     def asFea(self):
         """Returns this Rule as a string of AFDKO feature text."""
