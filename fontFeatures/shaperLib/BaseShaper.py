@@ -157,7 +157,7 @@ class BaseShaper:
             return [x for x in routines if not x.languages or ("DFLT", language) in x.languages]
 
     def delete_default_ignorables(self):
-        self.buffer.items = [x for x in self.buffer.items if not _is_default_ignorable(x.codepoint)]
+        self.buffer.items = [x for x in self.buffer.items if not(x.codepoint) or not _is_default_ignorable(x.codepoint)]
 
     def zero_width_default_ignorables(self):
         space = BufferItem.new_unicode(0x20)
@@ -165,7 +165,7 @@ class BaseShaper:
         if space.glyph == -1:
             return
         for ix, item in enumerate(self.buffer.items):
-            if _is_default_ignorable(item.codepoint):
+            if item.codepoint and _is_default_ignorable(item.codepoint):
                 item.glyph = space.glyph
                 item.position.xAdvance = 0
                 for i in self.buffer.items[ix:]:
