@@ -119,6 +119,7 @@ class Buffer:
         self.fallback_glyph_classes = False
         self.items = []
         self.mask = []
+        self.flags = 0
         self.current_feature_mask = None
         if glyphs:
             self.items = [BufferItem.new_glyph(g, font) for g in glyphs]
@@ -199,6 +200,7 @@ class Buffer:
 
     def recompute_mask(self):
         mask = range(0, len(self.items))
+        self.flags = self.flags or 0
         if self.flags & 0x2:  # IgnoreBases
             mask = list(filter(lambda ix: self.items[ix].category[0] != "base", mask))
         if self.flags & 0x4:  # IgnoreLigatures
