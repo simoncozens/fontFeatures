@@ -62,6 +62,8 @@ def test_shaping(request, fontname, hb_args, input_string, expectation):
 
     if "rand" in request.node.name:
         return pytest.skip("Not planning to support rand feature")
+    if "aat" in request.node.name:
+        return pytest.skip("Not planning to support Apple Advanced Typography")
     if "kern-format2" in request.node.name:
         return pytest.skip("Not planning to support kern table")
     if "fraction" in request.node.name:
@@ -83,7 +85,7 @@ def test_shaping(request, fontname, hb_args, input_string, expectation):
         serialize_options["ned"] = True
     if "--no-position" in hb_args:
         serialize_options["position"] = False
-    if font["post"].formatType != 2.0:
+    if "post" not in font or font["post"].formatType != 2.0:
         serialize_options["names"] = False
         expectation = re.sub("gid", "", expectation)
     serialized = buf.serialize(**serialize_options)
