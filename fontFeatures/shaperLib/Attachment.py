@@ -13,7 +13,7 @@ def find_base_backwards(self, buf, ix):
             # Check for unhelpful stuff in between
             my_category = buf[ix].category[0]
             for i in range(ix+1, start_ix):
-                if buf[i].category[0] == my_category:
+                if buf[i].category[0] == my_category or buf[i].category[0] == "unknown":
                     # Oops, we skipped over another %s to get here
                     return None
             return ix
