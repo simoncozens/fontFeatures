@@ -96,7 +96,7 @@ accuracy1 = 5  # This creates O[(n • n+1)/2] lookups
 # Accuracy of rise detector
 accuracy2 = 5
 
-failsafe_max_length = 5
+failsafe_max_length = 4
 failsafe_min_run = 100
 
 
@@ -135,6 +135,7 @@ class BYMoveDots:
                 -get_glyph_metrics(parser.font, bariye)["rsb"],
                 get_glyph_metrics(parser.font, bariye)["xMax"] - entry_anchor[0],
             )
+            # bariye_tail += max(get_glyph_metrics(parser.font, dot)["width"] for dot in below_dots) / 2
             # # Increase tail by half the width of the widest nukta
             # bariye_tail += (
             #     max(
