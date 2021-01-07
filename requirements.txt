@@ -8,3 +8,4 @@ more_itertools
 bidict
 lxml
 youseedee>=0.3.0
+dataclasses; python_version < '3.7'
