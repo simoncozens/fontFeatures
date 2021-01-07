@@ -1,6 +1,6 @@
 glyphtools>=0.2.0
 fs
-fontTools
+fontTools>=4.10.0
 beziers>=0.1.0
 parsley
 booleanOperations

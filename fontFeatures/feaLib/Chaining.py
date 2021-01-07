@@ -7,15 +7,6 @@ import fontFeatures
 from fontTools.feaLib.parser import Parser
 import io
 
-teststring = (
-    "lookup l1 { } l1; lookup l2 { } l2; lookup a { sub a' lookup l1 lookup l2; } a;"
-)
-parsetree = Parser(io.StringIO(teststring), ()).parse()
-if "\\" in parsetree.asFea():
-    EXPERIMENTAL_FONTTOOLS = False
-else:
-    EXPERIMENTAL_FONTTOOLS = True
-
 
 def glyphref(g):
     if len(g) == 1:
@@ -45,59 +36,21 @@ def feaPreamble(self, ff):
     replaceLongWithClasses(self.precontext, ff)
     replaceLongWithClasses(self.postcontext, ff)
 
-    from fontFeatures.optimizer.FontFeatures import MergeNonOverlappingRoutines
-
-    rv = []
-
-    if EXPERIMENTAL_FONTTOOLS == False:
-        ff.markRoutineUseInChains()
-        if not "synthesised_lookups" in ff.scratch:
-            ff.scratch["synthesised_lookups"] = {}
-        for ix, lookuplist in enumerate(self.lookups):
-            if not lookuplist:
-                continue
-
-            if len(lookuplist) == 2:  # Test purposes
-                synthname = lookuplist[0].name + "_" + lookuplist[1].name
-                synthname2 = lookuplist[1].name + "_" + lookuplist[0].name
-                if synthname in ff.scratch["synthesised_lookups"]:
-                    self.lookups[ix] = [ff.scratch["synthesised_lookups"][synthname]]
-                elif synthname2 in ff.scratch["synthesised_lookups"]:
-                    self.lookups[ix] = [ff.scratch["synthesised_lookups"][synthname2]]
-                else:
-                    o = MergeNonOverlappingRoutines()
-                    if o.compatibleRules(lookuplist[0], lookuplist[1]):
-                        synthesised = fontFeatures.Routine()
-                        synthesised.rules.extend(lookuplist[0].rules)
-                        synthesised.rules.extend(lookuplist[1].rules)
-                        synthesised.name = synthname
-                        from fontFeatures.optimizer import Optimizer
-
-                        Optimizer().optimize_routine(synthesised)
-                        self.lookups[ix] = [synthesised]
-                        ff.scratch["synthesised_lookups"][synthname] = synthesised
-                        rv.append(synthesised.asFeaAST())
-    return rv
+    return []
 
 
 def _complex(self):
-    import warnings
-
-    if EXPERIMENTAL_FONTTOOLS:
-        if self.stage == "sub":
-            routine = feaast.ChainContextSubstStatement
-        else:
-            routine = feaast.ChainContextPosStatement
-
-        return routine(
-            [glyphref(x) for x in self.precontext],
-            [glyphref(x) for x in self.input],
-            [glyphref(x) for x in self.postcontext],
-            self.lookups,
-        )
+    if self.stage == "sub":
+        routine = feaast.ChainContextSubstStatement
     else:
-        warnings.warn("Can't currently express multiple lookups per position in AFDKO")
-        return feaast.Comment("# Unparsing failed")
+        routine = feaast.ChainContextPosStatement
+
+    return routine(
+        [glyphref(x) for x in self.precontext],
+        [glyphref(x) for x in self.input],
+        [glyphref(x) for x in self.postcontext],
+        self.lookups,
+    )
 
 
 def asFeaAST(self):
@@ -110,11 +63,7 @@ def asFeaAST(self):
         # Check for >1 lookups per position
         if any([x and len(x) > 1 for x in self.lookups]):
             return _complex(self)
-        if EXPERIMENTAL_FONTTOOLS:
-            lookups = self.lookups
-        else:
-            self.lookups = [x or [None] for x in self.lookups]
-            lookups = [l[0] for l in self.lookups]
+        lookups = self.lookups
         return routine(
             [glyphref(x) for x in self.precontext],
             [glyphref(x) for x in self.input],
