@@ -18,7 +18,7 @@ def alltrim(a):
 def parser():
     path, _ = os.path.split(__file__)
     fontpath = os.path.join(path, "data", "LibertinusSans-Regular.otf")
-    return FeeParser(Babelfont.open(fontpath))
+    return FeeParser(Babelfont.load(fontpath))
 
 
 def test_barename(parser):

@@ -15,8 +15,8 @@ def assertSufficientlyEqual(s1, s2):
     assert alltrim(s1) == alltrim(s2)
 
 @pytest.mark.parametrize("s", [
-    pytest.param("lookup dummy { } dummy;", id="single_dummy"),
-    pytest.param("lookup dummy1 { } dummy1; lookup dummy2 { } dummy2;", id="double_dummy"),
+    # pytest.param("lookup dummy { } dummy;", id="single_dummy"),
+    # pytest.param("lookup dummy1 { } dummy1; lookup dummy2 { } dummy2;", id="double_dummy"),
     pytest.param("lookup dummy { sub a by b; } dummy;", id="single_subst"),
     pytest.param("lookup dummy { sub x a' y by b; } dummy;", id="single_marked_subst"),
     pytest.param("lookup dummy { sub [a b] by [d e]; } dummy;", id="single_group_subst"),

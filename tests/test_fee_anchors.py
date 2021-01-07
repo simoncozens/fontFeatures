@@ -16,7 +16,7 @@ class TestFeeAnchors(unittest.TestCase):
         self.assertEqual(alltrim(s1), alltrim(s2))
 
     def test_parse_to_ff(self):
-        p = FeeParser(Babelfont.open("fonts/Roboto-Regular.ttf"))
+        p = FeeParser(Babelfont.load("fonts/Roboto-Regular.ttf"))
         p.parseString(
             """
       Anchors A {
