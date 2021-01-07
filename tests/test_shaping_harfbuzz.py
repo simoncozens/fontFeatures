@@ -10,6 +10,9 @@ import os
 import re
 import logging
 
+if "CI" in os.environ:
+    pytest.skip("Not running shaping tests on CI", allow_module_level=True)
+
 script_map = {
     "Qaag": "Myanmar_Zawgyi"
 }
