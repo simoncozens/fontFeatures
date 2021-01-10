@@ -17,10 +17,9 @@ class GTableUnparser:
         self.table = table.table
         self.font = font
         self.fontFeatures = ff
-        self.lookupNames = []
         self.config = config
         self.index = 0
-        self.lookups = {}
+        self.lookups = [] # We keep a separate list because this is per-table
         self.sharedClasses = {}
         self.languageSystems = languageSystems
         self.sharedLookups = OrderedDict()
@@ -30,14 +29,12 @@ class GTableUnparser:
         if in_lookups:
             lookups = in_lookups
         for sl in slr:
-            self.lookups[sl.LookupListIndex]["inline"] = False
-            self.lookups[sl.LookupListIndex]["useCount"] = 999
-            self.sharedLookups[sl.LookupListIndex] = None
             if len(lookups) <= sl.SequenceIndex:
                 lookups.extend([None] * (1 + sl.SequenceIndex - len(lookups)))
             if not lookups[sl.SequenceIndex]:
                 lookups[sl.SequenceIndex] = []
-            lookups[sl.SequenceIndex].append(self.lookups[sl.LookupListIndex]["lookup"])
+            rr = fontFeatures.RoutineReference(routine=self.lookups[sl.LookupListIndex])
+            lookups[sl.SequenceIndex].append(rr)
         if len(lookups) < len(inputs):
             lookups.extend([None] * (len(inputs) - len(lookups)))
         assert(len(lookups) == len(inputs))
@@ -65,19 +62,24 @@ class GTableUnparser:
     def unparse(self, doLookups=True):
         if not self.table.ScriptList:
             return
-        if doLookups:
-            self.unparseLookups()
+        self.unparseLookups()
         self.collectFeatures()
-        # self.tidyFeatures()
-        if doLookups:
-            self.inlineFeatures()
-            # self.addGlyphClasses()
-        self.addFeatures(doLookups=doLookups)
+        self.resolve()
 
-    # def addGlyphClasses(self):
-    #     self.feature.statements.append(Comment('\n# Glyph classes\n'))
-    #     for gc in self.sharedClasses.values():
-    #         self.feature.statements.append(gc)
+    def resolve(self):
+        # Resolve chaining
+        for r in self.fontFeatures.routines:
+            self.resolve_routine(r)
+
+    def resolve_routine(self, r):
+        for rule in r.rules:
+            if isinstance(rule, fontFeatures.Chaining):
+                for lookuplist in rule.lookups:
+                    for lu in (lookuplist or []):
+                        lu.resolve(self.fontFeatures)
+                        if not lu.name:
+                            lu.name = lu.routine.name
+
 
     def _prepareFeatureLangSys(self, langTag, langSys, table, features, scriptTag):
         # This is a part of prepareFeatures
@@ -100,6 +102,9 @@ class GTableUnparser:
                 languages[langTag] = lookups
 
             for lookupIdx in featureRecord.Feature.LookupListIndex:
+                print(lookupIdx, featureTag, scriptTag, langTag)
+                self.lookups[lookupIdx].languages.append((scriptTag, langTag))
+                self.fontFeatures.addFeature(featureTag, [fontFeatures.RoutineReference(routine=self.lookups[lookupIdx])])
                 lookups.append(lookupIdx)
 
     def collectFeatures(self):
@@ -124,125 +129,47 @@ class GTableUnparser:
                 )
         self.features = features
 
-    def tidyFeatures(self):
-        # Now tidy up. Most common case is a set of lookups duplicated to all language systems
-        for name, feature in self.features.items():
-            # print(feature["DFLT"]["dflt"])
-            allLookups = [
-                langLookup
-                for script in feature.values()
-                for langLookup in script.values()
-            ]
-            lookupsAreEqual = [x == allLookups[0] for x in allLookups]
-            if all(lookupsAreEqual):
-                self.features[name] = {"DFLT": {"dflt": allLookups[0]}}
-
-        # Also check for individual lookups which can be hoisted to default
-        for name, feature in self.features.items():
-            allLookups = [
-                langLookup
-                for script in feature.values()
-                for langLookup in script.values()
-            ]
-            for lookupIx in allLookups[0]:
-                everyoneGetsIt = all([lookupIx in x for x in allLookups])
-                if everyoneGetsIt and len(allLookups) > 1:
-                    for arr in allLookups[1:]:
-                        arr.remove(lookupIx)
-
-    def inlineFeatures(self):
-        # Check which can be inlined and which are shared
-        for name, feature in self.features.items():
-            for script in feature.values():
-                for langLookups in script.values():
-                    for lookupIdx in langLookups:
-                        self.lookups[lookupIdx]["useCount"] = (
-                            self.lookups[lookupIdx]["useCount"] + 1
-                        )
-                        if (
-                            self.lookups[lookupIdx]["useCount"] > 1
-                            and len(self.lookups[lookupIdx]["lookup"].rules) > 3
-                        ):
-                            for l in self.lookups[lookupIdx]["dependencies"]:
-                                self.markAsSharedAndAdd(l)
-                            self.markAsSharedAndAdd(lookupIdx)
-
-    def markAsSharedAndAdd(self, lookupIdx):
-        self.lookups[lookupIdx]["inline"] = False
-        self.sharedLookups[lookupIdx] = None
-
     def addFeatures(self, doLookups=True):
-        if doLookups:
-            for l in self.sharedLookups.keys():
-                self.fontFeatures.addRoutine(self.lookups[l]["lookup"])
-
         for name, feature in self.features.items():
             f = []
             for scriptname, langs in feature.items():
                 for lang, lookups in langs.items():
                     if doLookups:
                         for lookupIdx in lookups:
-                            routine = self.lookups[lookupIdx]["lookup"]
-                            if not (scriptname == "DFLT" and lang == "dflt"):
-                                self.lookups[lookupIdx]["inline"] = True
-                            if isinstance(routine, fontFeatures.ExtensionRoutine):
-                                self.lookups[lookupIdx]["inline"] = False
-                            if self.lookups[lookupIdx]["inline"]:
-                                newroutine = fontFeatures.Routine(
-                                    languages=[(scriptname, lang)],
-                                    address = routine.address,
-                                    flags = routine.flags,
-                                    name = routine.name
-                                )
-                                if hasattr(routine, "markAttachmentSet"):
-                                    newroutine.markAttachmentSet = routine.markAttachmentSet
-                                if hasattr(routine, "markFilteringSet"):
-                                    newroutine.markFilteringSet = routine.markFilteringSet
-
-                                newroutine.rules.extend(routine.rules)
-                                f.append(newroutine)
-                            else:
-                                f.append(routine)
+                            f.append(RoutineReference(id=lookupIdx))
+                            self.fontFeatures.routines[lookupIdx].languages.append((scriptname, lang))
             self.fontFeatures.addFeature(name, f)
 
     def unparseLookups(self):
         if not self.table.LookupList:
             return
-        lookupOrder = range(0, len(self.table.LookupList.Lookup))
-        # Reorder to check for dependencies
-        newOrder = []
-        while True:
-            changed = False
-            newOrder = []
-            for lookupIdx in lookupOrder:
-                lookup = self.table.LookupList.Lookup[lookupIdx]
-                if self.isChaining(lookup.LookupType):
-                    dependencies = self.getDependencies(lookup)
-                    for l in dependencies:
-                        if l not in newOrder:
-                            newOrder.append(l)
-                            changed = True
-                if lookupIdx not in newOrder:
-                    newOrder.append(lookupIdx)
-            lookupOrder = newOrder
-            if not changed:
-                break
+        # Create a dummy list first, to allow resolving chained lookups
+        for _ in self.table.LookupList.Lookup:
+            r = fontFeatures.Routine()
+            self.lookups.append(r)
+            self.fontFeatures.routines.append(r)
 
-        for lookupIdx in lookupOrder:
-            lookup = self.table.LookupList.Lookup[lookupIdx]
-            res, dependencies = self.unparseLookup(lookup, lookupIdx)
-            res.address = (self._table, lookupIdx)
+        for lookupIdx, lookup in enumerate(self.table.LookupList.Lookup):
+            routine,deps = self.unparseLookup(lookup, lookupIdx)
             debug = self.getDebugInfo(self._table, lookupIdx)
             if debug:
-                res.address = (self._table, lookupIdx, *debug)
+                routine.address = (self._table, lookupIdx, *debug)
                 if debug[1]:
-                    res.name = debug[1]
-            self.lookups[lookupIdx] = {
-                "lookup": res,
-                "dependencies": dependencies,
-                "useCount": 0,
-                "inline": True,
-            }
+                    routine.name = debug[1]
+            self.copyRoutineToRoutine(routine, self.lookups[lookupIdx])
+
+    def copyRoutineToRoutine(self, src, dst):
+        dst.name = src.name
+        dst.rules = src.rules
+        dst.flags = src.flags
+        dst.address = src.address
+        dst.comments = src.comments
+        dst.inlined = src.inlined
+        dst.languages = src.languages
+        dst.parent = src.parent
+        dst.flags = src.flags
+        dst.markFilteringSet = src.markFilteringSet
+        dst.markAttachmentSet = src.markAttachmentSet
 
     def unparseLookup(self, lookup, lookupIdx):
         self.currentLookup = lookupIdx

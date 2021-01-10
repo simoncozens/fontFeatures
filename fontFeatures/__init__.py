@@ -41,8 +41,8 @@ class FontFeatures:
         self.symbols[category] += 1
         return f'{category}{self.symbols[category]}'
 
-    def addRoutine(self, r):
-        """Add a Routine to the preamble.
+    def referenceRoutine(self, r):
+        """Store a routine and return a reference to it.
 
         Args:
             r: A :py:class:`Routine` object.
@@ -50,6 +50,8 @@ class FontFeatures:
         assert isinstance(r, Routine)
         self.routines.append(r)
         r.parent = self
+        r.used = True
+        return RoutineReference(routine=r)
 
     def getNamedClassFor(self, glyphs, name):
         """Find and optionally stores a named class of glyphs
@@ -80,6 +82,8 @@ class FontFeatures:
             self.features[name] = []
         for r in rs:
             r.parent = self
+            if isinstance(r, Routine) and r not in self.routines:
+                r = self.referenceRoutine(r)
             self.features[name].append(r)
 
     def allRoutines(self):
@@ -161,11 +165,6 @@ class FontFeatures:
             if k.languages:
                 for l in k.languages:
                     add_language(l)
-        for feat in self.features.values():
-            for thing in feat:
-                if hasattr(thing, "languages") and thing.languages:
-                    for l in thing.languages:
-                        add_language(l)
 
         # if count > 0 and not "DFLT" in scripts:
         #     scripts["DFLT"] = []
@@ -192,13 +191,14 @@ class Routine:
         rules=None,
         address=None,
         inlined=False,
-        languages=None,
+        languages=[],
         parent=None,
         flags=0,
         markFilteringSet=None,
         markAttachmentSet=None,
     ):
         self.name = name
+        self.used = False
         self.usedin = set()
         if rules:
             self.rules = rules
@@ -267,6 +267,40 @@ class ExtensionRoutine(Routine):
     @rules.setter
     def rules(self, foo):
         pass
+
+class RoutineReference:
+    def __init__(self, name=None, id=None, routine=None):
+        self.routine = routine
+        if self.routine:
+            self.name = routine.name
+        if name:
+            self.name = name
+        self.id = id
+
+    def resolve(self, ff):
+        if self.routine:
+            return
+        if self.id:
+            self.routine = ff.routines[self.id]
+        elif self.name:
+            for r in ff.routines:
+                if r.name == self.name:
+                    self.routine = r
+                    break
+        if not self.routine:
+            raise ValueError("Could not resolve routine")
+        else:
+            self.name = self.routine.name
+
+    @property
+    def stage(self):
+        if not self.routine:
+            raise ValueError("Routine reference not resolved")
+        return self.routine.stage
+
+    from .xmlLib.RoutineReference import fromXML, toXML
+    from .feaLib.RoutineReference import asFea, asFeaAST, feaPreamble
+
 
 class Rule:
     def asFea(self):

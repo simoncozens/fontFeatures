@@ -33,39 +33,26 @@ def asFeaAST(self):
             k.name = self.gensym("Routine_")
         pre = k.feaPreamble(self)
         if k.rules:
-            for s in pre:
-                ff.statements.append(s)
-    for k, v in self.features.items():
-        for r in v:
-            pre = r.feaPreamble(self)
-            for s in pre:
-                ff.statements.append(s)
+            ff.statements.extend(pre)
+    # for k, v in self.features.items():
+    #     for r in v:
+    #         pre = r.feaPreamble(self)
+    #         for s in pre:
+    #             ff.statements.append(s)
 
-    for k, v in self.namedClasses.items():
-        asclass = feaast.GlyphClass([feaast.GlyphName(x) for x in v])
-        ff.statements.append(feaast.GlyphClassDefinition(k, asclass))
+    # for k, v in self.namedClasses.items():
+    #     asclass = feaast.GlyphClass([feaast.GlyphName(x) for x in v])
+    #     ff.statements.append(feaast.GlyphClassDefinition(k, asclass))
 
     ff.statements.append(feaast.Comment(""))
 
     for k in self.routines:
-        if not k.inlined and k.rules:
+        if k.rules:
             ff.statements.append(k.asFeaAST())
 
     for k, v in self.features.items():
         f = feaast.FeatureBlock(k)
         for n in v:
-            # If it's a routine and it's in self.routines, use a reference
-            if isinstance(n, Routine) and n in self.routines:
-                if not n.rules:
-                    continue
-                f.statements.append(feaast.LookupReferenceStatement(n.asFeaAST()))
-            elif not isinstance(n, Routine):
-                r = Routine(rules=[n], parent=self)
-                if hasattr(n, "languages"):
-                    r.languages = n.languages
-                f.statements.append(r.asFeaAST())
-            else:
-                f.statements.append(n.asFeaAST())
-        if f.statements:
-            ff.statements.append(f)
+            f.statements.append(n.asFeaAST())
+        ff.statements.append(f)
     return ff

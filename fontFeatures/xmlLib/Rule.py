@@ -30,8 +30,6 @@ def toXML(self):
             xmlslot = etree.SubElement(wrapper, "slot")
             if slot:
                 for lu in slot:
-                    # Might want to make this do the name, not the whole
-                    # routine, once we have sorted order-of-lookups issue
                     xmlslot.append(lu.toXML())
             else:
                 etree.SubElement(xmlslot, "lookup")

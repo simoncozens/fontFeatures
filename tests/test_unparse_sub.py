@@ -9,7 +9,8 @@ import unittest
 class TestUnparse(unittest.TestCase):
     font = TTFont("fonts/Amiri-Regular.ttf")
     lookups = font["GSUB"].table.LookupList.Lookup
-    unparser = GSUBUnparser(font["GSUB"], None, [])
+    ff = FontFeatures()
+    unparser = GSUBUnparser(font["GSUB"], ff, [])
 
     def test_single(self):
         g, _ = self.unparser.unparseLookup(self.lookups[1], 1)  # part of locl
@@ -36,6 +37,7 @@ class TestUnparse(unittest.TestCase):
         g, _ = self.unparser.unparseLookup(
             self.lookups[33], 33
         )  # part of calt in quran.fea
+        self.unparser.resolve_routine(g)
         self.assertEqual(
             g.rules[0].asFea(),
             "sub uni0644' lookup SingleSubstitution32 uni0621' lookup SingleSubstitution31 uni0627' lookup SingleSubstitution32;",

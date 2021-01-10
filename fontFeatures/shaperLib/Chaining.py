@@ -8,6 +8,7 @@ def __find_masked_ix(buf, ix):
     return -1
 
 def _do_apply(self, buf, ix):
+    from fontFeatures import RoutineReference
     # Save buffer mask
     flags = buf.flags
     markFilteringSet = buf.markFilteringSet
@@ -20,6 +21,7 @@ def _do_apply(self, buf, ix):
         if not lookups:
             continue
         for routine in lookups:
+            assert isinstance(routine, RoutineReference)
             # Adjust mask and recompute index?
             unmasked_ix = old_unmasked_indexes[i]
             for rule in routine.rules:

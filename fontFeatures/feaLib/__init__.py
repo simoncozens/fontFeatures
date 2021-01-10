@@ -52,9 +52,9 @@ class FeaUnparser:
             self.currentRoutine.name = "unnamed_routine_%i" % self.gensym
             self.gensym = self.gensym + 1
         self.currentRoutineFlag = 0
-        self.ff.addRoutine(self.currentRoutine)
+        reference = self.ff.referenceRoutine(self.currentRoutine)
         if self.currentFeature:
-            self.ff.addFeature(self.currentFeature, [self.currentRoutine])
+            self.ff.addFeature(self.currentFeature, [reference])
 
     def start_lookup_block(self, location, name):
         self._start_routine(location, name)
