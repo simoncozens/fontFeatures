@@ -238,6 +238,18 @@ class Routine:
         """Returns the names of all of the glyphs involved in this Routine."""
         return set.union(*[r.involved_glyphs for r in self.rules])
 
+    @property
+    def stage(self):
+        for r in self.rules:
+            if isinstance(r, Substitution):
+                return "sub"
+            if isinstance(r, Positioning):
+                return "pos"
+            if isinstance(r, Attachment):
+                return "pos"
+            if isinstance(r, Chaining):
+                return r.stage
+
     from .feaLib.Routine import asFea, asFeaAST, feaPreamble
     from .shaperLib.Routine import apply_to_buffer
     from .xmlLib.Routine import toXML, fromXML
@@ -261,8 +273,12 @@ class ExtensionRoutine(Routine):
         return f
 
     @property
+    def stage(self):
+        return self.routines[0].stage
+
+    @property
     def rules(self):
-        return  list(chain(*[routine.rules for routine in self.routines]))
+        return list(chain(*[routine.rules for routine in self.routines]))
 
     @rules.setter
     def rules(self, foo):
@@ -418,15 +434,7 @@ class Chaining(Rule):
             for aLookup in l:
                 if not aLookup:
                     continue
-                for r in aLookup.rules:
-                    if isinstance(r, Substitution):
-                        return "sub"
-                    if isinstance(r, Positioning):
-                        return "pos"
-                    if isinstance(r, Attachment):
-                        return "pos"
-                    if isinstance(r, Chaining):
-                        return r.stage
+                return aLookup.stage
 
     @property
     def involved_glyphs(self):
