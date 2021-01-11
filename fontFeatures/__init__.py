@@ -48,9 +48,11 @@ class FontFeatures:
             r: A :py:class:`Routine` object.
         """
         assert isinstance(r, Routine)
-        self.routines.append(r)
+
+        if r not in self.routines:
+            self.routines.append(r)
         r.parent = self
-        r.used = True
+        r.usecount = r.usecount + 1
         return RoutineReference(routine=r)
 
     def getNamedClassFor(self, glyphs, name):
@@ -76,13 +78,13 @@ class FontFeatures:
 
         Args:
             name: The feature name.
-            rs: A sequence of :py:class:`Routine` objects.
+            rs: A sequence of :py:class:`Routine` or :py:class:`RoutineReference` objects.
         """
         if not name in self.features:
             self.features[name] = []
         for r in rs:
             r.parent = self
-            if isinstance(r, Routine) and r not in self.routines:
+            if isinstance(r, Routine):
                 r = self.referenceRoutine(r)
             self.features[name].append(r)
 
@@ -178,6 +180,26 @@ class FontFeatures:
         self.hoist_languages()
         return script in self.scripts_and_languages
 
+    def resolveAllRoutines(self):
+        for routine in self.routines:
+            for r in routine.rules:
+                if not isinstance(r, Chaining):
+                    continue
+                for lookuplistIx in range(len(r.lookups)):
+                    r.lookups[lookuplistIx] = self.ensureLookupsAreReferences(r.lookups[lookuplistIx])
+
+    def ensureLookupsAreReferences(self, lookuplist):
+        rv = []
+        if not lookuplist:
+            return None
+        for r in lookuplist:
+            if isinstance(r, RoutineReference):
+                r.resolve(self)
+            else:
+                r = self.referenceRoutine(r)
+            assert r.routine in self.routines
+            rv.append(r)
+        return rv
 
 class Routine:
     """Represent a Routine (similar to OT Lookup).
@@ -191,14 +213,14 @@ class Routine:
         rules=None,
         address=None,
         inlined=False,
-        languages=[],
+        languages=None,
         parent=None,
         flags=0,
         markFilteringSet=None,
         markAttachmentSet=None,
     ):
         self.name = name
-        self.used = False
+        self.usecount = 0
         self.usedin = set()
         if rules:
             self.rules = rules
@@ -207,7 +229,7 @@ class Routine:
         self.address = address
         self.comments = []
         self.inlined = inlined
-        self.languages = languages
+        self.languages = languages or []
         self.parent = parent
         self.flags = flags
         self.markFilteringSet = markFilteringSet
@@ -294,19 +316,20 @@ class RoutineReference:
         self.id = id
 
     def resolve(self, ff):
-        if self.routine:
-            return
-        if self.id:
-            self.routine = ff.routines[self.id]
-        elif self.name:
-            for r in ff.routines:
-                if r.name == self.name:
-                    self.routine = r
-                    break
         if not self.routine:
-            raise ValueError("Could not resolve routine")
-        else:
+            if self.id:
+                self.routine = ff.routines[self.id]
+            elif self.name:
+                for r in ff.routines:
+                    if r.name == self.name:
+                        self.routine = r
+                        break
+            if not self.routine:
+                raise ValueError("Could not resolve routine")
+        if not self.name:
             self.name = self.routine.name
+        if not self.id and self.routine in ff.routines:
+            self.id = ff.routines.index(self.routine)
 
     @property
     def stage(self):

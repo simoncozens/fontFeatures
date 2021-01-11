@@ -154,26 +154,18 @@ def feaPreamble(self, ff):
     return preamble
 
 
-def asFeaAST(self):
-    if self.name:
+def asFeaAST(self, inFeature=False):
+    if self.name and not inFeature:
         f = feaast.LookupBlock(name=self.name)
     else:
         f = feaast.Block()
     arranged = arrange(self)
 
-    if arranged:
+    if arranged and inFeature:
+        f = feaast.Block()
         for a in arranged:
-            f.statements.append(asFeaAST(a))
+            f.statements.append(asFeaAST(a, inFeature))
         return f
-
-    if self.languages and not (
-        self.languages[0][0] == "DFLT" and self.languages[0][1] == "dflt"
-    ):
-        s, l = self.languages[0]
-        f.statements.append(feaast.ScriptStatement(s))
-        if l != "*":
-            l = "%4s" % l
-            f.statements.append(feaast.LanguageStatement(l))
 
     if hasattr(self, "flags") and self.flags > 0:
         flags = feaast.LookupFlagStatement(self.flags)

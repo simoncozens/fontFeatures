@@ -34,7 +34,7 @@ def assertSufficientlyEqual(s1, s2):
     pytest.param("lookup dummy { sub a by b; } dummy; lookup chain { sub a' lookup dummy; } chain; ",id="chain"),
     pytest.param("lookup dummy { sub a by b; } dummy; lookup chain { sub x [one two] a' lookup dummy b' lookup dummy; } chain; ",id="chain2"),
     pytest.param("lookup dummy { ignore sub a d' d; } dummy; ",id="ignore"),
-    pytest.param("lookup unnamed_routine_1 { sub a by b; sub c by d; } unnamed_routine_1; feature calt { lookup unnamed_routine_1; } calt;",id="feature"),
+    pytest.param("feature calt { sub a by b; sub c by d; } calt;",id="feature"),
     pytest.param("lookup dummy { pos one <-80 0 -160 0>; } dummy;",id="pos_one"),
     pytest.param("lookup dummy { pos [one two] <-80 0 -160 0>; } dummy;",id="pos_one_group"),
     pytest.param("lookup dummy { pos a [one two]' <-80 0 -160 0>; } dummy;",id="pos_one_contexual"),
@@ -52,10 +52,10 @@ def assertSufficientlyEqual(s1, s2):
   """, id="mark_attachment"
         ),
     pytest.param("lookup dummy { pos X [A B]' -40 B' -40 A' -40 Y; } dummy;", id="pos_contextual"),
-    pytest.param("lookup dummy { sub a b by c; } dummy; feature calt { lookup dummy; } calt;", id="lookup_reference"),
+    # pytest.param("lookup dummy { sub a b by c; } dummy; feature calt { lookup dummy; } calt;", id="lookup_reference"),
     pytest.param("lookup dummy { lookupflag IgnoreMarks; sub a b by c; } dummy;", id="lookup_flag"),
-    pytest.param("lookup unnamed_routine_1 { lookupflag IgnoreMarks; sub a b by c; } unnamed_routine_1; feature calt { lookup unnamed_routine_1; } calt;", id="flag_in_feature"),
-    pytest.param("lookup unnamed_routine_1 { sub x by y; } unnamed_routine_1; lookup unnamed_routine_2 { lookupflag IgnoreMarks; sub a b by c; } unnamed_routine_2; feature calt { lookup unnamed_routine_1; lookup unnamed_routine_2; } calt;", id="switch_flags"),
+    pytest.param("feature calt { lookupflag IgnoreMarks; sub a b by c; } calt;", id="flag_in_feature"),
+    pytest.param("feature calt { sub x by y; lookupflag IgnoreMarks; sub a b by c; } calt;", id="switch_flags"),
 ])
 def test_round_trip(s):
     assertSufficientlyEqual(FeaUnparser(s).ff.asFea(), s)

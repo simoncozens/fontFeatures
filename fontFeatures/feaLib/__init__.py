@@ -52,9 +52,11 @@ class FeaUnparser:
             self.currentRoutine.name = "unnamed_routine_%i" % self.gensym
             self.gensym = self.gensym + 1
         self.currentRoutineFlag = 0
-        reference = self.ff.referenceRoutine(self.currentRoutine)
         if self.currentFeature:
+            reference = self.ff.referenceRoutine(self.currentRoutine)
             self.ff.addFeature(self.currentFeature, [reference])
+        else:
+            self.ff.routines.append(self.currentRoutine)
 
     def start_lookup_block(self, location, name):
         self._start_routine(location, name)
@@ -216,8 +218,9 @@ class FeaUnparser:
             raise ValueError("Huh?")
 
     def end_lookup_block(self):
-        for rule in self.currentRoutine.rules:
-            rule.flags = self.currentRoutineFlag
+        if self.currentRoutine:
+            for rule in self.currentRoutine.rules:
+                rule.flags = self.currentRoutineFlag
 
     def end_feature(self):
         self._discard_empty_routine()

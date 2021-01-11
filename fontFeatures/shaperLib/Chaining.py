@@ -22,6 +22,7 @@ def _do_apply(self, buf, ix):
             continue
         for routine in lookups:
             assert isinstance(routine, RoutineReference)
+            routine = routine.routine
             # Adjust mask and recompute index?
             unmasked_ix = old_unmasked_indexes[i]
             for rule in routine.rules:

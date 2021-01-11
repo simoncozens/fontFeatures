@@ -102,9 +102,12 @@ class GTableUnparser:
                 languages[langTag] = lookups
 
             for lookupIdx in featureRecord.Feature.LookupListIndex:
-                print(lookupIdx, featureTag, scriptTag, langTag)
                 self.lookups[lookupIdx].languages.append((scriptTag, langTag))
-                self.fontFeatures.addFeature(featureTag, [fontFeatures.RoutineReference(routine=self.lookups[lookupIdx])])
+                # Add reference if there isn't one
+                if not featureTag in self.fontFeatures.features:
+                    self.fontFeatures.features[featureTag] = []
+                if not any(r.routine == self.lookups[lookupIdx] for r in self.fontFeatures.features[featureTag]):
+                    self.fontFeatures.addFeature(featureTag, [fontFeatures.RoutineReference(routine=self.lookups[lookupIdx])])
                 lookups.append(lookupIdx)
 
     def collectFeatures(self):

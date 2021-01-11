@@ -2,6 +2,8 @@ from fontFeatures.shaperLib.Buffer import Buffer, BufferItem
 from copy import copy
 import unicodedata
 from youseedee import ucd_data
+from fontFeatures import RoutineReference
+
 
 
 def _is_default_ignorable(c):
@@ -26,6 +28,7 @@ class BaseShaper:
         self.features = features
 
     def shape(self):
+        self.plan.fontfeatures.resolveAllRoutines()
         # self.buffer.set_unicode_props()
         # self.insert_dotted_circles()
         # self.buffer.form_clusters()
@@ -126,9 +129,10 @@ class BaseShaper:
                     if f not in self.plan.fontfeatures.features:
                         continue
 
-                    # XXX These should be ordered by ID
+                    routines = self.plan.fontfeatures.features[f]
+                    routines = [x.routine if isinstance(x, RoutineReference) else x for x in routines]
                     lookups.extend(
-                        [(routine, f) for routine in self._filter_by_lang(self.plan.fontfeatures.features[f])]
+                        [(routine, f) for routine in self._filter_by_lang(routines)]
                     )
                 self.plan.msg("Processing features: %s" % ",".join(stage))
                 for r, feature in lookups:
@@ -186,6 +190,8 @@ class BaseShaper:
         subbuffer.clear_mask()
         routines = self.plan.fontfeatures.features[feature]
         for r in routines:
+            if isinstance(r, RoutineReference):
+                r = r.routine
             for rule in r.rules:
                 if rule.stage == "pos":
                     continue
