@@ -63,5 +63,5 @@ class Routine:
           else:
             r.flags |= f
         if not parser.current_feature:
-          parser.fontfeatures.addRoutine(r)
+          parser.fontfeatures.routines.append(r)
         return [r]

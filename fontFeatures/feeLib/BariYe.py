@@ -282,9 +282,9 @@ class BYMoveDots:
                             queue.append([list(m)] + consideration)
 
             # Add all the routines to the parser
-            parser.fontfeatures.addRoutine(dropADotRoutine)
+            parser.fontfeatures.routines.append(dropADotRoutine)
             if not alwaysDrop:
-                parser.fontfeatures.addRoutine(maybeDropDotRoutine)
+                parser.fontfeatures.routines.append(maybeDropDotRoutine)
             routines.append(dropBYsRoutine)
         return routines
 
