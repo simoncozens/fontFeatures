@@ -72,9 +72,9 @@ def asFeaAST(self):
         if k.rules:
             ff.statements.extend(pre)
 
-    # for k, v in self.namedClasses.items():
-    #     asclass = feaast.GlyphClass([feaast.GlyphName(x) for x in v])
-    #     ff.statements.append(feaast.GlyphClassDefinition(k, asclass))
+    for k, v in self.namedClasses.items():
+        asclass = feaast.GlyphClass([feaast.GlyphName(x) for x in v])
+        ff.statements.append(feaast.GlyphClassDefinition(k, asclass))
 
 
     ff.statements.append(feaast.Comment(""))
