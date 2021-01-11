@@ -35,6 +35,17 @@ def feaPreamble(self, ff):
     replaceLongWithClasses(self.input, ff)
     replaceLongWithClasses(self.precontext, ff)
     replaceLongWithClasses(self.postcontext, ff)
+    from fontFeatures import RoutineReference
+
+    # Ensure all linked routines have names
+    for lul in self.lookups:
+        for r in (lul or []):
+            assert isinstance(r, RoutineReference)
+            assert r.routine
+            if not r.routine.name:
+                r.routine.name = "ChainedRoutine"+gensym(ff)
+            if not r.name:
+                r.name = r.routine.name
 
     return []
 
