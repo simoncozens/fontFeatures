@@ -20,3 +20,12 @@ def test_multiple_applications():
     r.addRule( Substitution( [["B"]], [["Y"]] ) )
     r.apply_to_buffer(buf)
     assert buf.serialize(position=False) == "X|Y|C"
+
+
+def test_namedclass_in_slot():
+    font = Babelfont.load("tests/data/LibertinusSans-Regular.otf")
+    buf = Buffer(font, glyphs=["A", "B", "C"])
+    r = Routine()
+    r.addRule( Substitution( [["G", "@AB"]], [["X"]] ) )
+    r.apply_to_buffer(buf, namedclasses={"AB": ["A","B"]})
+    assert buf.serialize(position=False) == "X|X|C"

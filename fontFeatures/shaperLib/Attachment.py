@@ -20,14 +20,18 @@ def find_base_backwards(self, buf, ix):
         ix = ix - 1
     return None
 
-def would_apply_at_position(self, buf, ix):
+def would_apply_at_position(self, buf, ix, namedclasses={}):
+    from fontFeatures.shaperLib.Rule import _expand_slot
+
     logging.getLogger("fontFeatures.shaperLib").debug("Testing if %s would apply at position %i" % (self.asFea(), ix))
+    marks = _expand_slot(self.marks.keys(), namedclasses)
+    bases = _expand_slot(self.bases.keys(), namedclasses)
 
     if self.is_cursive:
         if ix == 0:
             logging.getLogger("fontFeatures.shaperLib").debug(" * No, it has no adjacent glyph")
             return False
-        if buf[ix].glyph in self.marks.keys() and buf[ix-1].glyph in self.bases.keys():
+        if buf[ix].glyph in marks and buf[ix-1].glyph in bases:
             logging.getLogger("fontFeatures.shaperLib").debug(" * No, %s/%s is not a pair" % (buf[ix].glyph, buf[ix-1].glyph))
         logging.getLogger("fontFeatures.shaperLib").debug(" * Yes, %s/%s is a pair" % (buf[ix].glyph, buf[ix-1].glyph))
         return True
@@ -37,14 +41,14 @@ def would_apply_at_position(self, buf, ix):
     # Mark to base is a bit different, as multiple marks can attach to a base
     # so we search backwards for the preceding base glyph
     # XXX mark to mark
-    if buf[ix].glyph not in self.marks.keys():
+    if buf[ix].glyph not in marks:
         logging.getLogger("fontFeatures.shaperLib").debug(" * No, %s is not in our mark list" % (buf[ix].glyph))
         return False
     base_ix = find_base_backwards(self, buf, ix)
     if base_ix is None:
         logging.getLogger("fontFeatures.shaperLib").debug(" * No, I couldn't find a base glyph")
         return False
-    if buf[base_ix].glyph not in self.bases.keys():
+    if buf[base_ix].glyph not in bases:
         logging.getLogger("fontFeatures.shaperLib").debug(" * No, %s is not in our base list" % buf[base_ix].glyph)
         return False
     logging.getLogger("fontFeatures.shaperLib").debug(" * Yes, attaching mark %s/%i to %s/%i" % (buf[ix].glyph, ix, buf[base_ix].glyph, base_ix))
@@ -74,7 +78,7 @@ def _do_apply_cursive(self, buf, ix):
     buf[ix].attach_chain = parent - child
 
 
-def _do_apply(self, buf, ix):
+def _do_apply(self, buf, ix, namedclasses={}):
     if self.is_cursive:
         return _do_apply_cursive(self, buf, ix)
     from fontFeatures import ValueRecord

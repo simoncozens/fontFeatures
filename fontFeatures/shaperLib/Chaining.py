@@ -7,7 +7,7 @@ def __find_masked_ix(buf, ix):
         if buf.mask[i] == ix: return i
     return -1
 
-def _do_apply(self, buf, ix):
+def _do_apply(self, buf, ix, namedclasses={}):
     from fontFeatures import RoutineReference
     # Save buffer mask
     flags = buf.flags
@@ -28,7 +28,7 @@ def _do_apply(self, buf, ix):
             for rule in routine.rules:
                 buf.set_mask(rule.flags, routine.markFilteringSet)
                 newix = __find_masked_ix(buf, unmasked_ix)
-                if rule.would_apply_at_position(buf,newix) and rule._do_apply(buf, newix):
+                if rule.would_apply_at_position(buf,newix, namedclasses) and rule._do_apply(buf, newix):
                     break
 
     buf.set_mask(flags, markFilteringSet)

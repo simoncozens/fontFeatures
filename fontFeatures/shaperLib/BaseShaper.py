@@ -197,7 +197,7 @@ class BaseShaper:
                     continue
                 if any(
                     [
-                        rule.would_apply_at_position(subbuffer, i)
+                        rule.would_apply_at_position(subbuffer, i, namedclasses=self.plan.fontfeatures.namedClasses)
                         for i in range(len(subbuffer))
                     ]
                 ):
