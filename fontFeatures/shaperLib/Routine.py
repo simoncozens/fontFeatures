@@ -3,7 +3,7 @@ import logging
 __all__ = ["apply_to_buffer"]
 
 
-def apply_to_buffer(self, buf, stage=None, feature=None, namedclasses=None):
+def apply_to_buffer(self, buf, stage=None, feature=None, namedclasses={}):
     buf.set_mask(self.flags, self.markFilteringSet, self.markAttachmentSet)
     if feature:
         buf.set_feature_mask(feature)

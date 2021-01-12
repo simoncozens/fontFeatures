@@ -139,7 +139,7 @@ class BaseShaper:
                     self.plan.msg(
                         "Before %s (%s)" % (r.name, feature), buffer=self.buffer
                     )
-                    r.apply_to_buffer(self.buffer, stage=current_stage, feature=feature)
+                    r.apply_to_buffer(self.buffer, stage=current_stage, feature=feature, namedclasses=self.plan.fontfeatures.namedClasses)
                     self.plan.msg(
                         "After %s (%s)" % (r.name, feature), buffer=self.buffer
                     )
