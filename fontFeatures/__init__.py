@@ -307,29 +307,23 @@ class ExtensionRoutine(Routine):
         pass
 
 class RoutineReference:
-    def __init__(self, name=None, id=None, routine=None):
+    def __init__(self, name=None, routine=None):
         self.routine = routine
         if self.routine:
             self.name = routine.name
         if name:
             self.name = name
-        self.id = id
 
     def resolve(self, ff):
         if not self.routine:
-            if self.id:
-                self.routine = ff.routines[self.id]
-            elif self.name:
-                for r in ff.routines:
-                    if r.name == self.name:
-                        self.routine = r
-                        break
+            for r in ff.routines:
+                if r.name == self.name:
+                    self.routine = r
+                    break
             if not self.routine:
                 raise ValueError("Could not resolve routine")
         if not self.name:
             self.name = self.routine.name
-        if not self.id and self.routine in ff.routines:
-            self.id = ff.routines.index(self.routine)
 
     @property
     def stage(self):

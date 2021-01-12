@@ -139,7 +139,7 @@ class GTableUnparser:
                 for lang, lookups in langs.items():
                     if doLookups:
                         for lookupIdx in lookups:
-                            f.append(RoutineReference(id=lookupIdx))
+                            f.append(RoutineReference(routine=self.fontFeatures.routines[lookupIdx]))
                             self.fontFeatures.routines[lookupIdx].languages.append((scriptname, lang))
             self.fontFeatures.addFeature(name, f)
 
