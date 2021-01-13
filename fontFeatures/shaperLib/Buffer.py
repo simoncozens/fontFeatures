@@ -37,7 +37,7 @@ class BufferItem:
             else:
                 s = s + "?"
         else:
-            s = "U+%04x" % self.unicode
+            s = "U+%04x" % self.codepoint
         return "BufferItem(%s)" % s
 
     @classmethod
