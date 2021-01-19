@@ -144,6 +144,7 @@ integer = ('-'|'+')?:sign <digit+>:i -> (-int(i) if sign == "-" else int(i))
         "Feature",
         "Substitute",
         "Position",
+        "Chain",
         "Anchors",
         "Routine",
         "Include"
