@@ -2,7 +2,7 @@
 Anchor Management
 =================
 
-The ``Anchors`` plugin provides the ``Anchors`` and ``Attach`` verbs.
+The ``Anchors`` plugin provides the ``Anchors``, ``LoadAnchors`` and ``Attach`` verbs.
 
 ``Anchors`` takes a glyph name and a block containing anchor names and
 positions, like so::
@@ -13,6 +13,10 @@ Note that there are no semicolons between anchors. The *same thing* happens
 for mark glyphs::
 
       Anchors acutecomb { _top <-570 1290> };
+
+If you don't want to define these anchors manually but instead are dealing with
+a source font file which contains anchor declarations, you can load the anchors
+automatically from the font by using the ``LoadAnchors;`` verb.
 
 Once all your anchors are defined, the ``Attach`` verb can be used to attach
 marks to bases::
@@ -52,9 +56,11 @@ Anchors_Args = glyphselector:gs ws '{' ws (anchor_def)+:a ws '}' -> [gs, a]
 anchor_def = <(letter|digit|"."|"_")+>:anchorname ws '<' integer:x ws integer:y '>' ws -> {"name":anchorname, "x": x, "y": y}
 
 Attach_Args = '&' <(letter|digit|"."|"_")+>:anchor1 ws '&' <(letter|digit|"."|"_")+>:anchor2 ws ("marks"|"bases"|"cursive"):attachtype -> [anchor1, anchor2, attachtype]
+
+LoadAnchors_Args = ws -> ()
 """
 
-VERBS = ["Anchors", "Attach"]
+VERBS = ["Anchors", "LoadAnchors", "Attach"]
 
 class Anchors:
     @classmethod
@@ -68,6 +74,14 @@ class Anchors:
 
         return []
 
+class LoadAnchors:
+    @classmethod
+    def action(self, parser):
+        for g in parser.font:
+            for a in g.anchors:
+                if not g.name in parser.fontfeatures.anchors:
+                    parser.fontfeatures.anchors[g.name] = {}
+                parser.fontfeatures.anchors[g.name][a.name] = (a.x, a.y)
 
 class Attach:
     @classmethod
