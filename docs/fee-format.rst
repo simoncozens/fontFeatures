@@ -93,6 +93,7 @@ verbs. However, the following plugins are automatically loaded and their
 verbs are always available.
 
 .. automodule:: fontFeatures.feeLib.ClassDefinition
+.. automodule:: fontFeatures.feeLib.Conditional
 .. automodule:: fontFeatures.feeLib.Feature
 .. automodule:: fontFeatures.feeLib.LoadPlugin
 .. automodule:: fontFeatures.feeLib.Routine
