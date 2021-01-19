@@ -157,6 +157,8 @@ def feaPreamble(self, ff):
 def asFeaAST(self, inFeature=False):
     if self.name and not inFeature:
         f = feaast.LookupBlock(name=self.name)
+    elif self.name:
+        f = feaast.LookupBlock(name=self.name)
     else:
         f = feaast.Block()
     arranged = arrange(self)
@@ -186,6 +188,7 @@ def asFeaAST(self, inFeature=False):
     for x in self.comments:
         f.statements.append(feaast.Comment(x))
 
+    f.statements.append(feaast.Comment(";"))
     lastaddress = self.address
     if lastaddress:
         f.statements.append(feaast.Comment("# Original source: %s " % (" ".join([str(x) for x in lastaddress]))))
