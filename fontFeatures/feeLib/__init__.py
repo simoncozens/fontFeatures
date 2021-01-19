@@ -134,13 +134,24 @@ glyphsuffix = ('.'|'~'):suffixtype <barename+>:suffix -> {"suffixtype":suffixtyp
 glyphselector = (regex | barename | classname | inlineclass ):g glyphsuffix*:s -> GlyphSelector(g,s, self.input.position)
 
 # Number things
-integer = ('-'|'+')?:sign <digit+>:i -> (-int(i) if sign == "-" else int(i))
+bareinteger = ('-'|'+')?:sign <digit+>:i -> (-int(i) if sign == "-" else int(i))
+namedinteger = '$' barename:b ?(b["barename"] in parser.variables) -> int(parser.variables[b["barename"]])
+integer = namedinteger | bareinteger
+
+# Value records
+
+valuerecord = integer_value_record | fee_value_record | traditional_value_record
+integer_value_record = integer:xAdvance -> (0, 0, xAdvance, 0)
+traditional_value_record = '<' integer:xPlacement ws integer:yPlacement ws integer:xAdvance ws integer:yAdvance '>' -> (xPlacement, yPlacement, xAdvance, yAdvance)
+fee_value_record = '<' ws fee_value_record_member+:m '>' -> { "members": m }
+fee_value_record_member = ("xAdvance"| "xPlacement" | "yAdvance" | "yPlacement"):d '=' integer:pos ws -> {"dimension": d, "position": pos}
 
 """
 
     DEFAULT_PLUGINS = [
         "LoadPlugin",
         "ClassDefinition",
+        "Conditional",
         "Feature",
         "Substitute",
         "Position",
@@ -159,6 +170,7 @@ integer = ('-'|'+')?:sign <digit+>:i -> (-int(i) if sign == "-" else int(i))
         self.plugin_classes = {}
         self.current_feature = None
         self.font_modified = False
+        self.variables = {}
         self._rebuild_parser()
         for plugin in self.DEFAULT_PLUGINS:
             self._load_plugin(plugin)

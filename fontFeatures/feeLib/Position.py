@@ -43,11 +43,6 @@ context_pos_args = gsws*:pre '{' ws gsposws+:g_ps2 ws '}' ws gsws*:post language
 
 gsposws = glyphselector:g ws valuerecord?:v ws? -> (g,v)
 gsws = glyphselector:g ws? -> g
-valuerecord = integer_value_record | fee_value_record | traditional_value_record
-integer_value_record = integer:xAdvance -> (0, 0, xAdvance, 0)
-traditional_value_record = '<' integer:xPlacement ws integer:yPlacement ws integer:xAdvance ws integer:yAdvance '>' -> (xPlacement, yPlacement, xAdvance, yAdvance)
-fee_value_record = '<' ws fee_value_record_member+:m '>' -> { "members": m }
-fee_value_record_member = ("xAdvance"| "xPlacement" | "yAdvance" | "yPlacement"):d '=' integer:pos ws -> {"dimension": d, "position": pos}
 
 languages = '<' lang '/' script (ws ',' ws lang '/' script)* '>' ws
 lang = letter{3,4} | '*' # Fix later
