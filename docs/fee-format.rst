@@ -98,6 +98,7 @@ verbs are always available.
 .. automodule:: fontFeatures.feeLib.Routine
 .. automodule:: fontFeatures.feeLib.Substitute
 .. automodule:: fontFeatures.feeLib.Position
+.. automodule:: fontFeatures.feeLib.Chain
 
 Optional plugins
 ----------------
@@ -109,6 +110,8 @@ Optional plugins
 .. automodule:: fontFeatures.feeLib.IfCollides
 .. automodule:: fontFeatures.feeLib.IMatra
 .. automodule:: fontFeatures.feeLib.KernToDistance
+.. automodule:: fontFeatures.feeLib.LigatureFinder
+.. automodule:: fontFeatures.feeLib.MedialRa
 
 Writing your own plugins
 ------------------------

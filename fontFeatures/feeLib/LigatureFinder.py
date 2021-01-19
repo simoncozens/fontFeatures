@@ -3,7 +3,7 @@ Ligature Finder
 ===============
 
 Looks for ligature glyphs matching a glyph selector and tries to write ligature rules
-which compose them. e.g. given
+which compose them. e.g. given::
 
     LoadPlugin LigatureFinder;
     Routine ligatures {
