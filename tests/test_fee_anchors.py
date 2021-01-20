@@ -42,11 +42,11 @@ class TestFeeAnchors(unittest.TestCase):
     markClass tildecomb <anchor -542 1256> @top;
 
 
-feature mark {
+feature mark {  lookup Routine_1 { ;
                         pos base A <anchor 679 1600> mark @top;
             pos base B <anchor 611 1612> mark @top;
 
-
+} Routine_1;
 } mark;
 """,
         )
