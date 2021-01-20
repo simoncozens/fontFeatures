@@ -45,11 +45,6 @@ def unparse(font, do_gdef=False, doLookups=True, config={}):
 
     languageSystems = unparseLanguageSystems(gsub_gpos)
 
-    # if 'GDEF' in font and do_gdef:
-    #     table = GDEFUnparser(font["GDEF"]).unparse()
-    #     if table:
-    #         ff.statements.append(table)
-
     if "GSUB" in font:
         GSUBUnparser(
             font["GSUB"], ff, languageSystems, font=font, config=config

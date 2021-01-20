@@ -2,6 +2,7 @@
 import sys
 from fontTools.ttLib import TTFont
 from fontFeatures.ttLib import unparse
+from fontFeatures.ttLib.GDEFUnparser import GDEFUnparser
 from fontFeatures.optimizer import Optimizer
 from argparse import ArgumentParser
 
@@ -63,6 +64,13 @@ if args.input.endswith("c") and args.index == -1:
 
 font = TTFont(args.input, fontNumber=args.index)
 ff = unparse(font, do_gdef=args.gdef, doLookups=(not args.nolookups), config=config)
-if args.optimize:
-    Optimizer(ff).optimize(level=args.optimize)
+# if args.optimize:
+#     Optimizer(ff).optimize(level=args.optimize)
+
 print(ff.asFea())
+
+if args.gdef and 'GDEF':
+    table = GDEFUnparser(font["GDEF"]).unparse()
+    if table:
+        print(table.asFea())
+

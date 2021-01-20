@@ -8,6 +8,7 @@ class GDEFUnparser:
     def __init__(self, table):
         self.table = table.table
         self.feature = TableBlock("GDEF")
+        self.preamble = []
 
     def unparse(self):
         if self.table.MarkAttachClassDef is not None:
@@ -28,11 +29,14 @@ class GDEFUnparser:
         if self.table.LigCaretList is not None:
             self.unparseLigCaretList()
 
-        if len(self.feature.statements) > 0:
-            return self.feature
+        if len(self.feature.statements) > 0 or self.preamble:
+            b = Block()
+            b.statements.extend(self.preamble)
+            b.statements.append(self.feature)
+            return b
 
     def unparseMarkAttachClassDefinitions(self):
-        self.feature.statements.append(Comment("# Mark attachment classes\n"))
+        self.preamble.append(Comment("# Mark attachment classes\n"))
         markAttachClassDef = self.table.MarkAttachClassDef
         attachClasses = {}
 
@@ -42,18 +46,18 @@ class GDEFUnparser:
             attachClasses[val].append(key)
 
         for key, val in attachClasses.items():
-            self.feature.statements.append(
+            self.preamble.append(
                 GlyphClassDefinition("markClass_" + str(key), val)
             )
 
     def unparseMarkGlyphSetDefinitions(self):
         lines = []
-        self.feature.statements.append(Comment("# Mark glyph set classes\n"))
+        self.preamble.append(Comment("# Mark glyph set classes\n"))
         for idx, coverage in enumerate(self.table.MarkGlyphSetsDef.Coverage):
             glyphclass = GlyphClass()
             for g in coverage.glyphs:
                 glyphclass.append(g)
-            self.feature.statements.append(
+            self.preamble.append(
                 GlyphClassDefinition("markGlyphSet_" + str(idx), glyphclass)
             )
 
@@ -76,7 +80,7 @@ class GDEFUnparser:
         # Use named classes for everything
         for k, v in glyphClasses.items():
             definition = GlyphClassDefinition(k, v)
-            self.feature.statements.append(definition)
+            self.preamble.append(definition)
             glyphClasses[k] = GlyphClassName(definition)
 
         self.feature.statements.append(
