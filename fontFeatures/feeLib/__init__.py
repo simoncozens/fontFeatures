@@ -130,7 +130,7 @@ inlineclass_member = (barename|classname):m ws? -> m
 inlineclass_members = inlineclass_member+
 inlineclass = '[' ws inlineclass_members:m ']' -> {"inlineclass": m}
 regex = '/' <(~'/' anything)+>:r '/' -> {"regex": r}
-glyphsuffix = ('.'|'~'):suffixtype <barename+>:suffix -> {"suffixtype":suffixtype, "suffix":suffix}
+glyphsuffix = ('.'|'~'):suffixtype <(letter|digit|"_")+>:suffix -> {"suffixtype":suffixtype, "suffix":suffix}
 glyphselector = (regex | barename | classname | inlineclass ):g glyphsuffix*:s -> GlyphSelector(g,s, self.input.position)
 
 # Number things
