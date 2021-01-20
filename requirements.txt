@@ -1,4 +1,4 @@
-glyphtools>=0.2.0
+glyphtools>=0.7.0
 fs
 fontTools>=4.10.0
 beziers>=0.1.0
