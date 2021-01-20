@@ -23,7 +23,8 @@ own routines as well, due to the way that OpenType orders lookups for processing
 """
 
 GRAMMAR = """
-Routine_Args = routinename?:f wsc '{' wsc statement+:s '}' wsc flag*:flags -> (f,s, flags)
+Routine_Args = routinename?:f wsc routine_tail?:tail wsc -> (f,tail)
+routine_tail =  '{' wsc statement+:s '}' wsc flag*:flags -> (s, flags)
 
 routinename = <(letter|digit|"_")+>
 
@@ -42,7 +43,11 @@ import fontFeatures
 
 class Routine:
     @classmethod
-    def action(self, parser, routinename, statements, flags):
+    def action(self, parser, routinename, tail):
+        if not tail:
+            rr = fontFeatures.RoutineReference(name = routinename)
+            return [rr]
+        statements, flags = tail;
         r = fontFeatures.Routine()
         if routinename:
           r.name = routinename
