@@ -93,7 +93,9 @@ import warnings
 
 
 GRAMMAR = """
-predicate = ws 'and' ws '(' ws <letter+>:metric ws ('>='|'<='|'='|'<'|'>'):comparator ws (<digit+>|bracketed_metric):value ws ')' -> {'predicate': metric, 'comparator': comparator, 'value': value}
+predicate = ws 'and' ws (has_anchor_predicate | category_predicate |'not'?:n ws  '(' ws <letter+>:metric ws ('>='|'<='|'='|'<'|'>'):comparator ws (<digit+>|bracketed_metric):value ws ')' -> {'predicate': metric, 'comparator': comparator, 'value': value, 'inverted': n} )
+has_anchor_predicate = 'not'?:n ws 'hasanchor(' barename:anchor ')' -> {'predicate': 'hasanchor', 'value': anchor["barename"], 'inverted':n }
+category_predicate = 'not'?:n ws 'category(' barename:cat ')' -> {'predicate': 'category', 'value': cat["barenamed"], 'inverted':n }
 bracketed_metric = <letter+>:metric '(' <(letter|digit|"."|"_")+>:glyph ')' -> {'metric': metric, 'glyph': glyph}
 andconjunction = glyphselector:l ws '&' ws primary:r -> {'conjunction': 'and', 'left': l, 'right': r}
 orconjunction = glyphselector:l2 ws '|' ws primary:r2 -> {'conjunction': 'or', 'left': l2, 'right': r2}
@@ -133,31 +135,41 @@ class DefineClass:
 
     @classmethod
     def meets_predicate(self, glyphname, predicate, parser):
+        inverted = predicate["inverted"]
         metric = predicate["predicate"]
-        comp = predicate["comparator"]
-        if isinstance(predicate["value"], dict):
-            v = predicate["value"]
-            testvalue_metrics = get_glyph_metrics(parser.font, v["glyph"])
-            if v["metric"] not in testvalue_metrics:
-                raise ValueError("Unknown metric '%s'" % metric)
-            testvalue = testvalue_metrics[v["metric"]]
+        if metric == "hasanchor":
+            anchor = predicate["value"]
+            truth = glyphname in parser.fontfeatures.anchors and anchor in parser.fontfeatures.anchors[glyphname]
+        elif metric == "category":
+            cat = predicate["value"]
+            truth = parser.font[glyphname].category == cat
         else:
-            testvalue = int(predicate["value"])
+            comp = predicate["comparator"]
+            if isinstance(predicate["value"], dict):
+                v = predicate["value"]
+                testvalue_metrics = get_glyph_metrics(parser.font, v["glyph"])
+                if v["metric"] not in testvalue_metrics:
+                    raise ValueError("Unknown metric '%s'" % metric)
+                testvalue = testvalue_metrics[v["metric"]]
+            else:
+                testvalue = int(predicate["value"])
 
-        metrics = get_glyph_metrics(parser.font, glyphname)
-        if metric not in metrics:
-            raise ValueError("Unknown metric '%s'" % metric)
-        value = metrics[metric]
-        if comp == ">":
-            return value > testvalue
-        elif comp == "<":
-            return value < testvalue
-        elif comp == ">=":
-            return value >= testvalue
-        elif comp == "<=":
-            return value <= testvalue
-        raise ValueError("Bad comparator (can't happen?)")
-
+            metrics = get_glyph_metrics(parser.font, glyphname)
+            if metric not in metrics:
+                raise ValueError("Unknown metric '%s'" % metric)
+            value = metrics[metric]
+            if comp == ">":
+                truth = value > testvalue
+            elif comp == "<":
+                truth = value < testvalue
+            elif comp == ">=":
+                truth = value >= testvalue
+            elif comp == "<=":
+                truth = value <= testvalue
+            raise ValueError("Bad comparator (can't happen?)")
+        if inverted:
+            truth = not truth
+        return truth
 
 class DefineClassBinned(DefineClass):
     @classmethod
