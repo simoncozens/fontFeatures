@@ -19,19 +19,23 @@ import fontFeatures
 GRAMMAR = """
 LigatureFinder_Args = glyphselector:g -> (g,)
 """
+import re
 
 VERBS = ["LigatureFinder"]
-
 
 class LigatureFinder:
     @classmethod
     def action(cls, parser, ligatures):
-        ligatures = ligatures.resolve(parser.fontfeatures, parser.font)
+        ligatures = sorted(ligatures.resolve(parser.fontfeatures, parser.font),key=lambda a:len(a))
         rv = []
+        glyphnames = "|".join(sorted(parser.font.keys(),key=lambda a:len(a)))
         for l in ligatures:
-            components = l.split("_")
-            if len(components) > 1 and all(c in parser.font.keys() for c in components):
-                rv.append(fontFeatures.Substitution(
-                        [ [c] for c in components], replacement=[[l]]
-                    ))
+            for liglen in range(5,0,-1):
+                ligre = "^" + ("("+glyphnames+")_") * liglen + "(" + glyphnames + ")$"
+                m = re.match(ligre, l)
+                if m:
+                    rv.append(fontFeatures.Substitution(
+                            [ [c] for c in m.groups()], replacement=[[l]]
+                        ))
+                    break
         return [fontFeatures.Routine(rules=rv)]
