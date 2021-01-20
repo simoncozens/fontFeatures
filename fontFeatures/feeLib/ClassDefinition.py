@@ -34,6 +34,7 @@ against the expression given::
   - ``yMin`` (minimum Y coordinate)
   - ``yMax`` (maximum Y coordinate)
   - ``rise`` (difference in Y coordinate between cursive entry and exit)
+  - ``fullwidth`` (``xMax``-``xMin``)
 
 - The second part is a comparison operator (``>=``, ``<=``,
   ``=``, ``<``, or ``>``).
@@ -166,7 +167,8 @@ class DefineClass:
                 truth = value >= testvalue
             elif comp == "<=":
                 truth = value <= testvalue
-            raise ValueError("Bad comparator (can't happen?)")
+            else:
+                raise ValueError("Bad comparator %s (can't happen?)" % comp)
         if inverted:
             truth = not truth
         return truth
