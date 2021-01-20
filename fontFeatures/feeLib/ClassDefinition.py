@@ -48,6 +48,11 @@ less than the advance width of the ``space`` glyph::
 
     DefineClass @shorter_than_space = @alpha and (width < width(space));
 
+- As well as testing for glyph metrics, the following other relationships
+  are defined:
+
+  - ``hasanchor(anchorname)`` (true if the glyph has the named anchor)
+  - ``category(base)`` (true if the glyph has the given category)
 
 Binned Definitions
 ------------------

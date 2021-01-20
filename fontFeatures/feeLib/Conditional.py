@@ -2,7 +2,8 @@
 Conditional
 ===========
 
-Rules can be applied conditionally using the `If` statement::
+Rules can be applied conditionally using the `If` statement. These will make
+more sense when you can define variables.
 
 Examples::
 
