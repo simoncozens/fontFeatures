@@ -158,7 +158,8 @@ fee_value_record_member = ("xAdvance"| "xPlacement" | "yAdvance" | "yPlacement")
         "Chain",
         "Anchors",
         "Routine",
-        "Include"
+        "Include",
+        "Variables"
     ]
 
     def __init__(self, font):
