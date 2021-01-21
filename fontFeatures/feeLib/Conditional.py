@@ -15,8 +15,6 @@ Examples::
 
 import fontFeatures
 
-def docomparison(l,r):
-    import code; code.interact(local=locals())
 GRAMMAR = """
 If_Args = boolean_condition:c wsc '{' wsc statement+:s wsc '}' -> (c,s)
 boolean_condition = or | and | boolean_term
@@ -34,7 +32,6 @@ VERBS = ["If"]
 class If:
     @classmethod
     def action(self, parser, condition, statements):
-        print(condition)
         if bool(condition):
             return parser.filterResults(statements)
         else:
