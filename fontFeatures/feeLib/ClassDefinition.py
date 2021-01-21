@@ -99,7 +99,7 @@ import warnings
 
 
 GRAMMAR = """
-predicate = ws 'and' ws (has_anchor_predicate | category_predicate |'not'?:n ws  '(' ws <letter+>:metric ws ('>='|'<='|'='|'<'|'>'):comparator ws (<digit+>|bracketed_metric):value ws ')' -> {'predicate': metric, 'comparator': comparator, 'value': value, 'inverted': n} )
+predicate = ws 'and' ws (has_anchor_predicate | category_predicate |'not'?:n ws  '(' ws <letter+>:metric ws ('>='|'<='|'='|'<'|'>'):comparator ws (integer|bracketed_metric):value ws ')' -> {'predicate': metric, 'comparator': comparator, 'value': value, 'inverted': n} )
 has_anchor_predicate = 'not'?:n ws 'hasanchor(' barename:anchor ')' -> {'predicate': 'hasanchor', 'value': anchor["barename"], 'inverted':n }
 category_predicate = 'not'?:n ws 'category(' barename:cat ')' -> {'predicate': 'category', 'value': cat["barenamed"], 'inverted':n }
 bracketed_metric = <letter+>:metric '(' <(letter|digit|"."|"_")+>:glyph ')' -> {'metric': metric, 'glyph': glyph}
