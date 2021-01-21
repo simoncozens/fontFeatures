@@ -67,6 +67,7 @@ A *glyph selector* is a way of specifying a set of glyphs in the FEE language. T
 - An class name: ``@lc``
 - An inline class: ``[a e i o u]`` (Inline classes may also contain class names, but may *not* contain ranges.)
 - A regular expression: ``/\.sc/``. All glyph names in the font which match the expression will be selected. (This is another reason why FEE needs the font beforehand.)
+- A Unicode codepoint: ``U+1234`` (This will be mapped to a glyph in the font. If no glyph exists, an error is raised.)
 
 Any of these forms may be followed by zero or more *suffixing operations*
 or *desuffixing operations*. A suffixing operation begins with a period,

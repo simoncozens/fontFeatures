@@ -35,6 +35,8 @@ class GlyphSelector:
             returned = "@" + self.selector["classname"]
         elif "regex" in self.selector:
             returned = "/" + self.selector["regex"] + "/"
+        elif "unicodeglyph" in self.selector:
+            returned = "U+%04X" % self.selector["unicodeglyph"]
         elif "inlineclass" in self.selector:
             items = [
                 GlyphSelector(i, (), self.location)
@@ -62,6 +64,15 @@ class GlyphSelector:
         glyphs = font.keys()
         if "barename" in self.selector:
             returned = [self.selector["barename"]]
+        elif "unicodeglyph" in self.selector:
+            cp = self.selector["unicodeglyph"]
+            glyph = font.glyphForCodepoint(cp, fallback=False)
+            if not glyph:
+                raise ValueError(
+                    "Font does not contain glyph for U+%04X (at %s)"
+                    % (cp, self.location)
+                )
+            returned = [glyph]
         elif "inlineclass" in self.selector:
             returned = list(
                 collapse(
@@ -115,6 +126,7 @@ class FeeParser:
     Args:
         font: A TTFont object or glyphsLib GSFontMaster object.
     """
+
     basegrammar = """
 feefile = wsc statement+
 statement = verb:v wsc callRule(v "Args"):args ws ';' wsc -> parser.do(v, args)
@@ -126,12 +138,14 @@ verb = <letter+>:x ?(x in self.valid_verbs) -> x
 # Ways of specifying glyphs
 classname = '@' <(letter|"_")+>:b  -> {"classname": b}
 barename = <(letter|digit|"."|"_")+ (("."|"_"|"-") (letter|digit)+)*>:b -> {"barename": b}
+hexdigit = anything:x ?(x in '0123456789abcdefABCDEF') -> x
+unicodeglyphname = 'U+' <hexdigit+>:u -> {"unicodeglyph": int(u,16) }
 inlineclass_member = (barename|classname):m ws? -> m
 inlineclass_members = inlineclass_member+
 inlineclass = '[' ws inlineclass_members:m ']' -> {"inlineclass": m}
 regex = '/' <(~'/' anything)+>:r '/' -> {"regex": r}
 glyphsuffix = ('.'|'~'):suffixtype <(letter|digit|"_")+>:suffix -> {"suffixtype":suffixtype, "suffix":suffix}
-glyphselector = (regex | barename | classname | inlineclass ):g glyphsuffix*:s -> GlyphSelector(g,s, self.input.position)
+glyphselector = (unicodeglyphname | regex | barename | classname | inlineclass ):g glyphsuffix*:s -> GlyphSelector(g,s, self.input.position)
 
 # Number things
 bareinteger = ('-'|'+')?:sign <digit+>:i -> (-int(i) if sign == "-" else int(i))
@@ -159,7 +173,7 @@ fee_value_record_member = ("xAdvance"| "xPlacement" | "yAdvance" | "yPlacement")
         "Anchors",
         "Routine",
         "Include",
-        "Variables"
+        "Variables",
     ]
 
     def __init__(self, font):
