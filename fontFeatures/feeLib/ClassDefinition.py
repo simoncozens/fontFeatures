@@ -106,7 +106,7 @@ import warnings
 
 
 GRAMMAR = """
-predicate = ws 'and' ws ( has_glyph_predicate | category_predicate | has_anchor_predicate | comp_predicate )
+predicate = ws 'and' ws ( (has_glyph_predicate | category_predicate | has_anchor_predicate) | comp_predicate )
 comp_predicate = 'not'?:n ws  '(' ws <letter+>:metric ws ('>='|'<='|'='|'<'|'>'):comparator ws (<digit+>|bracketed_metric):value ws ')' -> {'predicate': metric, 'comparator': comparator, 'value': value, 'inverted': n}
 has_anchor_predicate = 'not'?:n ws 'hasanchor(' barename:anchor ')' -> {'predicate': 'hasanchor', 'value': anchor["barename"], 'inverted':n }
 has_glyph_predicate = 'not'?:n ws 'hasglyph(' regex:replace ws barename:withs ')' -> {'predicate': 'hasglyph', 'value': {'replace': replace["regex"], 'with': withs["barename"]}, 'inverted':n }
