@@ -17,6 +17,11 @@ statement using intersection (``|``) and union (``&``) operators::
     DefineClass @all_marks = @lower_marks | @upper_marks;
     DefineClass @uppercase_vowels = @uppercase & @vowels;
 
+As well as subtracted (``-``):
+
+    DefineClass @ABCD = A | B | C | D;
+    DefineClass @ABC = @ABCD - D;
+
 Finally, glyph classes can be filtered through the use of one or more
 *predicates*, which take the form ``and`` followed by a
 bracketed relationship, and which tests the properties of the glyphs
@@ -107,10 +112,10 @@ has_anchor_predicate = 'not'?:n ws 'hasanchor(' barename:anchor ')' -> {'predica
 has_glyph_predicate = 'not'?:n ws 'hasglyph(' regex:replace ws barename:withs ')' -> {'predicate': 'hasglyph', 'value': {'replace': replace["regex"], 'with': withs["barename"]}, 'inverted':n }
 category_predicate = 'not'?:n ws 'category(' barename:cat ')' -> {'predicate': 'category', 'value': cat["barename"], 'inverted':n }
 bracketed_metric = <letter+>:metric '(' <(letter|digit|"."|"_")+>:glyph ')' -> {'metric': metric, 'glyph': glyph}
-andconjunction = glyphselector:l ws '&' ws primary:r -> {'conjunction': 'and', 'left': l, 'right': r}
-orconjunction = glyphselector:l2 ws '|' ws primary:r2 -> {'conjunction': 'or', 'left': l2, 'right': r2}
+conjunction = glyphselector:l ws ('&'|'|'|'-'):conjunction ws primary:r -> {'conjunction': {"&":"and","|":"or","-":"subtract"}[conjunction], 'left': l, 'right': r}
+
 primary_paren = '(' ws primary:p ws ')' -> p
-primary =  primary_paren | orconjunction | andconjunction | glyphselector
+primary = primary_paren | conjunction | glyphselector
 
 DefineClass_Args = classname:c ws '=' ws definition:d -> (c,d)
 definition = primary:g predicate*:p -> (g,p)
@@ -138,8 +143,10 @@ class DefineClass:
             right = set(self.resolve_definition(parser, primary["right"]))
             if primary["conjunction"] == "or":
                 return list(left | right)
-            else:
+            elif primary["conjunction"] == "and":
                 return list(left & right)
+            else: #subtract
+                return set(left) - set(right)
         else:
             return primary.resolve(parser.fontfeatures, parser.font)
 
