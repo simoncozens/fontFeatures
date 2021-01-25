@@ -51,6 +51,8 @@ less than the advance width of the ``space`` glyph::
 - As well as testing for glyph metrics, the following other relationships
   are defined:
 
+  - ``hasglyph(regex string)`` (true if glyph after replacement of regex by
+    string exists in the font)
   - ``hasanchor(anchorname)`` (true if the glyph has the named anchor)
   - ``category(base)`` (true if the glyph has the given category)
 
@@ -99,9 +101,11 @@ import warnings
 
 
 GRAMMAR = """
-predicate = ws 'and' ws (has_anchor_predicate | category_predicate |'not'?:n ws  '(' ws <letter+>:metric ws ('>='|'<='|'='|'<'|'>'):comparator ws (<digit+>|bracketed_metric):value ws ')' -> {'predicate': metric, 'comparator': comparator, 'value': value, 'inverted': n} )
+predicate = ws 'and' ws (( has_glyph_predicate | category_predicate | has_anchor_predicate ) | comp_predicate )
+comp_predicate = 'not'?:n ws  '(' ws <letter+>:metric ws ('>='|'<='|'='|'<'|'>'):comparator ws (<digit+>|bracketed_metric):value ws ')' -> {'predicate': metric, 'comparator': comparator, 'value': value, 'inverted': n}
 has_anchor_predicate = 'not'?:n ws 'hasanchor(' barename:anchor ')' -> {'predicate': 'hasanchor', 'value': anchor["barename"], 'inverted':n }
-category_predicate = 'not'?:n ws 'category(' barename:cat ')' -> {'predicate': 'category', 'value': cat["barenamed"], 'inverted':n }
+has_glyph_predicate = 'not'?:n ws 'hasglyph(' regex:replace ws barename:withs ')' -> {'predicate': 'hasglyph', 'value': {'replace': replace["regex"], 'with': withs["barename"]}, 'inverted':n }
+category_predicate = 'not'?:n ws 'category(' barename:cat ')' -> {'predicate': 'category', 'value': cat["barename"], 'inverted':n }
 bracketed_metric = <letter+>:metric '(' <(letter|digit|"."|"_")+>:glyph ')' -> {'metric': metric, 'glyph': glyph}
 andconjunction = glyphselector:l ws '&' ws primary:r -> {'conjunction': 'and', 'left': l, 'right': r}
 orconjunction = glyphselector:l2 ws '|' ws primary:r2 -> {'conjunction': 'or', 'left': l2, 'right': r2}
@@ -149,6 +153,8 @@ class DefineClass:
         elif metric == "category":
             cat = predicate["value"]
             truth = parser.font[glyphname].category == cat
+        elif metric == "hasglyph":
+            truth = re.sub(predicate["value"]["replace"], predicate["value"]["with"], glyphname) in parser.font
         else:
             comp = predicate["comparator"]
             if isinstance(predicate["value"], dict):
