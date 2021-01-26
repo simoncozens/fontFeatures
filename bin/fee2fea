@@ -12,7 +12,7 @@ import warnings
 parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument('--load', action='store_true',
                     help='Load features from font file')
-parser.add_argument('-O', nargs='?', const=1, type=int, default=1,
+parser.add_argument('-O', nargs='?', const=1, type=int, default=0,
                     help='Optimization level')
 parser.add_argument("--master",
                     help="Master name for .glyphs fonts", metavar="MASTER")
