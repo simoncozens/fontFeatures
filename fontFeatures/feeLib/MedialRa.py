@@ -35,7 +35,7 @@ class MedialRa:
         rasAndOverhangs = list(sorted(rasAndOverhangs))
 
         for b in bases:
-            w = parser.font[b].width - (parser.font[b].rightMargin + parser.font[b].leftMargin)
+            w = parser.font[b].width - ((parser.font[b].rightMargin or 0) + (parser.font[b].leftMargin or 0))
             bestRa = None
             # Strictly more than glyph width
             for ra, overhang in rasAndOverhangs:
