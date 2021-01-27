@@ -42,7 +42,7 @@ class BufferItem:
 
     @classmethod
     def new_unicode(klass, codepoint):
-        self = BufferItem()
+        self = klass()
         self.codepoint = codepoint
         self.glyph = None
         self.feature_masks = {}
@@ -50,7 +50,7 @@ class BufferItem:
 
     @classmethod
     def new_glyph(klass, glyph, font):
-        self = BufferItem()
+        self = klass()
         self.codepoint = None
         self.glyph = glyph
         self.feature_masks = {}
@@ -110,6 +110,8 @@ class BufferItem:
 
 
 class Buffer:
+    itemclass = BufferItem
+
     def __init__(self, font, glyphs=[], unicodes=[], direction=None, script=None, language=None):
         self.font = font
         self.direction = direction
@@ -122,15 +124,17 @@ class Buffer:
         self.flags = 0
         self.current_feature_mask = None
         if glyphs:
-            self.items = [BufferItem.new_glyph(g, font) for g in glyphs]
+            self.store_glyphs(glyphs)
             self.clear_mask()
         elif unicodes:
             self.store_unicode(unicodes)
             self.guess_segment_properties()
 
+    def store_glyphs(self, glyphs):
+        self.items = [self.itemclass.new_glyph(g, self.font) for g in glyphs]
 
     def store_unicode(self, unistring):
-        self.items = [BufferItem.new_unicode(ord(char)) for char in unistring ]
+        self.items = [self.itemclass.new_unicode(ord(char)) for char in unistring ]
 
     def guess_segment_properties(self):
         for u in self.items:
