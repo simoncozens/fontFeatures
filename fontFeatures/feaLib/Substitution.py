@@ -13,11 +13,11 @@ def glyphref(g):
 def is_paired(self):
     # One of the substitution/replacements has all-but-one arity one,
     # and both arities are the same
-    input_lengths = [len(x) for x in self.input if len(x) != 1]
-    replacement_lengths = [len(x) for x in self.replacement if len(x) != 1]
-    if not (len(input_lengths) == 1 and len(replacement_lengths) ==1):
+    self.input_lengths = [len(x) for x in self.input if len(x) != 1]
+    self.replacement_lengths = [len(x) for x in self.replacement if len(x) != 1]
+    if not (len(self.input_lengths) == 1 and len(self.replacement_lengths) ==1):
         return False
-    if input_lengths[0] != replacement_lengths[0]:
+    if self.input_lengths[0] != self.replacement_lengths[0]:
         import warnings
         warnings.warn("Unbalanced paired substitution")
         return False
@@ -40,29 +40,60 @@ def paired_ligature(self):
             replacements.append(j)
     rhs = zip(*replacements)
     for l, r in zip(lhs,rhs):
-        b.statements.append(
-            feaast.LigatureSubstStatement(
+        stmt = feaast.LigatureSubstStatement(
             [glyphref(x) for x in self.precontext],
             [glyphref([x]) for x in l],
             [glyphref(x) for x in self.postcontext],
             glyphref([r[0]]),
             False,
         )
+        b.statements.append(stmt)
+    return b
+
+# Expand multiple substitutions, such that:
+#   * Substitute [a b] -> before_tail [a.2 b.2] tail;
+# Becomes in FEA:
+#   * sub a by before_tail a.2 tail;
+#   * sub b by before_tail b.2 tail;
+def paired_mult(self):
+    b = feaast.Block()
+
+    if len(self.input_lengths) != 1:
+        raise ValueError("Multiple substitution only valid on input of length one, use a Chain instead")
+
+    input_length = self.input_lengths[0]
+
+    if not sum([l for l in self.replacement_lengths if l == 1]) in [len(self.replacement_lengths), len(self.replacement_lengths)-1]:
+        raise ValueError("Cannot expand multiple glyph classes in a multiple substitution — creates ambiguity")
+
+    # Look for the glyph class in the replacement, or default to first glyph in replacement
+    glyphcls = next((i for i, v in enumerate(self.replacement) if len(v)> 1), 0)
+
+    if input_length != len(self.replacement[glyphcls]):
+        raise ValueError("Glyph class in input must be same length as that in replacement. {} != {}".format(input_length, len(self.replacement[glyphcls])))
+
+    zipped = zip(self.input[0], self.replacement[glyphcls])
+
+    prior_reps = self.replacement[:glyphcls]
+    after_reps = self.replacement[glyphcls+1:]
+
+    for f, t in zipped:
+        stmt = feaast.MultipleSubstStatement(
+            [glyphref(x) for x in self.precontext],
+            glyphref(f),
+            [glyphref(x) for x in self.postcontext],
+            [glyphref(g) for g in prior_reps+[t]+after_reps]
         )
+        b.statements.append(stmt)
+
     return b
 
 def asFeaAST(self):
     lut = lookup_type(self)
     if not lut:
         return feaast.Comment("")
-    if lut == 3:
-        return feaast.AlternateSubstStatement(
-            [glyphref(x) for x in self.precontext],
-            glyphref(self.input[0]),
-            [glyphref(x) for x in self.postcontext],
-            feaast.GlyphClass([feaast.GlyphName(x) for x in self.replacement[0]]),
-        )
-    elif lut == 1:
+
+    if lut == 1: # GSUB 1 Single Substitution
         return feaast.SingleSubstStatement(
             [glyphref(x) for x in self.input],
             [glyphref(x) for x in self.replacement],
@@ -70,7 +101,25 @@ def asFeaAST(self):
             [glyphref(x) for x in self.postcontext],
             False,
         )
-    elif lut == 4:
+    elif lut == 2: # GSUB 2 Multiple Substitution
+        # Paired rules need to become a set of statements
+        if is_paired(self):
+            return paired_mult(self)
+
+        return feaast.MultipleSubstStatement(
+            [glyphref(x) for x in self.precontext],
+            glyphref(self.input[0]),
+            [glyphref(x) for x in self.postcontext],
+            [glyphref(x) for x in self.replacement],
+        )
+    elif lut == 3: # GSUB 3 Alternate Substitution
+        return feaast.AlternateSubstStatement(
+            [glyphref(x) for x in self.precontext],
+            glyphref(self.input[0]),
+            [glyphref(x) for x in self.postcontext],
+            feaast.GlyphClass([feaast.GlyphName(x) for x in self.replacement[0]]),
+        )
+    elif lut == 4: # GSUB 4 Ligature Substitution
         # Paired rules need to become a set of statements
         if is_paired(self):
             return paired_ligature(self)
@@ -82,24 +131,16 @@ def asFeaAST(self):
             glyphref(self.replacement[0]),
             False,
         )
-    elif lut == 8:
+    elif lut in [5, 6, 7]: # GSUB 5, 6, 7 Different types of contextual substitutions
+        raise NotImplementedError("Use the Chain verb for this")
+    elif lut == 8: # GSUB 8 Reverse Chaining Single Substitution
         return feaast.ReverseChainSingleSubstStatement(
             [glyphref(x) for x in self.precontext],
             [glyphref(x) for x in self.postcontext],
             [glyphref(x) for x in self.input],
             [glyphref(self.replacement[0])],
         )
-    elif lut == 9:
-        raise ValueError
-    elif lut == 2:
-        return feaast.MultipleSubstStatement(
-            [glyphref(x) for x in self.precontext],
-            glyphref(self.input[0]),
-            [glyphref(x) for x in self.postcontext],
-            [glyphref(x) for x in self.replacement],
-        )
+    elif lut >= 9:
+        raise NotImplementedError("Invalid GSUB lookup type requested: {}".format(lut))
 
-    import warnings
-
-    warnings.warn("Couldn't convert Substitution Lookup Type %i" % lut)
-    raise ValueError()
+    raise ValueError("LookupType must be a single positive integer")
