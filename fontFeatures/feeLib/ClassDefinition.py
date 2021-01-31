@@ -112,10 +112,12 @@ has_anchor_predicate = 'not'?:n ws 'hasanchor(' barename:anchor ')' -> {'predica
 has_glyph_predicate = 'not'?:n ws 'hasglyph(' regex:replace ws barename:withs ')' -> {'predicate': 'hasglyph', 'value': {'replace': replace["regex"], 'with': withs["barename"]}, 'inverted':n }
 category_predicate = 'not'?:n ws 'category(' barename:cat ')' -> {'predicate': 'category', 'value': cat["barename"], 'inverted':n }
 bracketed_metric = <letter+>:metric '(' <(letter|digit|"."|"_")+>:glyph ')' -> {'metric': metric, 'glyph': glyph}
-conjunction = glyphselector:l ws ('&'|'|'|'-'):conjunction ws primary:r -> {'conjunction': {"&":"and","|":"or","-":"subtract"}[conjunction], 'left': l, 'right': r}
 
 primary_paren = '(' ws primary:p ws ')' -> p
 primary = primary_paren | conjunction | glyphselector
+
+conjunction = glyphselector:l ws ('&'|'|'|'-'):conjunction ws primary:r -> {'conjunction': {"&":"and","|":"or","-":"subtract"}[conjunction], 'left': l, 'right': r}
+classname = '@' barename:b -> {"classname": b["barename"]} # Parsley forgot...
 
 DefineClass_Args = classname:c ws '=' ws definition:d -> (c,d)
 definition = primary:g predicate*:p -> (g,p)

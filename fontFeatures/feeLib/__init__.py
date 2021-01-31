@@ -136,7 +136,7 @@ comment = '#' rest_of_line ws?
 verb = <letter+>:x ?(x in self.valid_verbs) -> x
 
 # Ways of specifying glyphs
-classname = '@' <(letter|"_")+>:b  -> {"classname": b}
+classname = '@' barename:b -> {"classname": b["barename"]}
 barename = <(letter|digit|"."|"_")+ (("."|"_"|"-") (letter|digit)+)*>:b -> {"barename": b}
 hexdigit = anything:x ?(x in '0123456789abcdefABCDEF') -> x
 unicodeglyphname = 'U+' <hexdigit+>:u -> {"unicodeglyph": int(u,16) }
