@@ -39,6 +39,7 @@ ReverseSubstitute_Args = glyphselector:l ws '->' ws? (gsws | dollar_gs):r langua
 normal_sub_args = gsws+:l '->' ws? (gsws | dollar_gs)+:r languages?:languages -> (l,r,languages, [], [])
 context_sub_args = gsws*:pre '{' ws gsws+:l2 ws '}' ws gsws*:post '->' ws (gsws | dollar_gs)+:r languages?:languages -> (l2,r,languages, pre, post)
 
+glyphselector = (unicodeglyphname | regex | barename | classname | inlineclass ):g glyphsuffix*:s -> GlyphSelector(g,s, self.input.position)
 
 gsws = glyphselector:g ws? -> g
 dollar_gs = '$' integer:d glyphsuffix*:g ws? -> { "reference": d, "suffixes": g }

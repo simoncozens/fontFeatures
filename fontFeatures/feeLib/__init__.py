@@ -112,8 +112,8 @@ class GlyphSelector:
                     plural = "s"
                 glyphstring = ", ".join(notFound)
                 warnings.warn(
-                    "# Couldn't find glyph%s '%s' in font (at %s)"
-                    % (plural, glyphstring, self.location)
+                    "# Couldn't find glyph%s '%s' in font (%s at %s)"
+                    % (plural, glyphstring, self.as_text(), self.location)
                 )
         return list(returned)
 
@@ -137,7 +137,11 @@ verb = <letter+>:x ?(x in self.valid_verbs) -> x
 
 # Ways of specifying glyphs
 classname = '@' barename:b -> {"classname": b["barename"]}
-barename = <(letter|digit|"."|"_")+ (("."|"_"|"-") (letter|digit)+)*>:b -> {"barename": b}
+
+startglyphname = anything:x ?(x in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_")
+midglyphname = anything:x ?(x in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-")
+# barename = <(letter|digit|"_"|'-')+>:b -> {"barename": b}
+barename = <startglyphname midglyphname*>:b -> {"barename": b}
 hexdigit = anything:x ?(x in '0123456789abcdefABCDEF') -> x
 unicodeglyphname = 'U+' <hexdigit+>:u -> {"unicodeglyph": int(u,16) }
 inlineclass_member = (barename|classname):m ws? -> m
