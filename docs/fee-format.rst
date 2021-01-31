@@ -114,6 +114,7 @@ Optional plugins
 .. automodule:: fontFeatures.feeLib.KernToDistance
 .. automodule:: fontFeatures.feeLib.LigatureFinder
 .. automodule:: fontFeatures.feeLib.MedialRa
+.. automodule:: fontFeatures.feeLib.Swap
 
 Writing your own plugins
 ------------------------
