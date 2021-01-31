@@ -35,6 +35,16 @@ class FontFeatures:
         self.scratch = {}  # Space for items to communicate context to each other. :(
         self.doneUsageMarking = False
 
+    def __add__(self, other):
+        combined = FontFeatures()
+        for k in ["namedClasses", "routines", "features", "anchors", "symbols"]:
+            if any([isinstance(getattr(combined, k), c) for c in [dict, bidict]]):
+                getattr(combined, k).update(getattr(self, k))
+                getattr(combined, k).update(getattr(other, k))
+            else:
+                setattr(combined, k, getattr(self, k) + getattr(other, k))
+        return combined
+
     def gensym(self, category):
         if not category in self.symbols:
             self.symbols[category] = 0
