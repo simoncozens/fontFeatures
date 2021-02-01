@@ -47,7 +47,7 @@ import warnings
 GRAMMAR = """
 SetWidth_Args = glyphselector:g ws integer:width "%"?:p -> (g,width,p)
 DuplicateGlyphs_Args = glyphselector:e ws glyphselector:n -> (e,n)
-SetCategory_args = glyphselector:g ws ("base"|"ligature"|"mark"|"component"):c -> (g,c)
+SetCategory_Args = glyphselector:g ws ("base"|"ligature"|"mark"|"component"):c -> (g,c)
 """
 
 VERBS = ["SetWidth", "DuplicateGlyphs", "SetCategory"]
