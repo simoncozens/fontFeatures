@@ -191,6 +191,8 @@ fee_value_record_member = ("xAdvance"| "xPlacement" | "yAdvance" | "yPlacement")
         self.font_modified = False
         self.variables = {}
         self._rebuild_parser()
+        # Set up GDEF table from font
+        self.fontfeatures.setGlyphClassesFromFont(self.font)
         for plugin in self.DEFAULT_PLUGINS:
             self._load_plugin(plugin)
 

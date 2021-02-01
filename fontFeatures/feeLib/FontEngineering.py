@@ -33,6 +33,12 @@ will be altered appropriately. Hence::
 This creates a new glyph `space.ARA` from the `space` glyph and then sets its
 advance width to be 50% of the width of `space`.
 
+The `SetCategory` verb sets a glyph's OpenType category::
+
+    DuplicateGlyphs tonemark tonemark.spacing;
+    SetCategory tonemark.spacing base;
+    SetWidth tonemark.spacing 120;
+
 """
 
 import warnings
@@ -41,9 +47,10 @@ import warnings
 GRAMMAR = """
 SetWidth_Args = glyphselector:g ws integer:width "%"?:p -> (g,width,p)
 DuplicateGlyphs_Args = glyphselector:e ws glyphselector:n -> (e,n)
+SetCategory_args = glyphselector:g ws ("base"|"ligature"|"mark"|"component"):c -> (g,c)
 """
 
-VERBS = ["SetWidth", "DuplicateGlyphs"]
+VERBS = ["SetWidth", "DuplicateGlyphs", "SetCategory"]
 
 class SetWidth:
     @classmethod
@@ -79,3 +86,12 @@ class DuplicateGlyphs:
             parser.font_modified = True
         parser.glyphs = list(parser.font.keys())
         return []
+
+class SetCategory:
+    @classmethod
+    def action(self, parser, glyphs, category):
+        glyphs = glyphs.resolve(parser.fontfeatures, parser.font)
+        for g in glyphs:
+            parser.fontfeatures.glyphclasses[g] = category
+        return []
+

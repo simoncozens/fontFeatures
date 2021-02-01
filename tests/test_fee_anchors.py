@@ -12,6 +12,7 @@ class TestFeeAnchors(unittest.TestCase):
             a = re.sub("lookupflag 0;", "", a)
             a = re.sub("#.*", "", a)
             a = re.sub("\\s+", " ", a)
+            a = re.sub("table GDEF.*GDEF;", "", a)
             return a.strip()
 
         self.assertEqual(alltrim(s1), alltrim(s2))

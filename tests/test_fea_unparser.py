@@ -10,6 +10,7 @@ def assertSufficientlyEqual(s1, s2):
         a = re.sub("lookupflag 0;", "", a)
         a = re.sub("#.*", "", a)
         a = re.sub("\\s+", " ", a)
+        a = re.sub("table GDEF.*GDEF;", "", a)
         a = re.sub(" ; ", " ", a)
         return a.strip()
 

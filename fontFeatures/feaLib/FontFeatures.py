@@ -18,8 +18,13 @@ def asFea(self):
     return self.asFeaAST().asFea()
 
 
+def _to_inline_class(glyphs):
+    return feaast.GlyphClass([feaast.GlyphName(x) for x in glyphs])
+
+
 def reorderAndResolve(self):
     from fontFeatures import Chaining
+
     # Arrange the routines based on dependencies
 
     # First pass ensures all are references and resolves them. We do this in
@@ -28,8 +33,8 @@ def reorderAndResolve(self):
     self.resolveAllRoutines()
 
     # Second pass reorders
-    ordering = list(range(0,len(self.routines)))
-    ptr = len(self.routines)-1
+    ordering = list(range(0, len(self.routines)))
+    ptr = len(self.routines) - 1
     while ptr >= 0:
         routine = self.routines[ptr]
         if not any(isinstance(r, Chaining) for r in routine.rules):
@@ -42,7 +47,9 @@ def reorderAndResolve(self):
                 if not lookuplist:
                     continue
                 for lookup in lookuplist:
-                    lookup.routine.usecount = 999 # Always explicitly list referenced lookups
+                    lookup.routine.usecount = (
+                        999  # Always explicitly list referenced lookups
+                    )
                     ix = self.routines.index(lookup.routine)
                     if ix > ptr:
                         later.append(ix)
@@ -52,16 +59,19 @@ def reorderAndResolve(self):
         ptr = ptr - 1
     return ordering
 
+
 def asFeaAST(self):
     """Returns this font's features as a feaLib AST object, for later
-  translation to AFDKO code."""
+    translation to AFDKO code."""
     from fontFeatures import Routine, Chaining
 
     ff = feaast.FeatureFile()
 
     add_language_system_statements(self, ff)
 
-    newRoutines = [ self.routines[i] for i in reorderAndResolve(self) ]
+    add_gdef(self, ff)
+
+    newRoutines = [self.routines[i] for i in reorderAndResolve(self)]
 
     # Preamble
     for k in newRoutines:
@@ -73,9 +83,8 @@ def asFeaAST(self):
             ff.statements.extend(pre)
 
     for k, v in self.namedClasses.items():
-        asclass = feaast.GlyphClass([feaast.GlyphName(x) for x in v])
+        asclass = _to_inline_class(v)
         ff.statements.append(feaast.GlyphClassDefinition(k, asclass))
-
 
     ff.statements.append(feaast.Comment(""))
 
@@ -84,12 +93,30 @@ def asFeaAST(self):
             ff.statements.append(k.asFeaAST())
 
     expandedLanguages = []
-    for s,ls in self.scripts_and_languages.items():
+    for s, ls in self.scripts_and_languages.items():
         for l in ls:
-            expandedLanguages.append((s,l))
+            expandedLanguages.append((s, l))
     for k, v in self.features.items():
         f = feaast.FeatureBlock(k)
         for n in v:
             f.statements.append(n.asFeaAST(allLanguages=expandedLanguages))
         ff.statements.append(f)
     return ff
+
+
+def add_gdef(self, ff):
+    gdef = feaast.TableBlock("GDEF")
+    gc = self.glyphclasses
+    categories = {"base": [], "mark": [], "ligature": [], "component": []}
+    for k, v in gc.items():
+        categories[v] = categories.get(v, []) + [k]
+    if categories:
+        gdef.statements.append(
+            feaast.GlyphClassDefStatement(
+                _to_inline_class(categories["base"]),
+                _to_inline_class(categories["mark"]),
+                _to_inline_class(categories["ligature"]),
+                _to_inline_class(categories["component"]),
+            )
+        )
+        ff.statements.append(gdef)

@@ -18,7 +18,7 @@ of them as functions that are called on a glyph string.
 """
 
 from fontTools.ttLib import TTFont
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 from fontTools.feaLib.ast import ValueRecord as feaLibValueRecord
 from itertools import chain
 from bidict import bidict
@@ -26,12 +26,14 @@ from bidict import bidict
 
 class FontFeatures:
     """An object representing the layout rules in a font."""
+
     def __init__(self):
         self.namedClasses = bidict({})
         self.routines = []
         self.features = OrderedDict()
         self.anchors = {}
         self.symbols = {}
+        self.glyphclasses = {}  # Glyph name -> category
         self.scratch = {}  # Space for items to communicate context to each other. :(
         self.doneUsageMarking = False
 
@@ -43,13 +45,15 @@ class FontFeatures:
                 getattr(combined, k).update(getattr(other, k))
             else:
                 setattr(combined, k, getattr(self, k) + getattr(other, k))
+        for mine, theirs in zip(self.glyphclasses, other.glyphclasses):
+            mine |= theirs
         return combined
 
     def gensym(self, category):
         if not category in self.symbols:
             self.symbols[category] = 0
         self.symbols[category] += 1
-        return f'{category}{self.symbols[category]}'
+        return f"{category}{self.symbols[category]}"
 
     def referenceRoutine(self, r):
         """Store a routine and return a reference to it.
@@ -196,7 +200,9 @@ class FontFeatures:
                 if not isinstance(r, Chaining):
                     continue
                 for lookuplistIx in range(len(r.lookups)):
-                    r.lookups[lookuplistIx] = self.ensureLookupsAreReferences(r.lookups[lookuplistIx])
+                    r.lookups[lookuplistIx] = self.ensureLookupsAreReferences(
+                        r.lookups[lookuplistIx]
+                    )
 
     def ensureLookupsAreReferences(self, lookuplist):
         rv = []
@@ -211,12 +217,18 @@ class FontFeatures:
             rv.append(r)
         return rv
 
+    def setGlyphClassesFromFont(self, font):
+        for g in font:
+            self.glyphclasses[g.name] = g.category
+
+
 class Routine:
     """Represent a Routine (similar to OT Lookup).
 
     A routine is a set of rules, sometimes but not always with an explicit name.
     It can apply to a set of language/script pairs.
     """
+
     def __init__(
         self,
         name="",
@@ -286,6 +298,7 @@ class Routine:
     from .shaperLib.Routine import apply_to_buffer
     from .xmlLib.Routine import toXML, fromXML
 
+
 class ExtensionRoutine(Routine):
     def __init__(self, **kwargs):
         if "routines" in kwargs:
@@ -299,6 +312,7 @@ class ExtensionRoutine(Routine):
 
     def asFeaAST(self):
         import fontTools.feaLib.ast as feaast
+
         f = feaast.Block()
         for r in self.routines:
             f.statements.append(r.asFeaAST())
@@ -315,6 +329,7 @@ class ExtensionRoutine(Routine):
     @rules.setter
     def rules(self, foo):
         pass
+
 
 class RoutineReference:
     def __init__(self, name=None, routine=None):
@@ -357,6 +372,7 @@ class Rule:
     from .shaperLib.Rule import would_apply_at_position, pre_post_context_matches
     from .xmlLib.Rule import fromXML, toXML, _makeglyphslots, _slotArray
 
+
 class Substitution(Rule):
     """Represents a Substitution rule.
 
@@ -379,7 +395,7 @@ class Substitution(Rule):
             the inner list containing Routines to apply.
         reverse: Boolean representing if the substitutions should take place from
             the end of the string.
-  """
+    """
 
     def __init__(
         self,
@@ -435,6 +451,7 @@ class Chaining(Rule):
             The outer list represents the positions in the input sequence, with
             the inner list containing Routines to apply.
     """
+
     def __init__(
         self,
         input_,
@@ -497,7 +514,8 @@ class ValueRecord(feaLibValueRecord):
                     xPlacement=vr.xPlacement,
                     yPlacement=vr.yPlacement,
                     xAdvance=vr.xAdvance,
-                    yAdvance=vr.yAdvance)
+                    yAdvance=vr.yAdvance,
+                )
         else:
             self.masters[master] = vr
 
@@ -521,17 +539,19 @@ class ValueRecord(feaLibValueRecord):
         """
         if not hasattr(self, "masters"):
             return self
-        locs = {k: (v.xPlacement, v.yPlacement, v.xAdvance, v.yAdvance) for k,v in self.masters.items()}
-        values = vf.interpolate_tuples(
-            locs, location
-        )
+        locs = {
+            k: (v.xPlacement, v.yPlacement, v.xAdvance, v.yAdvance)
+            for k, v in self.masters.items()
+        }
+        values = vf.interpolate_tuples(locs, location)
         xPlacement, yPlacement, xAdvance, yAdvance = values
         return ValueRecord(
             xPlacement=xPlacement,
             yPlacement=yPlacement,
             xAdvance=xAdvance,
-            yAdvance=yAdvance
+            yAdvance=yAdvance,
         )
+
 
 class Positioning(Rule):
     """Represents a Positioning rule.
@@ -546,7 +566,8 @@ class Positioning(Rule):
             sequence.
         postcontext: A list of list of glyphs which must appear before the input
             sequence.
-  """
+    """
+
     def __init__(
         self,
         glyphs,
@@ -592,10 +613,17 @@ class Attachment(Rule):
         marks: Dictionary. They keys are names of glyphs to act as marks;
             the associated values are a two-element tuple with the coordinates
             of the anchor.
-  """
+    """
+
     def __init__(
-        self, base_name, mark_name, bases=None, marks=None, flags=0, address=None,
-        font=None
+        self,
+        base_name,
+        mark_name,
+        bases=None,
+        marks=None,
+        flags=0,
+        address=None,
+        font=None,
     ):
         self.base_name = base_name
         self.mark_name = mark_name
@@ -608,7 +636,7 @@ class Attachment(Rule):
 
     @property
     def is_cursive(self):
-        return self.base_name == "cursive_entry" or self.base_name == "entry" # XXX
+        return self.base_name == "cursive_entry" or self.base_name == "entry"  # XXX
 
     from .feaLib.Attachment import asFeaAST, feaPreamble
     from .shaperLib.Attachment import shaper_inputs, _do_apply, would_apply_at_position
