@@ -169,7 +169,7 @@ def asFeaAST(self, inFeature=False):
             f.statements.append(asFeaAST(a, inFeature))
         return f
 
-    if hasattr(self, "flags") and self.flags > 0:
+    if hasattr(self, "flags"):
         flags = feaast.LookupFlagStatement(self.flags)
         if self.flags & 0x10 and hasattr(self, "markFilteringSetAsClass"): # XXX
             # We only need the name, not the contents
