@@ -52,10 +52,11 @@ anchors, and using an ``Attach`` statement like the following::
 import fontFeatures
 
 GRAMMAR = """
-Anchors_Args = glyphselector:gs ws '{' ws (anchor_def)+:a ws '}' -> [gs, a]
-anchor_def = <(letter|digit|"."|"_")+>:anchorname ws '<' integer:x ws integer:y '>' ws -> {"name":anchorname, "x": x, "y": y}
 
-Attach_Args = '&' <(letter|digit|"."|"_")+>:anchor1 ws '&' <(letter|digit|"."|"_")+>:anchor2 ws ("marks"|"bases"|"cursive"):attachtype -> [anchor1, anchor2, attachtype]
+Anchors_Args = glyphselector:gs ws '{' ws (anchor_def)+:a ws '}' -> [gs, a]
+anchor = <(letter|digit|"."|"_")+>
+anchor_def = anchor:anchorname ws '<' integer:x ws integer:y '>' ws -> {"name":anchorname, "x": x, "y": y}
+Attach_Args = '&' anchor:anchor1 ws '&' anchor:anchor2 ws ("marks"|"bases"|"cursive"):attachtype -> [anchor1, anchor2, attachtype]
 
 LoadAnchors_Args = ws -> ()
 """
