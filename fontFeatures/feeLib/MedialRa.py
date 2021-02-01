@@ -13,7 +13,7 @@ Same as IMatra, but for Myanmar::
 import fontFeatures
 
 GRAMMAR = """
-MedialRa_Args = glyphselector:bases ws ':' ws glyphselector:medialra ws '->' ws glyphselector:otherras -> (bases,medialra,otherras)
+MedialRa_Args = glyphselector:bases ws ':' ws glyphselector:medialra ws integer?:overshoot ws '->' ws glyphselector:otherras -> (bases,medialra,otherras, overshoot)
 """
 
 VERBS = ["MedialRa"]
@@ -21,17 +21,19 @@ VERBS = ["MedialRa"]
 
 class MedialRa:
     @classmethod
-    def action(cls, parser, bases, medialra, otherras):
+    def action(cls, parser, bases, medialra, otherras, overshoot):
         bases = bases.resolve(parser.fontfeatures, parser.font)
         medialra = medialra.resolve(parser.fontfeatures, parser.font)
         otherras = otherras.resolve(parser.fontfeatures, parser.font)
 
         # Chuck the original ra in the basket
+        if overshoot is None:
+            overshoot = 0
         ras = set(otherras + medialra)
 
         # Organise ras into overhang widths
         ras2bases = {}
-        rasAndOverhangs = [(m, -parser.font[m].rightMargin) for m in ras]
+        rasAndOverhangs = [(m, -parser.font[m].rightMargin+overshoot) for m in ras]
         rasAndOverhangs = list(reversed(sorted(rasAndOverhangs)))
 
         for b in bases:
