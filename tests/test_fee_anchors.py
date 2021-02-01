@@ -9,6 +9,7 @@ import re
 class TestFeeAnchors(unittest.TestCase):
     def assertSufficientlyEqual(self, s1, s2):
         def alltrim(a):
+            a = re.sub("lookupflag 0;", "", a)
             a = re.sub("#.*", "", a)
             a = re.sub("\\s+", " ", a)
             return a.strip()

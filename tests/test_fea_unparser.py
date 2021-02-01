@@ -7,6 +7,7 @@ import re
 
 def assertSufficientlyEqual(s1, s2):
     def alltrim(a):
+        a = re.sub("lookupflag 0;", "", a)
         a = re.sub("#.*", "", a)
         a = re.sub("\\s+", " ", a)
         a = re.sub(" ; ", " ", a)

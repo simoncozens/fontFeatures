@@ -9,6 +9,7 @@ import re
 
 
 def alltrim(a):
+    a = re.sub("lookupflag 0;", "", a)
     a = re.sub("#.*", "", a)
     a = re.sub("\\s+", " ", a)
     return a.strip()
