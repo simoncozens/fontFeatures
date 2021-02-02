@@ -61,7 +61,7 @@ class GlyphSelector:
     def resolve(self, fontfeatures, font, mustExist=True):
         returned = []
         assert isinstance(font, Font)
-        glyphs = font.keys()
+        glyphs = font.exportedGlyphs()
         if "barename" in self.selector:
             returned = [self.selector["barename"]]
         elif "unicodeglyph" in self.selector:

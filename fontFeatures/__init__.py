@@ -218,8 +218,8 @@ class FontFeatures:
         return rv
 
     def setGlyphClassesFromFont(self, font):
-        for g in font:
-            self.glyphclasses[g.name] = g.category
+        for g in font.exportedGlyphs():
+            self.glyphclasses[g] = font[g].category
 
 
 class Routine:

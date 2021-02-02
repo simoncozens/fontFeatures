@@ -78,7 +78,8 @@ class Anchors:
 class LoadAnchors:
     @classmethod
     def action(self, parser):
-        for g in parser.font:
+        for glyphname in parser.font.exportedGlyphs():
+            g = parser.font[glyphname]
             for a in g.anchors:
                 if not g.name in parser.fontfeatures.anchors:
                     parser.fontfeatures.anchors[g.name] = {}
