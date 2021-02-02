@@ -101,6 +101,7 @@ will take any glyph selector and display its contents on standard error.
 
 import re
 from glyphtools import get_glyph_metrics, bin_glyphs_by_metric
+from bidict import ValueDuplicationError
 
 import warnings
 
@@ -135,7 +136,13 @@ class DefineClass:
         predicates = definition[1]
         for p in predicates:
             glyphs = list(filter(lambda x: self.meets_predicate(x, p, parser), glyphs))
-        parser.fontfeatures.namedClasses[classname["classname"]] = tuple(glyphs)
+        try:
+            parser.fontfeatures.namedClasses[classname["classname"]] = tuple(glyphs)
+        except ValueDuplicationError as e:
+            import warnings
+            warnings.warn("Could not define class %s as it contains the same"
+                    " glyphs as an existing class %s" % (classname["classname"],
+                        parser.fontfeatures.namedClasses.inverse[tuple(glyphs)]))
 
     @classmethod
     def resolve_definition(self, parser, primary):
