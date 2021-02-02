@@ -34,6 +34,18 @@ class TestSubstitution(unittest.TestCase):
         self.assertEqual(s.involved_glyphs, set(["a", "b", "c"]))
         self.roundTrip(s)
 
+    def test_multiple_expansion(self):
+        s = Substitution([["a", "b"]], [["a", "b"], "c"])
+        self.assertEqual(s.asFea(), "    sub a by a c;\n    sub b by b c;\n")
+        self.assertEqual(s.involved_glyphs, set(["a", "b", "c"]))
+        self.roundTrip(s)
+
+    def test_multiple_expansion_middle(self):
+        s = Substitution([["a", "b"]], ["d", ["a", "b"], "c"])
+        self.assertEqual(s.asFea(), "    sub a by d a c;\n    sub b by d b c;\n")
+        self.assertEqual(s.involved_glyphs, set(["a", "b", "c", "d"]))
+        self.roundTrip(s)
+
     def test_alternate(self):
         s = Substitution(["a"], [["b", "c"]])
         self.assertEqual(s.asFea(), "sub a from [b c];")
