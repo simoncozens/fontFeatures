@@ -13,11 +13,11 @@ def glyphref(g):
 def is_paired(self):
     # One of the substitution/replacements has all-but-one arity one,
     # and both arities are the same
-    self.input_lengths = [len(x) for x in self.input if len(x) != 1]
-    self.replacement_lengths = [len(x) for x in self.replacement if len(x) != 1]
-    if not (len(self.input_lengths) == 1 and len(self.replacement_lengths) ==1):
+    input_lengths = [len(x) for x in self.input if len(x) != 1]
+    replacement_lengths = [len(x) for x in self.replacement if len(x) != 1]
+    if not (len(input_lengths) == 1 and len(replacement_lengths) ==1):
         return False
-    if self.input_lengths[0] != self.replacement_lengths[0]:
+    if input_lengths[0] != replacement_lengths[0]:
         import warnings
         warnings.warn("Unbalanced paired substitution")
         return False
@@ -58,12 +58,15 @@ def paired_ligature(self):
 def paired_mult(self):
     b = feaast.Block()
 
-    if len(self.input_lengths) != 1:
+    input_lengths = [len(x) for x in self.input]
+    replacement_lengths = [len(x) for x in self.replacement]
+
+    if len(input_lengths) != 1:
         raise ValueError("Multiple substitution only valid on input of length one, use a Chain instead")
 
-    input_length = self.input_lengths[0]
+    input_length = input_lengths[0]
 
-    if not sum([l for l in self.replacement_lengths if l == 1]) in [len(self.replacement_lengths), len(self.replacement_lengths)-1]:
+    if not sum([l for l in replacement_lengths if l == 1]) in [len(replacement_lengths), len(replacement_lengths)-1]:
         raise ValueError("Cannot expand multiple glyph classes in a multiple substitution — creates ambiguity")
 
     # Look for the glyph class in the replacement, or default to first glyph in replacement
