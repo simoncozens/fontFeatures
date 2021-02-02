@@ -9,3 +9,4 @@ bidict
 lxml
 youseedee>=0.3.0
 dataclasses; python_version < '3.7'
+babelfont>=2.0.0
