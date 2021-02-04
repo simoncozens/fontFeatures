@@ -3,9 +3,9 @@ Class Definitions
 =================
 
 To define a named glyph class in the FEE language, use the ``DefineClass``
-verb. This takes three arguments: the first is a class name, which must
-start with the ``@`` character; the second is the symbol ``=``; the third
-is a glyph selector as described above::
+verb. This takes three arguments: the first is a class name, which must start
+with the ``@`` character; the second is the symbol ``=``; the third is a glyph
+selector as described above::
 
     DefineClass @upper_alts = @upper.alt;
     DefineClass @lower = /^[a-z]$/;
@@ -22,10 +22,19 @@ As well as subtracted (``-``):
     DefineClass @ABCD = A | B | C | D;
     DefineClass @ABC = @ABCD - D;
 
+Glyph classes can also be defined using the Unicode codepoints that the glyphs
+map to in the font. For example:
+
+    DefineClass @Q = U+51;
+
+In the PostScript standard, the ASCII digits don't have regex friendly names,
+so you may wish to select them with a Unicode range selector:
+
+    DefineClass @digits = U+30=>U+39;
+
 Finally, glyph classes can be filtered through the use of one or more
-*predicates*, which take the form ``and`` followed by a
-bracketed relationship, and which tests the properties of the glyphs
-against the expression given::
+*predicates*, which take the form ``and`` followed by a bracketed relationship,
+and which tests the properties of the glyphs against the expression given::
 
     DefineClass @short_behs = /^BE/ and (width < 200);
 
@@ -41,15 +50,15 @@ against the expression given::
   - ``rise`` (difference in Y coordinate between cursive entry and exit)
   - ``fullwidth`` (``xMax``-``xMin``)
 
-- The second part is a comparison operator (``>=``, ``<=``,
-  ``=``, ``<``, or ``>``).
+- The second part is a comparison operator (``>=``, ``<=``, ``=``, ``<``, or
+  ``>``).
 
-- The third is either an integer or a metric name and the name of a
-  single glyph in brackets.
+- The third is either an integer or a metric name and the name of a single
+  glyph in brackets.
 
-This last form is best understood by example. The following definition
-selects all members of the glyph class ``@alpha`` whose advance width is
-less than the advance width of the ``space`` glyph::
+This last form is best understood by example. The following definition selects
+all members of the glyph class ``@alpha`` whose advance width is less than the
+advance width of the ``space`` glyph::
 
     DefineClass @shorter_than_space = @alpha and (width < width(space));
 
