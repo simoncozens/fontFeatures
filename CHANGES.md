@@ -3,6 +3,7 @@ CHANGES
 
 1.0.4
 
+* New FEE quickstart in README
 * New FEE verbs: IncludeFea, Swap, SetCategory.
 * Support multiple substitution expansion in FEE.
 * Only include "exported" glyphs in emitted rules.
