@@ -90,6 +90,9 @@ class Attach:
     def action(self, parser, aFrom, aTo, attachtype):
         bases = {}
         marks = {}
+        def _category(k):
+            return parser.fontfeatures.glyphclasses.get(k, parser.font[k].category)
+
         for k, v in parser.fontfeatures.anchors.items():
             if aFrom in v:
                 bases[k] = v[aFrom]
@@ -99,19 +102,19 @@ class Attach:
                 bases = {
                     k: v
                     for k, v in bases.items()
-                    if parser.font[k].category == "mark"
+                    if _category(k) == "mark"
                 }
             else:
                 bases = {
                     k: v
                     for k, v in bases.items()
-                    if parser.font[k].category == "base"
+                    if _category(k) == "base"
                 }
             if attachtype != "cursive":
                 marks = {
                     k: v
                     for k, v in marks.items()
-                    if parser.font[k].category == "mark"
+                    if _category(k) == "mark"
                 }
         return [
             fontFeatures.Routine(
