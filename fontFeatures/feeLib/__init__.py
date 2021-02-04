@@ -37,6 +37,8 @@ class GlyphSelector:
             returned = "/" + self.selector["regex"] + "/"
         elif "unicodeglyph" in self.selector:
             returned = "U+%04X" % self.selector["unicodeglyph"]
+        elif "unicoderange" in self.selector:
+            returned = "U+%04X=>U+%04X" % self.selector["unicoderange"].start, self.selector["unicoderange"].stop
         elif "inlineclass" in self.selector:
             items = [
                 GlyphSelector(i, (), self.location)
@@ -73,6 +75,15 @@ class GlyphSelector:
                     % (cp, self.location)
                 )
             returned = [glyph]
+        elif "unicoderange" in self.selector:
+            returned = list(
+                collapse(
+                    [
+                        GlyphSelector({"unicodeglyph": i}, (), self.location).resolve(fontfeatures, font)
+                        for i in self.selector["unicoderange"]
+                    ]
+                )
+            )
         elif "inlineclass" in self.selector:
             returned = list(
                 collapse(
@@ -142,14 +153,16 @@ startglyphname = anything:x ?(x in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQR
 midglyphname = anything:x ?(x in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-")
 # barename = <(letter|digit|"_"|'-')+>:b -> {"barename": b}
 barename = <startglyphname midglyphname*>:b -> {"barename": b}
-hexdigit = anything:x ?(x in '0123456789abcdefABCDEF') -> x
-unicodeglyphname = 'U+' <hexdigit+>:u -> {"unicodeglyph": int(u,16) }
 inlineclass_member = (barename|classname):m ws? -> m
 inlineclass_members = inlineclass_member+
 inlineclass = '[' ws inlineclass_members:m ']' -> {"inlineclass": m}
 regex = '/' <(~'/' anything)+>:r '/' -> {"regex": r}
+hexdigit = anything:x ?(x in '0123456789abcdefABCDEF') -> x
+unicodechar = 'U+' <hexdigit+>:u -> int(u,16)
+unicoderange = unicodechar:s '=>' unicodechar:e -> {"unicoderange": range(s,e+1)}
+unicodeglyphname = unicodechar:u -> {"unicodeglyph": u }
 glyphsuffix = ('.'|'~'):suffixtype <(letter|digit|"_")+>:suffix -> {"suffixtype":suffixtype, "suffix":suffix}
-glyphselector = (unicodeglyphname | regex | barename | classname | inlineclass ):g glyphsuffix*:s -> GlyphSelector(g,s, self.input.position)
+glyphselector = ( unicoderange | unicodeglyphname | regex | barename | classname | inlineclass ):g glyphsuffix*:s -> GlyphSelector(g,s, self.input.position)
 
 # Number things
 bareinteger = ('-'|'+')?:sign <digit+>:i -> (-int(i) if sign == "-" else int(i))
