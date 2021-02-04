@@ -83,9 +83,9 @@ def paired_mult(self):
     for f, t in zipped:
         stmt = feaast.MultipleSubstStatement(
             [glyphref(x) for x in self.precontext],
-            glyphref(f),
+            glyphref([f]),
             [glyphref(x) for x in self.postcontext],
-            [glyphref(g) for g in prior_reps+[t]+after_reps]
+            [glyphref(g) for g in prior_reps+[[t]]+after_reps]
         )
         b.statements.append(stmt)
 
