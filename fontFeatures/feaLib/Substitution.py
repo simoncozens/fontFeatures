@@ -2,20 +2,37 @@
 import fontTools.feaLib.ast as feaast
 from fontFeatures.ttLib.Substitution import lookup_type
 from itertools import cycle
+from typing import Union
 
-
-def glyphref(g):
+def glyphref(g) -> Union[feaast.GlyphName, feaast.GlyphClass]:
     if len(g) == 1:
         return feaast.GlyphName(g[0])
     return feaast.GlyphClass([feaast.GlyphName(x) for x in g])
 
+# Whether or not the input or the replacement has classes (so, entire statement).
+def has_classes(self) -> bool:
+    input_has_class = next((i for i,v in enumerate([len(x) for x in self.input]) if v>1), None)
+    replacement_has_class = next((i for i,v in enumerate([len(x) for x in self.replacement]) if v>1), None)
 
-def is_paired(self):
-    # One of the substitution/replacements has all-but-one arity one,
-    # and both arities are the same
+    return (input_has_class is not None or replacement_has_class is not None)
+
+# Excepting single glyphs, if classes are defined, the input and replacement
+# all use classes of equal length.
+def all_classes_equal(self) -> bool:
     input_lengths = [len(x) for x in self.input if len(x) != 1]
     replacement_lengths = [len(x) for x in self.replacement if len(x) != 1]
-    if not (len(input_lengths) == 1 and len(replacement_lengths) ==1):
+
+    if len(input_lengths) == 0 and len(replacement_lengths) == 0:
+        return True
+
+    return len(set(input_lengths+replacement_lengths)) == 1
+
+# One of the substitution/replacements has all-but-one arity one,
+# and both arities are the same
+def is_paired(self) -> bool:
+    input_lengths = [len(x) for x in self.input if len(x) != 1]
+    replacement_lengths = [len(x) for x in self.replacement if len(x) != 1]
+    if not (len(input_lengths) == 1 and len(replacement_lengths) == 1):
         return False
     if input_lengths[0] != replacement_lengths[0]:
         import warnings
@@ -23,7 +40,17 @@ def is_paired(self):
         return False
     return True
 
-def paired_ligature(self):
+# Expand ligature substitutions ending in a class, such that:
+#   * Substitute [f f.ss01] i -> [f_i f_i.ss01];
+# Expands to:
+#   * sub f i -> f_i;
+#   * sub f.ss01 i -> f_i.ss01;
+# Likewise:
+#   * Substitute [f f.ss01] [i i.ss01] -> [f_i f_i.ss01];
+# Expands to:
+#   * sub f i -> f_i;
+#   * sub f.ss01 i.ss01 -> f_i.ss01;
+def paired_ligature(self) -> feaast.LigatureSubstStatement:
     b = feaast.Block()
     inputs = []
     for i in self.input:
@@ -39,6 +66,7 @@ def paired_ligature(self):
         else:
             replacements.append(j)
     rhs = zip(*replacements)
+
     for l, r in zip(lhs,rhs):
         stmt = feaast.LigatureSubstStatement(
             [glyphref(x) for x in self.precontext],
@@ -55,7 +83,7 @@ def paired_ligature(self):
 # Becomes in FEA:
 #   * sub a by before_tail a.2 tail;
 #   * sub b by before_tail b.2 tail;
-def paired_mult(self):
+def paired_mult(self) -> feaast.MultipleSubstStatement:
     b = feaast.Block()
 
     input_lengths = [len(x) for x in self.input]
@@ -123,8 +151,8 @@ def asFeaAST(self):
             feaast.GlyphClass([feaast.GlyphName(x) for x in self.replacement[0]]),
         )
     elif lut == 4: # GSUB 4 Ligature Substitution
-        # Paired rules need to become a set of statements
-        if is_paired(self):
+        # Some rules with classes need to become a set of statements.
+        if has_classes(self) and all_classes_equal(self) and not len(self.replacement[0]) == 1:
             return paired_ligature(self)
 
         return feaast.LigatureSubstStatement(

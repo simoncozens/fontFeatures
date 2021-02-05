@@ -28,6 +28,12 @@ class TestSubstitution(unittest.TestCase):
         self.assertEqual(s.involved_glyphs, set(["a", "b", "c"]))
         self.roundTrip(s)
 
+    def test_ligature_expansion(self):
+        s = Substitution([["f", "f.ss01"], ["i", "i.ss01"]], [["f_i", "f_i.ss01"]])
+        self.assertEqual(s.asFea(), "    sub f i by f_i;\n    sub f.ss01 i.ss01 by f_i.ss01;\n")
+        self.assertEqual(s.involved_glyphs, set(["f", "i", "f_i", "f.ss01", "i.ss01", "f_i.ss01"]))
+        self.roundTrip(s)
+
     def test_multiple(self):
         s = Substitution(["a"], ["b", "c"])
         self.assertEqual(s.asFea(), "sub a by b c;")
