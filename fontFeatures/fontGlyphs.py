@@ -26,6 +26,7 @@ class FontGlyphs:
         """
         self.ttFont = ttFont
         self.unparsed = self._unparse_gsub()
+        self.processed_lookups = set()
         self.glyph_inputs = self._get_encoded_glyphs()
         # We enable these features by default since most text-processing clients
         # do the same. If we don't enable these features, many scripts won't
@@ -115,6 +116,10 @@ class FontGlyphs:
         return res
 
     def _process_routine(self, tag, routine):
+        if routine.name in self.processed_lookups:
+            return
+        self.processed_lookups.add(routine.name)
+
         for rule in routine.rules:
             if routine.name.startswith("SingleSubstitution"):
                 self._process_simple_subs(tag, rule)
@@ -152,12 +157,18 @@ class FontGlyphs:
 
     def _process_chained_subs(self, tag, rule):
         inputs = list(
-            itertools.product(*rule.precontext, *rule.input, *rule.postcontext)
+                itertools.product(
+                    *rule.precontext,
+                    *rule.input,
+                    *rule.postcontext
+                )
         )
         # process lks
-        for lk in rule.lookups[0]:
-            # TODO (Marc F) This may fail if there are cycles
-            self._process_routine(tag, lk.routine)
+        for lookup_group in rule.lookups:
+            if not lookup_group:
+                continue
+            for lk in lookup_group:
+                self._process_routine(tag, lk.routine)
 
         for input_ in inputs:
             key = "-".join(input_)
