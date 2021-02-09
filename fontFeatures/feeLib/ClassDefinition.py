@@ -108,56 +108,129 @@ will take any glyph selector and display its contents on standard error.
 
 """
 
+import lark
 import re
 from glyphtools import get_glyph_metrics, bin_glyphs_by_metric
 from bidict import ValueDuplicationError
 
 import warnings
 
+from . import HelperTransformer
+from .util import compare
+from fontFeatures.feeLib import GlyphSelector
 
 GRAMMAR = """
-comp_predicate = 'not'?:n ws  '(' ws <letter+>:metric ws ('>='|'<='|'='|'<'|'>'):comparator ws (<digit+>|bracketed_metric):value ws ')' -> {'predicate': metric, 'comparator': comparator, 'value': value, 'inverted': n}
-has_anchor_predicate = 'not'?:n ws 'hasanchor(' barename:anchor ')' -> {'predicate': 'hasanchor', 'value': anchor["barename"], 'inverted':n }
-has_glyph_predicate = 'not'?:n ws 'hasglyph(' regex:replace ws <midglyphname+>:withs ')' -> {'predicate': 'hasglyph', 'value': {'replace': replace["regex"], 'with': withs}, 'inverted':n }
-predicate = ws 'and' ws ( has_glyph_predicate | category_predicate | has_anchor_predicate | comp_predicate )
-category_predicate = 'not'?:n ws 'category(' barename:cat ')' -> {'predicate': 'category', 'value': cat["barename"], 'inverted':n }
-bracketed_metric = <letter+>:metric '(' <(letter|digit|"."|"_")+>:glyph ')' -> {'metric': metric, 'glyph': glyph}
+has_glyph_predicate: "hasglyph(" REGEX MIDGLYPHNAME* ")"
+has_anchor_predicate: "hasanchor(" BARENAME ")"
+category_predicate: "category(" BARENAME ")"
+predicate: has_glyph_predicate | has_anchor_predicate | category_predicate | metric_comparison
+negated_predicate: "not" predicate
 
-primary_paren = '(' ws primary:p ws ')' -> p
-primary = primary_paren | conjunction | glyphselector
+CONJUNCTOR: "&" | "|" | "-"
+primary: glyphselector | conjunction | predicate | negated_predicate | primary_paren
+primary_paren: "(" primary ")"
+conjunction: primary CONJUNCTOR primary
 
-conjunction = glyphselector:l ws ('&'|'|'|'-'):conjunction ws primary:r -> {'conjunction': {"&":"and","|":"or","-":"subtract"}[conjunction], 'left': l, 'right': r}
-
-DefineClass_Args = classname:c ws '=' ws definition:d -> (c,d)
-definition = primary:g predicate*:p -> (g,p)
-
-DefineClassBinned_Args = classname:c '[' <letter+>:metric ws "," ws <digit+>:bincount ']' ws '=' ws definition:d -> (metric, bincount, c,d)
-
-ShowClass_Args = glyphselector:g -> (g,)
 """
 
-VERBS = ["DefineClass", "ShowClass", "DefineClassBinned"]
+DefineClass_GRAMMAR = """
+?start: action
+action: CLASSNAME "=" primary
+"""
 
-class DefineClass:
-    @classmethod
-    def action(self, parser, classname, definition):
-        glyphs = self.resolve_definition(parser, definition[0])
-        predicates = definition[1]
-        for p in predicates:
-            glyphs = list(filter(lambda x: self.meets_predicate(x, p, parser), glyphs))
+DefineClassBinned_GRAMMAR = """
+?start: action
+action: CLASSNAME "[" METRIC "," NUMBER "]" "=" primary
+"""
+
+PARSEOPTS = dict(use_helpers=True)
+VERBS = ["DefineClass", "DefineClassBinned"]
+
+class DefineClass(HelperTransformer):
+    def _add_glyphs_to_named_class(self, glyphs, classname):
         try:
-            parser.fontfeatures.namedClasses[classname["classname"]] = tuple(glyphs)
+            self.parser.fontfeatures.namedClasses[classname] = tuple(glyphs)
         except ValueDuplicationError as e:
             import warnings
             warnings.warn("Could not define class %s as it contains the same"
                     " glyphs as an existing class %s" % (classname["classname"],
-                        parser.fontfeatures.namedClasses.inverse[tuple(glyphs)]))
+                        self.parser.fontfeatures.namedClasses.inverse[tuple(glyphs)]))
+    
+    def has_glyph_predicate(self, args):
+        glyphre, withs = args
+        value = {"replace": re.compile(glyphre.value[1:-1]), "with": withs.value}
+        return {"predicate": "hasglyph", "value": value, "inverted": False}
+
+    def has_anchor_predicate(self, args):
+        (barename,) = args
+        return {"predicate": "hasanchor", "value": barename.value, "inverted": False}
+
+    def category_predicate(self, args):
+        (barename,) = args
+        return {"predicate": "category", "value": barename.value, "inverted": False}
+
+    def _get_metrics(self, glyph, metric=None):
+        metrics = get_glyph_metrics(self.parser.font, glyph)
+        if metric is not None:
+            if metric not in testvalue_metrics:
+                raise ValueError("Unknown metric '%s'" % metric)
+            else:
+                return metrics[metric]
+        else:
+            return metrics
+
+    def metric_comparison(self, args):
+        (metric, comparator, comp_value) = args
+        metric = metric.value
+        comparator = comparator.value
+        return lambda metrics, glyphname: compare(metrics[metric], comparator, comp_value)
+
+    def predicate(self, args):
+        (predicate,) = args
+
+        if callable(predicate): # if it's a comparison
+            return predicate
+        else:
+            return lambda _, glyphname: self.meets_predicate(glyphname, predicate, self.parser)
+
+    def negated_predicate(self, args):
+        (predicate,) = args
+        return lambda metrics, glyphname: not predicate(metrics, glyphname)
+
+    def primary(self, args):
+        (primary,) = args
+        if isinstance(primary, GlyphSelector) or (isinstance(primary, dict) and "conjunction" in primary):
+            glyphs = self.resolve_definition(self.parser, primary)
+            return glyphs
+        else: # we're holding a predicate, apply it to all glyphs
+            glyphs = self._predicate_for_all_glyphs(primary)
+            return glyphs
+
+    def _predicate_for_all_glyphs(self, predicate):
+        all_glyphs = list(self.parser.font.glyphOrder)
+        return [g for g in all_glyphs if predicate(self._get_metrics(g), g)]
+
+    def conjunction(self, args):
+        l, conjunctor, r = args
+
+        if isinstance(l, list) and callable(r):
+            return [g for g in l if r(self._get_metrics(g), g)]
+
+        return {"conjunction": {"&":"and","|":"or","-":"subtract"}[conjunctor], "left": l, "right": r}
+
+    def action(self, args):
+        parser = self.parser
+        classname, glyphs = args
+
+        self._add_glyphs_to_named_class(glyphs, classname)
+
+        return args[0]
 
     @classmethod
     def resolve_definition(self, parser, primary):
         if isinstance(primary, dict) and "conjunction" in primary:
-            left = set(self.resolve_definition(parser, primary["left"]))
-            right = set(self.resolve_definition(parser, primary["right"]))
+            left = set(primary["left"])
+            right = set(primary["right"])
             if primary["conjunction"] == "or":
                 return list(left | right)
             elif primary["conjunction"] == "and":
@@ -169,7 +242,6 @@ class DefineClass:
 
     @classmethod
     def meets_predicate(self, glyphname, predicate, parser):
-        inverted = predicate["inverted"]
         metric = predicate["predicate"]
         if metric == "hasanchor":
             anchor = predicate["value"]
@@ -180,34 +252,23 @@ class DefineClass:
         elif metric == "hasglyph":
             truth = re.sub(predicate["value"]["replace"], predicate["value"]["with"], glyphname) in parser.font
         else:
-            comp = predicate["comparator"]
-            if isinstance(predicate["value"], dict):
-                v = predicate["value"]
-                testvalue_metrics = get_glyph_metrics(parser.font, v["glyph"])
-                if v["metric"] not in testvalue_metrics:
-                    raise ValueError("Unknown metric '%s'" % metric)
-                testvalue = testvalue_metrics[v["metric"]]
-            else:
-                testvalue = int(predicate["value"])
-
-            metrics = get_glyph_metrics(parser.font, glyphname)
-            if metric not in metrics:
-                raise ValueError("Unknown metric '%s'" % metric)
-            value = metrics[metric]
-            if comp == ">":
-                truth = value > testvalue
-            elif comp == "<":
-                truth = value < testvalue
-            elif comp == ">=":
-                truth = value >= testvalue
-            elif comp == "<=":
-                truth = value <= testvalue
-            else:
-                raise ValueError("Bad comparator %s (can't happen?)" % comp)
-        if inverted:
-            truth = not truth
+            raise ValueError("Unknown metric {}".format(metric))
         return truth
 
+    def CLASSNAME(self, tok):
+        return tok.value[1:] # -@
+
+class DefineClassBinned(DefineClass):
+    def action(self, args):
+        # glyphs is already resolved, because this class has functions of DefineClass, which resolves `primary`
+        classname, (metric, bincount), glyphs = args[0], (args[1].value, args[2].value), args[3]
+        binned = bin_glyphs_by_metric(self.parser.font, glyphs, metric, bincount=int(bincount))
+        for i in range(1, int(bincount) + 1):
+            self.parser.fontfeatures.namedClasses["%s_%s%i" % (classname, metric, i)] = tuple(binned[i - 1][0])
+
+        return classname, (metric, bincount), glyphs
+
+"""
 class DefineClassBinned(DefineClass):
     @classmethod
     def action(self, parser, metric, bincount, classname, definition):
@@ -219,16 +280,4 @@ class DefineClassBinned(DefineClass):
         binned = bin_glyphs_by_metric(parser.font, glyphs, metric, bincount=int(bincount))
         for i in range(1, int(bincount) + 1):
             parser.fontfeatures.namedClasses["%s_%s%i" % (classname["classname"], metric, i)] = tuple(binned[i - 1][0])
-
-
-class ShowClass:
-    @classmethod
-    def action(self, parser, classname):
-        warnings.warn(
-            "%s = %s"
-            % (
-                classname.as_text(),
-                " ".join(classname.resolve(parser.fontfeatures, parser.font)),
-            )
-        )
-        return []
+"""

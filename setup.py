@@ -34,7 +34,8 @@ config = {
     'package_dir': {'fontFeatures': 'fontFeatures'},
     'packages': find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"])
 ,
-    'scripts': scripts
+    'scripts': scripts,
+    'zip_safe': False
 }
 
 if __name__ == '__main__':

@@ -31,37 +31,79 @@ substitution rules.
 """
 
 import fontFeatures
+from . import HelperTransformer
+from .util import extend_args_until
 
-GRAMMAR = """
-Substitute_Args = context_sub_args | normal_sub_args
-ReverseSubstitute_Args = glyphselector:l ws '->' ws? (gsws | dollar_gs):r languages?:languages -> ([l],[r],languages)
+PARSEOPTS = dict(use_helpers=True)
 
-normal_sub_args = gsws+:l '->' ws? (gsws | dollar_gs)+:r languages?:languages -> (l,r,languages, [], [])
-context_sub_args = gsws*:pre '{' ws gsws+:l2 ws '}' ws gsws*:post '->' ws (gsws | dollar_gs)+:r languages?:languages -> (l2,r,languages, pre, post)
+# A different variable is used so Chain.py can import it and redefine pre/left/post/right
+BASE_GRAMMAR = """
+pre: glyphselector* // these two make sure they get grouped into a list
+post: glyphselector*
 
-glyphselector = (unicodeglyphname | regex | barename | classname | inlineclass ):g glyphsuffix*:s -> GlyphSelector(g,s, self.input.position)
+dollar_gs: "$" DIGIT+ gs_suffixes
+gs_suffixes: glyphsuffix*
+"""
 
-gsws = glyphselector:g ws? -> g
-dollar_gs = '$' integer:d glyphsuffix*:g ws? -> { "reference": d, "suffixes": g }
-languages = '<' lang '/' script (ws ',' ws lang '/' script)* '>' ws
-lang = letter{3,4} | '*' # Fix later
-script = letter{3,4} | '*' # Fix later
+GRAMMAR = BASE_GRAMMAR+"""
+normal_action: leftside "->" rightside languages?
+contextual_action: pre "(" leftside ")" post "->" rightside languages?
+
+leftside: glyphselector+
+rightside: (glyphselector | dollar_gs)+
+"""
+
+Substitute_GRAMMAR = """
+?start: action
+action: normal_action | contextual_action
+"""
+
+ReverseSubstitute_GRAMMAR = """
+?start: action
+action: normal_action
 """
 
 VERBS = ["Substitute", "ReverseSubstitute"]
 
-class Substitute:
-    @classmethod
-    def action(self, parser, l, r, languages, pre, post):
-        inputs  = [g.resolve(parser.fontfeatures, parser.font) for g in l]
-        pre     = [g.resolve(parser.fontfeatures, parser.font) for g in pre]
-        post     = [g.resolve(parser.fontfeatures, parser.font) for g in post]
+class Substitute(HelperTransformer):
+    def dollar_gs(self, args):
+        (ref, suffixes) = args
+        return {"reference": int(ref.value), "suffixes": suffixes}
+
+    def leftside(self, args):
+        return args
+
+    rightside = leftside
+    pre = leftside
+    post = leftside
+
+    gs_suffixes = leftside
+
+    def languages(self, args):
+        return [] # For now
+
+    def contextual_action(self, args):
+        args = extend_args_until(args, 5)
+        (pre, l, post, r, languages) = args
+        args = [l, r, languages, pre, post]
+        return args
+
+    def normal_action(self, args):
+        args = extend_args_until(args, 5)
+        return args
+
+    def action(self, args):
+        (l, r, languages, pre, post) = args[0]
+
+        inputs  = [g.resolve(self.parser.fontfeatures, self.parser.font) for g in l]
+        pre     = [g.resolve(self.parser.fontfeatures, self.parser.font) for g in pre]
+        post     = [g.resolve(self.parser.fontfeatures, self.parser.font) for g in post]
         for ix, output in enumerate(r):
         	if isinstance(output, dict):
         		r[ix] = l[output["reference"]-1]
         		if "suffixes" in output:
 	        		r[ix].suffixes = output["suffixes"]
-        outputs = [g.resolve(parser.fontfeatures, parser.font) for g in r]
+        outputs = [g.resolve(self.parser.fontfeatures, self.parser.font) for g in r]
         languages = None # For now
         return [fontFeatures.Substitution(inputs, outputs,
             precontext = pre,
@@ -69,8 +111,9 @@ class Substitute:
             languages=languages)]
 
 class ReverseSubstitute(Substitute):
-    @classmethod
-    def action(self, parser, l, r, languages):
-        s = super().action(parser,l,r,languages,[],[])
+    def action(self, args):
+        (l, r, languages, _, _) = args[0]
+
+        s = super().action([[l, r, languages, [], []]])
         s[0].reverse = True
         return s

@@ -8,11 +8,15 @@ verb::
     Include anchors.fee;
 """
 
+from . import HelperTransformer
+import lark
+
 import os
 
+PARSEOPTS = dict(use_helpers=True)
 GRAMMAR = """
-Include_Args = <(~';' anything)+>:filename -> (filename,)
-IncludeFEA_Args = Include_Args
+?start: action
+action: ESCAPED_STRING
 """
 VERBS = ["Include", "IncludeFEA"]
 
@@ -26,15 +30,18 @@ def _file_to_string_or_error(parser, filename):
                 return f.read()
     raise ValueError("Could not include file %s" % filename)
 
-class Include:
-    @classmethod
-    def action(self, parser, filename):
-        return parser.parseString(_file_to_string_or_error(parser, filename))
+class Include(HelperTransformer):
+    def ESCAPED_STRING(self, tok):
+        return tok.value[1:-1] # slice removes "'s
+
+    def action(self, args):
+        (filename,) = args
+        return self.parser.parseString(_file_to_string_or_error(self.parser, filename))
 
 from fontFeatures.feaLib import FeaUnparser
 
-class IncludeFEA:
-    @classmethod
-    def action(self, parser, filename):
-        fea = FeaUnparser(_file_to_string_or_error(parser, filename))
-        parser.fontfeatures += fea.ff
+class IncludeFEA(Include):
+    def action(self, args):
+        (filename,) = args
+        fea = FeaUnparser(_file_to_string_or_error(self.parser, filename))
+        self.parser.fontfeatures += fea.ff

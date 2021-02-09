@@ -49,51 +49,83 @@ anchors, and using an ``Attach`` statement like the following::
 
 """
 
+from . import HelperTransformer
 import fontFeatures
 
-GRAMMAR = """
+PARSEOPTS = dict(use_helpers=True)
 
-Anchors_Args = glyphselector:gs ws '{' ws (anchor_def)+:a ws '}' -> [gs, a]
-anchor = <(letter|digit|"."|"_")+>
-anchor_def = anchor:anchorname ws '<' integer:x ws integer:y '>' ws -> {"name":anchorname, "x": x, "y": y}
-Attach_Args = '&' anchor:anchor1 ws '&' anchor:anchor2 ws ("marks"|"bases"|"cursive"):attachtype -> [anchor1, anchor2, attachtype]
+GRAMMAR = ""
 
-LoadAnchors_Args = ws -> ()
+Anchors_GRAMMAR = """
+?start: action
+action: glyphselector anchors
+anchors: anchor+
+anchor: BARENAME "<" integer_container integer_container ">"
 """
 
-VERBS = ["Anchors", "LoadAnchors", "Attach"]
+Attach_GRAMMAR = """
+?start: action
+action: "&" BARENAME "&" BARENAME ATTACHTYPE
+ATTACHTYPE: "marks" | "bases" | "cursive"
+"""
 
-class Anchors:
-    @classmethod
-    def action(self, parser, glyphselector, anchors):
-        glyphs = glyphselector.resolve(parser.fontfeatures, parser.font)
+LoadAnchors_GRAMMAR = """
+?start: action
+action:
+"""
+
+#"""
+#Anchors_Args = glyphselector:gs ws '{' ws (anchor_def)+:a ws '}' -> [gs, a]
+#anchor = <(letter|digit|"."|"_")+>
+#anchor_def = anchor:anchorname ws '<' integer:x ws integer:y '>' ws -> {"name":anchorname, "x": x, "y": y}
+#Attach_Args = '&' anchor:anchor1 ws '&' anchor:anchor2 ws ("marks"|"bases"|"cursive"):attachtype -> [anchor1, anchor2, attachtype]
+#
+#LoadAnchors_Args = ws -> ()
+#"""
+
+VERBS = ["Anchors", "Attach", "LoadAnchors"]
+
+class Anchors(HelperTransformer):
+    def anchors(self, args):
+        return args
+
+    def anchor(self, args):
+        (name, x, y) = args
+        name = name.value
+        return (name, x, y)
+
+    def action(self, args):
+        (glyphselector, anchors) = args
+
+        glyphs = glyphselector.resolve(self.parser.fontfeatures, self.parser.font)
         for g in glyphs:
-            if not g in parser.fontfeatures.anchors:
-                parser.fontfeatures.anchors[g] = {}
+            if not g in self.parser.fontfeatures.anchors:
+                self.parser.fontfeatures.anchors[g] = {}
             for a in anchors:
-                parser.fontfeatures.anchors[g][a["name"]] = (a["x"], a["y"])
+                (name, x, y) = a
+                self.parser.fontfeatures.anchors[g][name] = (x, y)
 
         return []
 
-class LoadAnchors:
-    @classmethod
-    def action(self, parser):
-        for glyphname in parser.font.exportedGlyphs():
-            g = parser.font[glyphname]
+class LoadAnchors(HelperTransformer):
+    def action(self, _):
+        for glyphname in self.parser.font.exportedGlyphs():
+            g = self.parser.font[glyphname]
             for a in g.anchors:
-                if not g.name in parser.fontfeatures.anchors:
-                    parser.fontfeatures.anchors[g.name] = {}
-                parser.fontfeatures.anchors[g.name][a.name] = (a.x, a.y)
+                if not g.name in self.parser.fontfeatures.anchors:
+                    self.parser.fontfeatures.anchors[g.name] = {}
+                self.parser.fontfeatures.anchors[g.name][a.name] = (a.x, a.y)
 
-class Attach:
-    @classmethod
-    def action(self, parser, aFrom, aTo, attachtype):
+class Attach(HelperTransformer):
+    def action(self, args):
+        (aFrom, aTo, attachtype) = args    
+
         bases = {}
         marks = {}
         def _category(k):
-            return parser.fontfeatures.glyphclasses.get(k, parser.font[k].category)
+            return self.parser.fontfeatures.glyphclasses.get(k, self.parser.font[k].category)
 
-        for k, v in parser.fontfeatures.anchors.items():
+        for k, v in self.parser.fontfeatures.anchors.items():
             if aFrom in v:
                 bases[k] = v[aFrom]
             if aTo in v:
@@ -119,7 +151,7 @@ class Attach:
         return [
             fontFeatures.Routine(
                 rules=[
-                    fontFeatures.Attachment(aFrom, aTo, bases, marks, font=parser.font)
+                    fontFeatures.Attachment(aFrom, aTo, bases, marks, font=self.parser.font)
                 ]
             )
         ]
