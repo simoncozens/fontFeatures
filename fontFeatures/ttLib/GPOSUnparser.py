@@ -34,16 +34,20 @@ class GPOSUnparser(GTableUnparser):
             ("YPlacement", 0x0002),  # Includes vertical adjustment for placement
             ("XAdvance", 0x0004),  # Includes horizontal adjustment for advance
             ("YAdvance", 0x0008),  # Includes vertical adjustment for advance
-            ("XPlaDevice", 0x0010),  # Includes horizontal Device table for placement
-            ("YPlaDevice", 0x0020),  # Includes vertical Device table for placement
-            ("XAdvDevice", 0x0040),  # Includes horizontal Device table for advance
-            ("YAdvDevice", 0x0080)  # Includes vertical Device table for advance
+
+            # Currently we don't have a way to express or represent value records
+            # with Device tables, whether old-style (ppem adjustment) or new-style
+            # (VariationIndex). Even if we could represent them, then what? See
+            # issue #31.
+
+            #("XPlaDevice", 0x0010),  # Includes horizontal Device table for placement
+            #("YPlaDevice", 0x0020),  # Includes vertical Device table for placement
+            #("XAdvDevice", 0x0040),  # Includes horizontal Device table for advance
+            #("YAdvDevice", 0x0080)  # Includes vertical Device table for advance
             # , 'Reserved': 0xF000 For future use (set to zero)
         )
 
         # defaults to 0
-        # NOTE: this is likely not correct anymore when we start doing the
-        # <device> tables in Value record format C.
         values = [getattr(valueRecord, name, 0) or None for name, _ in valueFormatFlags]
         return fontFeatures.ValueRecord(*values)
 
