@@ -14,8 +14,8 @@ def add_language_system_statements(self, ff):
             ff.statements.append(feaast.LanguageSystemStatement(s, l))
 
 
-def asFea(self):
-    return self.asFeaAST().asFea()
+def asFea(self,**kwargs):
+    return self.asFeaAST(**kwargs).asFea()
 
 
 def _to_inline_class(glyphs):
@@ -60,7 +60,7 @@ def reorderAndResolve(self):
     return ordering
 
 
-def asFeaAST(self):
+def asFeaAST(self, do_gdef=True):
     """Returns this font's features as a feaLib AST object, for later
     translation to AFDKO code."""
     from fontFeatures import Routine, Chaining
@@ -69,7 +69,8 @@ def asFeaAST(self):
 
     add_language_system_statements(self, ff)
 
-    add_gdef(self, ff)
+    if do_gdef:
+        add_gdef(self, ff)
 
     newRoutines = [self.routines[i] for i in reorderAndResolve(self)]
 
