@@ -22,6 +22,7 @@ from collections import OrderedDict, namedtuple
 from fontTools.feaLib.ast import ValueRecord as feaLibValueRecord
 from itertools import chain
 from bidict import bidict
+from copy import copy
 
 
 class FontFeatures:
@@ -155,7 +156,10 @@ class FontFeatures:
                     continue
                 for routine in routinelist:
                     # Using a set here so it is safe to call more than once
-                    routine.usedin.add(chain)
+                    if isinstance(routine, RoutineReference):
+                        routine.routine.usedin.add(chain)
+                    else:
+                        routine.usedin.add(chain)
         self.doneUsageMarking = True
 
     from .feaLib.FontFeatures import asFea, asFeaAST
@@ -220,6 +224,49 @@ class FontFeatures:
     def setGlyphClassesFromFont(self, font):
         for g in font.exportedGlyphs():
             self.glyphclasses[g] = font[g].category
+
+    def partitionRoutine(self, routine, factor):
+        if not routine.rules:
+            return
+        self.doneUsageMarking = False
+        self.markRoutineUseInChains()
+        usedin = routine.usedin
+
+        index = self.routines.index(routine)
+
+        split_routines = {}
+        split_rules = {}
+        # The first rule stays in the original
+        split_routines[factor(routine.rules[0])] = (routine, [routine.rules[0]])
+        for rule in routine.rules[1:]:
+            thisfactor = factor(rule)
+            if thisfactor not in split_routines:
+                rulelist = []
+                newroutine = copy(routine)
+                newroutine.rules = rulelist
+                split_routines[thisfactor] = (newroutine, rulelist)
+            split_routines[thisfactor][1].append(rule)
+
+        # Alter the first rule's routine's rulelist (we couldn't alter it on
+        # the fly because we were iterating over it).
+        routine_with_first_rule, rulelist = split_routines[factor(routine.rules[0])]
+        routine_with_first_rule.rules = rulelist
+
+        allroutines = [x[0] for x in split_routines.values()]
+        self.routines[index : index + 1] = allroutines
+        for user in usedin:
+            for lookuplist in user.lookups:
+                i = 0
+                while i < len(lookuplist):
+                    lookup = lookuplist[i]
+                    if lookup == routine or (
+                        isinstance(lookup, RoutineReference)
+                        and lookup.routine == routine
+                    ):
+                        lookuplist[i : i + 1] = [
+                            RoutineReference(routine=r) for r in allroutines
+                        ]
+                    i = i + 1
 
 
 class Routine:
@@ -297,6 +344,7 @@ class Routine:
     from .feaLib.Routine import asFea, asFeaAST, feaPreamble
     from .shaperLib.Routine import apply_to_buffer
     from .xmlLib.Routine import toXML, fromXML
+    from .ttLib.Routine import toOTLookup
 
 
 class ExtensionRoutine(Routine):
@@ -371,6 +419,10 @@ class Rule:
 
     from .shaperLib.Rule import would_apply_at_position, pre_post_context_matches
     from .xmlLib.Rule import fromXML, toXML, _makeglyphslots, _slotArray
+
+    @property
+    def has_context(self):
+        return len(self.precontext) or len(self.postcontext)
 
 
 class Substitution(Rule):
@@ -552,6 +604,8 @@ class ValueRecord(feaLibValueRecord):
             yAdvance=yAdvance,
         )
 
+    from .ttLib.ValueRecord import toOTLookup
+
 
 class Positioning(Rule):
     """Represents a Positioning rule.
@@ -598,6 +652,7 @@ class Positioning(Rule):
     from .feaLib.Positioning import asFeaAST
     from .shaperLib.Positioning import shaper_inputs, _do_apply
     from .xmlLib.Positioning import _toXML, fromXML
+    from .ttLib.Positioning import lookup_type
 
 
 class Attachment(Rule):
