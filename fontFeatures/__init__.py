@@ -267,6 +267,19 @@ class FontFeatures:
                             RoutineReference(routine=r) for r in allroutines
                         ]
                     i = i + 1
+        # Same trick for features
+        for lookuplist in self.features.values():
+            i = 0
+            while i < len(lookuplist):
+                lookup = lookuplist[i]
+                if lookup == routine or (
+                    isinstance(lookup, RoutineReference) and lookup.routine == routine
+                ):
+                    lookuplist[i : i + 1] = [
+                        RoutineReference(routine=r) for r in allroutines
+                    ]
+                i = i + 1
+        return allroutines
 
 
 class Routine:
