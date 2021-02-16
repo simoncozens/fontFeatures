@@ -162,8 +162,6 @@ class FontFeatures:
                         routine.usedin.add(chain)
         self.doneUsageMarking = True
 
-    from .feaLib.FontFeatures import asFea, asFeaAST
-
     def hoist_languages(self):
         """Sort routines into scripts and languages and resolve wildcards."""
         scripts = OrderedDict()
@@ -280,6 +278,9 @@ class FontFeatures:
                     ]
                 i = i + 1
         return allroutines
+
+    from .feaLib.FontFeatures import asFea, asFeaAST
+    from .ttLib.FontFeatures import buildGPOSGSUB
 
 
 class Routine:
@@ -496,6 +497,7 @@ class Substitution(Rule):
     from .feaLib.Substitution import asFeaAST
     from .shaperLib.Substitution import shaper_inputs, _do_apply
     from .xmlLib.Substitution import _toXML, fromXML
+    from .ttLib.Substitution import lookup_type
 
 
 class Chaining(Rule):

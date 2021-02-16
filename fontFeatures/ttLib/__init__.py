@@ -6,7 +6,6 @@ from collections import OrderedDict
 from .GDEFUnparser import GDEFUnparser
 from .GSUBUnparser import GSUBUnparser
 from .GPOSUnparser import GPOSUnparser
-from fontFeatures import FontFeatures
 
 
 def unparseLanguageSystems(tables):
@@ -41,6 +40,7 @@ def unparse(font, do_gdef=False, doLookups=True, config={}):
         config: A dictionary of glyph class and routine names.
     """
     gsub_gpos = [font[tableTag] for tableTag in ("GSUB", "GPOS") if tableTag in font]
+    from fontFeatures import FontFeatures
     ff = FontFeatures()
 
     languageSystems = unparseLanguageSystems(gsub_gpos)
