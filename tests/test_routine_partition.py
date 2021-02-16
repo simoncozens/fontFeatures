@@ -22,6 +22,8 @@ def test_routine_partition():
     r2 = Routine(rules=[c])
     f.routines.append(r2)
 
+    f.addFeature("locl", [r])
+
     f.partitionRoutine(r, lambda rule: tuple(rule.languages or []))
 
     assert len(f.routines) == 4
@@ -32,3 +34,18 @@ def test_routine_partition():
     assert f.routines[1].rules[0].replacement[0][0] == "A.esp"
 
     assert len(c.lookups[0]) == 3
+    assert len(f.features["locl"]) == 2
+
+
+
+def test_routine_partition_not_needed():
+    f = FontFeatures()
+
+    s1 = Substitution([["A"]],  [["A.grk"]], languages=["grek/*"])
+    s2 = Substitution([["A"]],  [["A.esp"]], languages=["grek/*"])
+    r = Routine(rules=[s1,s2], flags=0x2)
+
+    f.routines.append(r)
+    f.partitionRoutine(r, lambda rule: tuple(rule.languages or []))
+
+    assert len(f.routines) == 1
