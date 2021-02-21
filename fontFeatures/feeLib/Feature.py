@@ -34,12 +34,14 @@ Feature_beforebrace_GRAMMAR = """
 ?start: beforebrace
 beforebrace: FEATURENAME
 """
-#FeatureName_Args = '"' <~'"' anything >+:name '"' -> (name,)
 
-#featurename = <letter (letter|digit){3}>
-#"""
+FeatureName_GRAMMAR = """
+?start: action
+action: ESCAPED_STRING
+"""
+
 PARSEOPTS = dict(use_helpers=True)
-VERBS = ["Feature"]#, "FeatureName"]
+VERBS = ["Feature", "FeatureName"]
 
 from . import FEEVerb
 from fontFeatures import Routine, Rule
@@ -77,9 +79,7 @@ class Feature(FEEVerb):
 
         return statements
 
-"""
+# FIXME: Implement this.
 class FeatureName:
-    @classmethod
-    def action(self, parser, name):
+    def action(self, args):
       pass
-"""

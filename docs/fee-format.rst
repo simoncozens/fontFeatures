@@ -131,75 +131,76 @@ rules that you can carry from font to font without needing to rewrite them.
 
 Let's take a look at a couple of sample plugins to see how they're constructed.
 
-Parsley Grammars
-^^^^^^^^^^^^^^^^
+Grammars
+^^^^^^^^
 
 A fontFeatures plugin comes in two parts: the *grammar* and the *code*. Grammars
 explain what kinds of arguments, and how many arguments, the verbs in the plugin
-expect. Grammars are written in the notation used by the
-`Parsley module <https://parsley.readthedocs.io/en/latest/tutorial.html>`_ so
-you should start by reading its documentation (or, if you're like me, by picking
-it up by looking at existing examples).
+expect. Grammars are written in the notation used by
+`Lark <https://lark-parser.readthedocs.io/en/latest/>`_ so you should start by
+reading its documentation (or, if you're like me, by picking it up by looking
+at existing examples).
 
 Our first plugin is going to be called ``CopyAnchors``, and it will copy all
 anchors from glyphs in one glyph class to glyphs in another glyph class. What
-do we want the call to this verb to look like? Probably something like ``CopyAnchors @gc1 @gc2;``. So the arguments to ``CopyAnchors`` will be two glyph selectors, separated by whitespace. Here's how we will start our plugin::
+do we want the call to this verb to look like? Probably something like
+``CopyAnchors @gc1 @gc2;``. So the arguments to ``CopyAnchors`` will be two
+glyph selectors, separated by whitespace. Here's how we will start our plugin::
+
+    PARSEOPTS = dict(use_helpers=True)
 
     GRAMMAR = """
-    CopyAnchors_Args = glyphselector:fromglyphs ws glyphselector:toglyphs -> (fromglyphs, toglyphs)
+    ?start: action
+    action: glyphselector glyphselector
     """
     VERBS = ["CopyAnchors"]
 
-A ``GRAMMAR`` statement can contain multiple Parsley rules, but must have one
-ending in ``_Args`` for each verb to be defined. The ``CopyAnchors_Args`` rule
-takes two glyph selectors, separated by whitespace, and gives each of them a
-variable name. It then uses these variable names to return a tuple. It is this
-tuple which will be added to the arguments sent to the Python method which
-implements the verb's functionality, which we'll look at in a moment.
+A ``GRAMMAR`` contains a complete Lark grammar. ``PARSEOPTS`` must be defined;
+its function is to describe how the grammar is to be parsed. If ``use_helpers``
+is ``True``, then the grammar defined in ``__init__.py`` as ``HELPERS`` will be
+prepended to your grammar. This grammar defines many useful elements, such as
+``glyphselector``, which we reuse.
 
-Note that unfortunately Parsley grammars are quite fiddly, and the error
-messages returned from Parsley when you get them wrong can be somewhat tricky
-to understand. My advice is to start with small rules that work and build up.
+By convention, your grammar should always start with the line ``?start:
+action``, and then work backwards defining action. In Lark, tokens
+(*terminals*) are in all capital letters, while *rules* are in lowercase. One
+of the rules imported by ``use_helpers`` is the handy ``%ignore WS``, which
+inserts an implied optional whitespace between the two glyph selectors.
 
-You don't have to define all your rules from scratch, as we can see here.
-``ws`` (which matches whitespace) is provided by Parsley as part of its
-`built-in rules <https://parsley.readthedocs.io/en/latest/reference.html#built-in-parsley-rules>`_ and ``glyphselector`` is a rule
-provided by FEE. Look at the ``basegrammar`` in the ``fontFeatures.feeLib``
-module for the list of FEE's built-in rules.
-
-Now we have the grammar, and also defined the ``VERBS`` that this module provides (don't forget that bit!), we can turn to implementation.
+Now we have the grammar, and also defined the ``VERBS`` that this module
+provides (don't forget that bit!), we can turn to implementation.
 
 Verb implementations
 ^^^^^^^^^^^^^^^^^^^^
 
-When a verb is "called" by a FEE file, this call is converted into a class
-method call in Python, with the method called "action". So ``CopyAnchors
-@gc1 @gc2;`` will appear in Python as ``CopyAnchors.action(parser, gc1, gc2)``.
-(The FEE parser object also gets sent to the method, along with the arguments
-we defined in our grammar. This gives us access to the font object, the
-``fontFeatures`` object, and other stuff we might need.)
+When a verb is "called" by a FEE file, first the arguments to the verb are
+parsed according to the grammar you've provided. Then, the abstract syntax tree
+(AST) that is generated is transformed by our subclass of ``lark.Transformer``,
+``FEEVerb``.
+
+``FEEVerb`` gives us access to the font object, the ``fontFeatures`` object,
+and other stuff we might need, through ``self.parser``. It is also possible to
+only subclass ``lark.Transformer`` for low level access to the AST, but you
+should only very seldom want to do this.
 
 Let's set up our class, and then we'll talk about the content of those
 arguments::
 
-    class CopyAnchors:
-        @classmethod
-        def action(self, parser, fromglyphs, toglyphs):
+    class CopyAnchors(FEEVerb):
+        def action(self, args):
+            (fromglyphs, toglyphs) = args
 
-Each Parsley rule returns a Python object, and it's up to you what that object
-looks like. The ``integer`` rule, for instance, returns an integer, which is
-quite helpful. You might expect the ``glyphselector`` rule to return a list of
-glyph names, but it doesn't do that. There are a few reasons why not, but the
-main one is that the parser doesn't know whether a ``glyphselector`` refers to
-glyphs which are expected to be in the font already, or new glyphs that we're
-going to be creating in the plugin. If it restricted itself to glyphs in the
-font and we had a list of glyphs that didn't yet exist, it would return us an
-empty list, which is not what we want. So ``glyphselector`` actually returns a
-``GlyphSelector`` object, which must be resolved into a list of glyph names.
+Because we've subclassed ``FEEVerb``, we receive the benefits of this class;
+both of our ``glyphselectors`` are transformed for us into
+``fontFeatures.feeLib.GlyphSelector`` objects which can be resolved. Note that
+we, due to our grammar, know that ``args`` will contain exactly two
+``glyphselector``'s. A grammar, however, could instead say ``glyphselector*``,
+receiving any number, and making ``args`` return a variable number of them.
+
 This is a common pattern you will see in a lot of FEE plugins::
 
-          fromglyphs = fromglyphs.resolve(parser.fontfeatures, parser.font)
-          toglyphs = toglyphs.resolve(parser.fontfeatures, parser.font)
+          fromglyphs = fromglyphs.resolve(self.parser.fontfeatures, self.parser.font)
+          toglyphs = toglyphs.resolve(self.parser.fontfeatures, self.parser.font)
 
 (It needs the ``fontfeatures`` object so that it can resolve named class
 references; it needs the ``font`` object for the list of glyphs in the font.)
@@ -235,8 +236,12 @@ three glyph selectors - but we use some constant symbols as a bit of "syntactic
 sugar". Note that we only assign the glyph selectors to variables (and put them
 into the return tuple), and not the syntactic sugar::
 
+    PARSEOPTS = dict(use_helpers=True)
+
     GRAMMAR = """
-    IMatra_Args = glyphselector:bases ws ':' ws glyphselector:matra ws '->' ws glyphselector:matras -> (bases,matra,matras)
+    ?start: action
+    //      bases             matra              matras
+    action: glyphselector ":" glyphselector "->" glyphselector
     """
 
     VERBS = ["IMatra"]
@@ -251,11 +256,11 @@ Now we're ready to write our action method, which will start with the usual
 resolving of glyph selectors into glyph name lists::
 
     class IMatra:
-        @classmethod
-        def action(self, parser, bases, matra, matras):
-            bases = bases.resolve(parser.fontfeatures, parser.font)
-            matra = matra.resolve(parser.fontfeatures, parser.font)
-            matras = matras.resolve(parser.fontfeatures, parser.font)
+        def action(self, args):
+            (bases, matra, matras) = args
+            bases = bases.resolve(self.parser.fontfeatures, self.parser.font)
+            matra = matra.resolve(self.parser.fontfeatures, self.parser.font)
+            matras = matras.resolve(self.parser.fontfeatures, self.parser.font)
 
 Let's think what we need to do now. We have a list of matras, with different
 "overhangs" (negative RSBs). For each matra, we want a list of bases which this
@@ -349,3 +354,39 @@ inspecting the paths and doing some sums based on them (:py:mod:`fontFeatures.pa
 To gain more understanding of what this might look like, try working through
 the code of the :py:mod:`fontFeatures.feeLib.IfCollides` and
 :py:mod:`fontFeatures.feeLib.BariYe` plugins.
+
+Defining multiple verbs
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Up until now, we've defined extensions which have only one verb. An example of
+this can be seen in the default ``Substitute.py`` extension. ``GRAMMAR``, in
+this case, applies to the entire extension. Then, you can define::
+
+    Substitute_GRAMMAR = """
+    ?start: action
+    action: normal_action | contextual_action
+    """
+
+    ReverseSubstitute_GRAMMAR = """
+    ?start: action
+    action: normal_action
+    """
+
+    VERBS = ["Substitute", "ReverseSubstitute"]
+
+Notes on curly brackets
+^^^^^^^^^^^^^^^^^^^^^^^
+
+In order to prevent grammars from ever being ambiguous, ``{`` and ``}`` are not
+allowed in your grammar with any meaning other than grouping other verbs. So,
+extensions like ``Feature`` and ``Routine`` may use them, but they must not be
+used unless it's to group other verbs.
+
+If you do need to group, note the different way that such grammars are parsed.
+If you want to define arguments before and after the braces, you must define
+``beforebrace`` and ``afterbrace`` grammars; see ``Feature.py`` and
+``Routine.py`` in the ``fontFeatures/feeLib`` directory for examples.
+
+Generally, it's recommended to avoid curly brackets, as they should normally
+not be useful for user extensions now that ``Feature`` and ``Routine`` already
+exist.
