@@ -115,7 +115,8 @@ from bidict import ValueDuplicationError
 
 import warnings
 
-from . import HelperTransformer
+from . import FEEVerb
+from . import TESTVALUE_METRICS
 from .util import compare
 from fontFeatures.feeLib import GlyphSelector
 
@@ -146,7 +147,7 @@ action: CLASSNAME "[" METRIC "," NUMBER "]" "=" primary
 PARSEOPTS = dict(use_helpers=True)
 VERBS = ["DefineClass", "DefineClassBinned"]
 
-class DefineClass(HelperTransformer):
+class DefineClass(FEEVerb):
     def _add_glyphs_to_named_class(self, glyphs, classname):
         try:
             self.parser.fontfeatures.namedClasses[classname] = tuple(glyphs)
@@ -172,7 +173,7 @@ class DefineClass(HelperTransformer):
     def _get_metrics(self, glyph, metric=None):
         metrics = get_glyph_metrics(self.parser.font, glyph)
         if metric is not None:
-            if metric not in testvalue_metrics:
+            if metric not in TESTVALUE_METRICS:
                 raise ValueError("Unknown metric '%s'" % metric)
             else:
                 return metrics[metric]

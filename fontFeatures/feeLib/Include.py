@@ -8,7 +8,7 @@ verb::
     Include anchors.fee;
 """
 
-from . import HelperTransformer
+from . import FEEVerb
 import lark
 
 import os
@@ -30,7 +30,7 @@ def _file_to_string_or_error(parser, filename):
                 return f.read()
     raise ValueError("Could not include file %s" % filename)
 
-class Include(HelperTransformer):
+class Include(FEEVerb):
     def ESCAPED_STRING(self, tok):
         return tok.value[1:-1] # slice removes "'s
 

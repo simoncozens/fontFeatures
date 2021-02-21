@@ -49,7 +49,7 @@ anchors, and using an ``Attach`` statement like the following::
 
 """
 
-from . import HelperTransformer
+from . import FEEVerb
 import fontFeatures
 
 PARSEOPTS = dict(use_helpers=True)
@@ -85,7 +85,7 @@ action:
 
 VERBS = ["Anchors", "Attach", "LoadAnchors"]
 
-class Anchors(HelperTransformer):
+class Anchors(FEEVerb):
     def anchors(self, args):
         return args
 
@@ -107,7 +107,7 @@ class Anchors(HelperTransformer):
 
         return []
 
-class LoadAnchors(HelperTransformer):
+class LoadAnchors(FEEVerb):
     def action(self, _):
         for glyphname in self.parser.font.exportedGlyphs():
             g = self.parser.font[glyphname]
@@ -116,7 +116,7 @@ class LoadAnchors(HelperTransformer):
                     self.parser.fontfeatures.anchors[g.name] = {}
                 self.parser.fontfeatures.anchors[g.name][a.name] = (a.x, a.y)
 
-class Attach(HelperTransformer):
+class Attach(FEEVerb):
     def action(self, args):
         (aFrom, aTo, attachtype) = args    
 

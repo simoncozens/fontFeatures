@@ -19,10 +19,12 @@ GRAMMAR="""
     %ignore COMMENT
 """
 
+TESTVALUE_METRICS=["width", "lsb", "rsb", "xMin", "xMax", "yMin", "yMax", "rise", "fullwidth"]
+
 HELPERS="""
     statement: verb args ";"
     verb: VERB
-    args: arg* | (arg* "{" statement* "}" arg*)
+    args: arg* | (arg* "{{" statement* "}}" arg*)
     arg: ARG WS*
 
     VERB: /[A-Z]/ (LETTER | DIGIT | "_")+
@@ -50,7 +52,7 @@ HELPERS="""
     FEE_VALUE_VERB: "xAdvance" | "xPlacement" | "yAdvance" | "yPlacement"
     fea_value_record: "<" integer_container integer_container integer_container integer_container ">"
 
-    METRIC: "width" | "lsb" | "rsb" | "xMin" | "xMax" | "yMin" | "yMax" | "rise" | "fullwidth"
+    METRIC: {}
     metric_comparison: METRIC COMPARATOR integer_container 
     GLYPHVALUE: METRIC "[" BARENAME "]"
 
@@ -64,7 +66,7 @@ HELPERS="""
 
     %import common(ESCAPED_STRING, SIGNED_NUMBER, NUMBER, LETTER, DIGIT, WS)
     %ignore WS
-"""
+""".format(" | ".join(['"{}"'.format(tv) for tv in TESTVALUE_METRICS]))
 
 # These are options usable by plugins to affect parsing. It is recommended to
 # leave use_helpers True in almost all cases, unless you want to handle parsing
@@ -238,7 +240,7 @@ class FeeTransformer(lark.Transformer):
 def _UNICODEGLYPH(u):
     return int(u[2:], 16)
 
-class HelperTransformer(lark.Transformer):
+class FEEVerb(lark.Transformer):
     def __init__(self, parser):
         self.parser = parser
 

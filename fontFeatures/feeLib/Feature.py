@@ -41,10 +41,10 @@ beforebrace: FEATURENAME
 PARSEOPTS = dict(use_helpers=True)
 VERBS = ["Feature"]#, "FeatureName"]
 
-from . import HelperTransformer
+from . import FEEVerb
 from fontFeatures import Routine, Rule
 
-class Feature(HelperTransformer):
+class Feature(FEEVerb):
     def FEATURENAME(self, tok):
         return tok.value
 

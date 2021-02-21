@@ -15,7 +15,7 @@ Examples::
 
 import fontFeatures
 from .util import compare
-from . import HelperTransformer
+from . import FEEVerb
 
 PARSEOPTS = dict(use_helpers=True)
 
@@ -39,7 +39,7 @@ beforebrace: boolean_condition
 
 VERBS = ["If"]
 
-class If(HelperTransformer):
+class If(FEEVerb):
     def __init__(self, parser):
         self.parser = parser
 

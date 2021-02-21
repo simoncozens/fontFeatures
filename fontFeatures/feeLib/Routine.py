@@ -60,9 +60,9 @@ FLAGS = {
 }
 
 import fontFeatures
-from . import HelperTransformer
+from . import FEEVerb
 
-class Routine(HelperTransformer):
+class Routine(FEEVerb):
     def beforebrace(self, args):
         return args
 

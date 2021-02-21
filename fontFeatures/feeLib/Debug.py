@@ -1,6 +1,6 @@
 import warnings
 
-from . import HelperTransformer
+from . import FEEVerb
 from fontFeatures.feeLib import GlyphSelector
 
 PARSEOPTS = dict(use_helpers=True)
@@ -15,19 +15,19 @@ action:
 """
 VERBS = ["ShowClass", "DumpClassNames", "DumpClasses"]
 
-class DumpClasses(HelperTransformer):
+class DumpClasses(FEEVerb):
     def action(self, _):
         for c in self.parser.fontfeatures.namedClasses:
             ShowClass(self.parser).action((GlyphSelector({"classname":c}, [], None),))
         return
 
-class DumpClassNames(HelperTransformer):
+class DumpClassNames(FEEVerb):
     def action(self, _):
         warnings.warn(" ".join(self.parser.fontfeatures.namedClasses))
 
         return
 
-class ShowClass(HelperTransformer):
+class ShowClass(FEEVerb):
     def action(self, args):
         (classname,) = args
         warnings.warn(

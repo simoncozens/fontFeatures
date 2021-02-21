@@ -31,7 +31,7 @@ substitution rules.
 """
 
 import fontFeatures
-from . import HelperTransformer
+from . import FEEVerb
 from .util import extend_args_until
 
 PARSEOPTS = dict(use_helpers=True)
@@ -65,7 +65,7 @@ action: normal_action
 
 VERBS = ["Substitute", "ReverseSubstitute"]
 
-class Substitute(HelperTransformer):
+class Substitute(FEEVerb):
     def dollar_gs(self, args):
         (ref, suffixes) = args
         return {"reference": int(ref.value), "suffixes": suffixes}
