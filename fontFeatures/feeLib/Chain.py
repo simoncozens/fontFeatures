@@ -14,7 +14,6 @@ Examples::
 
 import fontFeatures
 from .Substitute import BASE_GRAMMAR, Substitute_GRAMMAR, Substitute
-from .util import extend_args_until
 
 PARSEOPTS = dict(use_helpers=True)
 
@@ -24,8 +23,9 @@ GRAMMAR = BASE_GRAMMAR+"""
 lookup: "^" BARENAME ","?
 lookups: lookup*
 gslu: glyphselector lookups
+gslu_list: gslu+
 
-normal_action: gslu+ languages?
+normal_action: gslu_list languages?
 contextual_action: pre "(" normal_action ")" post
 """
 
@@ -47,18 +47,19 @@ class Chain(Substitute):
         return lookupname.value
 
     def contextual_action(self, args):
-        args = extend_args_until(args, 4)
-        (pre, stuff, languages, post) = args
-        args = [stuff, languages, pre, post]
         return args
 
+    gslu_list = contextual_action
+
     def normal_action(self, args):
+        if len(args) == 1: # No languages provided
+            args.append(None)
         return args
 
     # stuff, languages, pre, post
     def action(self, args):
         # `stuff` are tuples of (glyphselector, lookup_list)
-        (stuff, languages, pre, post) = args[0]
+        (pre, (stuff, languages), post) = args[0]
 
         inputs  = [x[0].resolve(self.parser.fontfeatures, self.parser.font) for x in stuff]
         lookupnames = [x[1] or [] for x in stuff]
