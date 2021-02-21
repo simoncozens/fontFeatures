@@ -2,12 +2,13 @@
 Chain
 ==========
 
-Chaining rules are created using the ``Chain`` verb.
+Chaining rules are created using the ``Chain`` verb. Lookups are differentiated
+from glyph selectors by prepending a ``^``.
 
 Examples::
 
-    Chain glyph1 (lookup1) glyph2 (lookup2);
-    Chain pre { glyph1 (lookup1,lookup2) glyph2  glyph3 (lookup3) } post;
+    Chain glyph1 ^lookup1 glyph2 ^lookup2;
+    Chain pre ( glyph1 ^lookup1,^lookup2 glyph2 glyph3 ^lookup3 ) post;
 
 """
 

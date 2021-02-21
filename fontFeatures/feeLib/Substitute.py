@@ -8,13 +8,13 @@ forms of this verb:
 - a simple substitution, which simply has a number of glyph
   selectors on each side of an arrow (``->``)
 - a contextual substitution, which wraps the main glyphs to be substituted in
-  curly braces, and optionally surrounds them with prefix and/or suffix glyphs.
+  parenthesis, and optionally surrounds them with prefix and/or suffix glyphs.
 
 Examples::
 
     Substitute f i -> f_i;
 
-    Substitute [CH_YEu1 BEu1] { NUNu1 } -> NUNf2;
+    Substitute [CH_YEu1 BEu1] ( NUNu1 ) -> NUNf2;
 
 Within the right hand side of a ``Substitute`` operation, you may use
 *backreferences* as glyph selectors to refer to glyph selectors in equivalent
