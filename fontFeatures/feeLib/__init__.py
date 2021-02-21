@@ -2,13 +2,122 @@ import lark
 
 import collections
 import pathlib
+import re
 import warnings
 
 from importlib import import_module
 from fontFeatures import FontFeatures
-from fontFeatures.feeLib import GlyphSelector
 from babelfont.font import Font
 from more_itertools import collapse
+
+class GlyphSelector:
+    def __init__(self, selector, suffixes, location):
+        self.selector = selector
+        self.suffixes = suffixes
+        self.location = location
+
+    def __repr__(self):
+        return "GlyphSelector<{}>".format(self.as_text())
+
+    def as_text(self):
+        if "barename" in self.selector:
+            returned = self.selector["barename"]
+        elif "classname" in self.selector:
+            returned = "@" + self.selector["classname"]
+        elif "regex" in self.selector:
+            returned = "/" + self.selector["regex"] + "/"
+        elif "unicodeglyph" in self.selector:
+            returned = "U+%04X" % self.selector["unicodeglyph"]
+        elif "unicoderange" in self.selector:
+            returned = "U+%04X=>U+%04X" % self.selector["unicoderange"].start, self.selector["unicoderange"].stop
+        elif "inlineclass" in self.selector:
+            items = [
+                GlyphSelector(i, (), self.location)
+                for i in self.selector["inlineclass"]
+            ]
+            returned = "[" + " ".join([item.as_text() for item in items]) + "]"
+
+        else:
+            raise ValueError("Unknown selector type %s" % self.selector)
+        for s in self.suffixes:
+            returned = returned + s["suffixtype"] + s["suffix"]
+        return returned
+
+    def _apply_suffix(self, glyphname, suffix):
+        if suffix["suffixtype"] == ".":
+            glyphname = glyphname + "." + suffix["suffix"]
+        else:
+            if glyphname.endswith("." + suffix["suffix"]):
+                glyphname = glyphname[: -(len(suffix["suffix"]) + 1)]
+        return glyphname
+
+    def resolve(self, fontfeatures, font, mustExist=True):
+        returned = []
+        assert isinstance(font, Font)
+        glyphs = font.exportedGlyphs()
+        if "barename" in self.selector:
+            returned = [self.selector["barename"]]
+        elif "unicodeglyph" in self.selector:
+            cp = self.selector["unicodeglyph"]
+            glyph = font.glyphForCodepoint(cp, fallback=False)
+            if not glyph:
+                raise ValueError(
+                    "Font does not contain glyph for U+%04X (at %s)"
+                    % (cp, self.location)
+                )
+            returned = [glyph]
+        elif "unicoderange" in self.selector:
+            returned = list(
+                collapse(
+                    [
+                        GlyphSelector({"unicodeglyph": i}, (), self.location).resolve(fontfeatures, font)
+                        for i in self.selector["unicoderange"]
+                    ]
+                )
+            )
+        elif "inlineclass" in self.selector:
+            returned = list(
+                collapse(
+                    [
+                        GlyphSelector(i, (), self.location).resolve(fontfeatures, font)
+                        for i in self.selector["inlineclass"]
+                    ]
+                )
+            )
+        elif "classname" in self.selector:
+            classname = self.selector["classname"]
+            if not classname in fontfeatures.namedClasses:
+                raise ValueError(
+                    "Tried to expand glyph class '@%s' but @%s was not defined (at %s)"
+                    % (classname, classname, self.location)
+                )
+            returned = fontfeatures.namedClasses[classname]
+        elif "regex" in self.selector:
+            regex = self.selector["regex"]
+            try:
+                pattern = re.compile(regex)
+            except Exception as e:
+                raise ValueError(
+                    "Couldn't parse regular expression '%s' at %s"
+                    % (regex, self.location)
+                )
+
+            returned = list(filter(lambda x: re.search(pattern, x), glyphs))
+        for s in self.suffixes:
+            returned = [self._apply_suffix(g, s) for g in returned]
+        if mustExist:
+            notFound = list(filter(lambda x: x not in glyphs, returned))
+            returned = list(filter(lambda x: x in glyphs, returned))
+            if len(notFound) > 0:
+                plural = ""
+                if len(notFound) > 1:
+                    plural = "s"
+                glyphstring = ", ".join(notFound)
+                warnings.warn(
+                    "# Couldn't find glyph%s '%s' in font (%s at %s)"
+                    % (plural, glyphstring, self.as_text(), self.location)
+                )
+        return list(returned)
 
 GRAMMAR="""
     ?start: statement+
@@ -115,7 +224,7 @@ class FeeParser:
 
     def load_plugin(self, plugin) -> bool:
         if "." not in plugin:
-            resolved_plugin = "feeLib." + plugin
+            resolved_plugin = "fontFeatures.feeLib." + plugin
 
         mod = import_module(resolved_plugin)
 
