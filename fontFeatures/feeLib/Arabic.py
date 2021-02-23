@@ -18,21 +18,26 @@ the ``init``, ``medi`` and ``fina`` features.
 
 """
 
+from . import FEEVerb
+
+PARSEOPTS = dict(use_helpers=True)
+
 GRAMMAR = """
-InitMediFina_Args = ws;
+?start: action
+action:
 """
 
 VERBS = ["InitMediFina"];
 
-class InitMediFina:
-    def action(self, parser):
-        return parser.parseString(
-            """
-      DefineClass @inits = /init$/;
-      DefineClass @medis = /medi$/;
-      DefineClass @finas = /fina$/;
-      Feature init { Substitute @inits~init -> @inits; };
-      Feature medi { Substitute @medis~medi -> @medis; };
-      Feature fina { Substitute @finas~fina -> @finas; };
-    """
+class InitMediFina(FEEVerb):
+    def action(self, _):
+        return self.parser.parseString(
+        """
+          DefineClass @inits = /init$/;
+          DefineClass @medis = /medi$/;
+          DefineClass @finas = /fina$/;
+          Feature init { Substitute @inits~init -> @inits; };
+          Feature medi { Substitute @medis~medi -> @medis; };
+          Feature fina { Substitute @finas~fina -> @finas; };
+        """
         )
