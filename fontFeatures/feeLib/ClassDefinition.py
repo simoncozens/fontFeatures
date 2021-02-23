@@ -128,8 +128,8 @@ predicate: has_glyph_predicate | has_anchor_predicate | category_predicate | met
 negated_predicate: "not" predicate
 
 CONJUNCTOR: "&" | "|" | "-"
-primary: glyphselector | conjunction | predicate | negated_predicate | primary_paren
-primary_paren: "(" primary ")"
+primary_action: glyphselector | conjunction | predicate | negated_predicate
+primary: primary_action | ("(" primary_action ")")
 conjunction: primary CONJUNCTOR primary
 
 """
@@ -154,9 +154,9 @@ class DefineClass(FEEVerb):
         except ValueDuplicationError as e:
             import warnings
             warnings.warn("Could not define class %s as it contains the same"
-                    " glyphs as an existing class %s" % (classname["classname"],
+                    " glyphs as an existing class %s" % (classname,
                         self.parser.fontfeatures.namedClasses.inverse[tuple(glyphs)]))
-    
+
     def has_glyph_predicate(self, args):
         glyphre, withs = args
         value = {"replace": re.compile(glyphre.value[1:-1]), "with": withs.value}
@@ -198,6 +198,9 @@ class DefineClass(FEEVerb):
         (predicate,) = args
         return lambda metrics, glyphname: not predicate(metrics, glyphname)
 
+    def primary_action(self, args):
+        return args[0]
+
     def primary(self, args):
         (primary,) = args
         if isinstance(primary, GlyphSelector) or (isinstance(primary, dict) and "conjunction" in primary):
@@ -222,6 +225,7 @@ class DefineClass(FEEVerb):
     def action(self, args):
         parser = self.parser
         classname, glyphs = args
+        classname = classname[1:] # -@
 
         self._add_glyphs_to_named_class(glyphs, classname)
 
@@ -255,9 +259,6 @@ class DefineClass(FEEVerb):
         else:
             raise ValueError("Unknown metric {}".format(metric))
         return truth
-
-    def CLASSNAME(self, tok):
-        return tok.value[1:] # -@
 
 class DefineClassBinned(DefineClass):
     def action(self, args):

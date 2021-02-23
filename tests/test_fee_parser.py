@@ -1,8 +1,7 @@
-from fontFeatures.feeLib import FeeParser, GlyphSelector
-import fontFeatures.feeLib.ClassDefinition as DefineClass
-from ometa.builder import writePython
-from ometa.grammar import OMeta
+from fontFeatures.feeLib import FeeParser, GlyphSelector, FEEVerb
 from babelfont import Babelfont
+import lark
+from lark import Tree, Token
 import pytest
 import os
 import re
@@ -22,79 +21,163 @@ def parser():
     fontpath = os.path.join(path, "data", "LibertinusSans-Regular.otf")
     return FeeParser(Babelfont.load(fontpath))
 
+############
+# BareName #
+############
+
+class BareNameModule:
+    GRAMMAR = """
+    ?start: action
+    action: BARENAME
+    """
+
+    VERBS = ["BareName"]
+
+    PARSEOPTS = dict(use_helpers=True)
+
+    class BareName(FEEVerb):
+        pass
 
 def test_barename(parser):
-    s = "foo"
-    a = parser.parser(s).barename()
-    assert a == {"barename": s}
+    parser.register_plugin(BareNameModule, "BareName")
 
-    s = "CH_YEf1"
-    a = parser.parser(s).barename()
-    assert a == {"barename": s}
+    def test_barename_string(test_bn):
+        s = "BareName %s;" % test_bn
+        a = parser.parseString(s)
+        assert a == ("BareName", Tree('action', [Token('BARENAME', test_bn)]))
 
-    s = "teh-ar"
-    a = parser.parser(s).barename()
-    assert a == {"barename": s}
+    test_barename_string("foo")
+    test_barename_string("CH_YEf1")
+    test_barename_string("teh-ar")
 
+#############
+# ClassName #
+#############
+
+class ClassNameModule:
+    GRAMMAR = """
+    ?start: action
+    action: CLASSNAME
+    """
+
+    VERBS = ["ClassName"]
+
+    PARSEOPTS = dict(use_helpers=True)
+
+    class ClassName(FEEVerb):
+        pass
 
 def test_classname(parser):
-    s = "@foo"
-    a = parser.parser(s).classname()
-    assert a == {"classname": "foo"}
+    parser.register_plugin(ClassNameModule, "ClassName")
 
+    def test_classname_string(test_bn):
+        s = "ClassName %s;" % test_bn
+        a = parser.parseString(s)
+        assert a == ("ClassName", Tree('action', [Token('CLASSNAME', test_bn)]))
+
+    test_classname_string("@foo")
+
+###############
+# InlineClass #
+###############
+
+class InlineClassModule:
+    GRAMMAR = """
+    ?start: action
+    action: inlineclass
+    """
+
+    VERBS = ["InlineClass"]
+
+    PARSEOPTS = dict(use_helpers=True)
+
+    class InlineClass(FEEVerb):
+        pass
 
 def test_inlineclass(parser):
-    s = "[a b c @foo]"
-    a = parser.parser(s).inlineclass()
-    assert a == {
-        "inlineclass": [
-            {"barename": "a"},
-            {"barename": "b"},
-            {"barename": "c"},
-            {"classname": "foo"},
-        ]
-    }
+    s = "InlineClass [a b c @foo];"
+    parser.register_plugin(InlineClassModule, "InlineClass")
+    a = parser.parseString(s)
+    assert a == ('InlineClass', Tree('action', [Token('INLINECLASS', [{'barename': 'a'}, {'barename': 'b'}, {'barename': 'c'}, {'classname': 'foo'}])]))
+
+#################
+# GlyphSelector #
+#################
+
+class GlyphSelectorModule:
+    GRAMMAR = """
+    ?start: action
+    action: glyphselector
+    """
+
+    VERBS = ["GlyphSelector"]
+
+    PARSEOPTS = dict(use_helpers=True)
+
+    class GlyphSelector(FEEVerb):
+        def action(self, args):
+            return args
 
 
 def test_glyphselector(parser):
     s = "[foo @bar].sc"
-    a = parser.parser(s).glyphselector()
-    assert a.as_text() == s
+    stmt = "GlyphSelector %s;" % s
+    parser.register_plugin(GlyphSelectorModule, "GlyphSelector")
+    a = parser.parseString(stmt)
+    _, (gs,) = a
+    assert gs.as_text() == s
 
+###############
+# DefineClass #
+###############
+
+from fontFeatures.feeLib import ClassDefinition
+
+class ConjunctionModule:
+    GRAMMAR = ClassDefinition.GRAMMAR
+
+    Conjunction_GRAMMAR = """
+    ?start: conjunction
+    """
+
+    VERBS = ["Conjunction"]
+
+    PARSEOPTS = dict(use_helpers=True)
+
+    class Conjunction(ClassDefinition.DefineClass):
+        pass
 
 def test_classdefinition_conjunctions(parser):
-    s = "foo | bar"
-    a = parser.grammar.globals["DefineClass"](s).apply("primary")[0]
+    parser.register_plugin(ConjunctionModule, "Conjunction")
+    s = "Conjunction A | B;"
+    (_, a) = parser.parseString(s)
     assert isinstance(a, dict)
     assert a["conjunction"] == "or"
-    assert a["left"].as_text() == "foo"
-    assert a["right"].as_text() == "bar"
+    assert a["left"] == ["A"]
+    assert a["right"] == ["B"]
 
-    s = "@foo.sc & @bar~sc"
-    a = parser.grammar.globals["DefineClass"](s).apply("primary")[0]
-    assert isinstance(a, dict)
-    assert a["conjunction"] == "and"
-    assert a["left"].as_text() == "@foo.sc"
-    assert a["right"].as_text() == "@bar~sc"
-
+def test_classdefinition_with_conjunction(parser):
+    s = """
+    DefineClass @foo = /^[a-z]$/;
+    DefineClass @bar = /^[g-o]\.sc$/;
+    DefineClass @conjunction = @foo.sc & @bar;
+    """
+    parser.parseString(s)
+    matches = set(["{}.sc".format(c) for c in "ghijklmno"])
+    assert set(parser.fontfeatures.namedClasses["conjunction"]) == matches
 
 def test_classdefinition_with_predicate(parser):
-    s = "(@foo | @bar) and (width <= 200)"
-    a = parser.grammar.globals["DefineClass"](s).apply("definition")[0]
-    assert isinstance(a[0], dict)
-    assert isinstance(a[1], list)
-
-    s = "@foo = /\\.sc$/ and (width > 500)"
-    a = parser.grammar.globals["DefineClass"](s).apply("DefineClass_Args")[0]
-
-    s = "DefineClass @foo = /\\.sc$/ and (width > 500);"
-    parser.parser(s).statement()
+    s = r"DefineClass @foo = /\.sc$/ & (width > 500);"
+    parser.parseString(s)
     assert len(parser.fontfeatures.namedClasses["foo"]) == 49
 
+#################
+# Substitutions #
+#################
 
 def test_substitute(parser):
     s = "Feature rlig { Substitute a -> b; };"
-    parser.parser(s).feefile()
+    parser.parseString(s)
     assert alltrim(parser.fontfeatures.asFea()) == alltrim(
         "feature rlig { lookup Routine_1 { ; sub a by b; } Routine_1; } rlig;"
     )
@@ -102,7 +185,7 @@ def test_substitute(parser):
 
 def test_substitute2(parser):
     s = "Feature rlig { Substitute [a b] -> [c d]; };"
-    parser.parser(s).feefile()
+    parser.parseString(s)
     assert alltrim(parser.fontfeatures.asFea()) == alltrim(
         "feature rlig { lookup Routine_1 { ; sub [a b] by [c d]; } Routine_1; } rlig;"
     )

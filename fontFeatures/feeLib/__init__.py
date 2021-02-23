@@ -143,7 +143,7 @@ HELPERS="""
     MIDGLYPHNAME: STARTGLYPHNAME | "." | "-"
     BARENAME: STARTGLYPHNAME MIDGLYPHNAME*
     inlineclass: "[" (WS* (CLASSNAME | BARENAME))* "]"
-    CLASSNAME: "@" BARENAME
+    CLASSNAME: "@" STARTGLYPHNAME+
 
     ANYTHING: /[^\s]/
     REGEX: "/" ANYTHING* "/"
@@ -162,7 +162,7 @@ HELPERS="""
     fea_value_record: "<" integer_container integer_container integer_container integer_container ">"
 
     METRIC: {}
-    metric_comparison: METRIC COMPARATOR integer_container 
+    metric_comparison: METRIC COMPARATOR integer_container
     GLYPHVALUE: METRIC "[" BARENAME "]"
 
     NAMEDINTEGER: "$" BARENAME
@@ -245,7 +245,7 @@ class FeeParser:
             verb_grammar = getattr(mod, v+"_GRAMMAR", None)
             verb_bbgrammar = getattr(mod, v+"_beforebrace_GRAMMAR", None)
             verb_abgrammar = getattr(mod, v+"_afterbrace_GRAMMAR", None)
-            
+
             if verb_grammar:
                 verb.parser = lark.Lark(rules+verb_grammar)
             else:
@@ -292,7 +292,7 @@ class FeeTransformer(lark.Transformer):
         self.parser = parser
 
     def start(self, args):
-        return args 
+        return args
 
     def statement(self, args):
         verb, args = args
@@ -382,14 +382,21 @@ class FEEVerb(lark.Transformer):
         return lark.Token("UNICODERANGE", range(_UNICODEGLYPH(args[0].value), _UNICODEGLYPH(args[1].value)+1), args[0].pos_in_stream)
 
     def inlineclass(self, args):
-        return lark.Token("INLINECLASS", [{t.type.lower(): t.value} for t in args if t.type in ["BARENAME", "CLASSNAME"]])
+        return lark.Token("INLINECLASS", [self._glyphselector(t) for t in args if t.type != "WS"])
+
+    def _glyphselector(self, token):
+        if token.type == "CLASSNAME":
+            val = token.value[1:]
+        elif token.type == "REGEX":
+            val = token.value[1:-1]
+        elif token.type == "UNICODEGLYPH":
+            val = _UNICODEGLYPH(token.value)
+        else:
+            val = token.value
+
+        return {token.type.lower(): val}
 
     def glyphselector(self, args):
         token, suffixes = args[0], args[1:]
-        if token.type == "CLASSNAME":
-            token.value = token.value[1:]
-        elif token.type == "REGEX":
-            token.value = token.value[1:-1]
-        elif token.type == "UNICODEGLYPH":
-            token.value = _UNICODEGLYPH(token.value)
-        return GlyphSelector({token.type.lower(): token.value}, suffixes, token.pos_in_stream)
+        gs = self._glyphselector(token)
+        return GlyphSelector(gs, suffixes, token.pos_in_stream)
