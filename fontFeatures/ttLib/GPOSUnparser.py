@@ -262,20 +262,21 @@ class GPOSUnparser(GTableUnparser):
         self._fix_flags(b, lookup)
         for subtable in lookup.SubTable:  # fontTools.ttLib.tables.otTables.MarkBasePos
             assert subtable.Format == 1
-            anchorClassPrefix = "Anchor" + self.gensym()
-            marks = self.formatMarkArray(
-                subtable.Mark1Array, subtable.Mark1Coverage, anchorClassPrefix
-            )
-            bases = self.formatMark2Array(
-                subtable.Mark2Array, subtable.Mark2Coverage, anchorClassPrefix
-            )
-            b.addRule(
-                fontFeatures.Attachment(
-                    anchorClassPrefix, anchorClassPrefix + "_", bases, marks,
-                    font = self.font,
-                    address=self.currentLookup,
-                    flags=lookup.LookupFlag,
-
+            for classId in range(0,subtable.ClassCount):
+                anchorClassPrefix = "Anchor" + self.gensym()
+                marks = self.formatMarkArray(
+                    subtable.Mark1Array, subtable.Mark1Coverage, classId
                 )
-            )
+                bases = self.formatMark2Array(
+                    subtable.Mark2Array, subtable.Mark2Coverage, classId
+                )
+                b.addRule(
+                    fontFeatures.Attachment(
+                        anchorClassPrefix, anchorClassPrefix + "_", bases, marks,
+                        font = self.font,
+                        address=self.currentLookup,
+                        flags=lookup.LookupFlag,
+
+                    )
+                )
         return b, []
