@@ -1,6 +1,12 @@
 CHANGES
 =======
 
+1.0.5
+
+* Make emitting the GDEF table optional
+* Beginnings of a binary GSUB/GPOS emitter. Proof-of-concept only.
+* Fix some mark-to-mark and mark-to-base unparsing bugs.
+
 1.0.4
 
 * New FEE quickstart in README
