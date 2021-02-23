@@ -4,15 +4,15 @@ Anchor Management
 
 The ``Anchors`` plugin provides the ``Anchors``, ``LoadAnchors`` and ``Attach`` verbs.
 
-``Anchors`` takes a glyph name and a block containing anchor names and
+``Anchors`` takes a glyph name followed by anchor names and
 positions, like so::
 
-      Anchors A { top <679 1600> bottom <691 0> };
+      Anchors A top <679 1600> bottom <691 0>;
 
 Note that there are no semicolons between anchors. The *same thing* happens
 for mark glyphs::
 
-      Anchors acutecomb { _top <-570 1290> };
+      Anchors acutecomb _top <-570 1290>;
 
 If you don't want to define these anchors manually but instead are dealing with
 a source font file which contains anchor declarations, you can load the anchors
@@ -37,7 +37,7 @@ Writing a mark-to-mark feature is similar; you just need to define a correspondi
 anchor on the mark, and use the ``marks`` class filter instead of the ``bases``
 filter::
 
-      Anchors acutecomb { _top <-570 1290> top <-570 1650> };
+      Anchors acutecomb _top <-570 1290> top <-570 1650>;
       Feature mkmk { Attach &top &_top marks; };
 
 Writing a cursive attachment figure can be done by defining ``entry`` and ``exit``
