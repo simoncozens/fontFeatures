@@ -54,4 +54,8 @@ def unparse(font, do_gdef=False, doLookups=True, config={}):
         GPOSUnparser(
             font["GPOS"], ff, languageSystems, font=font, config=config
         ).unparse(doLookups=doLookups)
+
+    if "GDEF" in font and do_gdef:
+        GDEFUnparser(font["GDEF"], ff).unparse()
+
     return ff

@@ -68,9 +68,3 @@ ff = unparse(font, do_gdef=args.gdef, doLookups=(not args.nolookups), config=con
 #     Optimizer(ff).optimize(level=args.optimize)
 
 print(ff.asFea())
-
-if args.gdef and 'GDEF':
-    table = GDEFUnparser(font["GDEF"]).unparse()
-    if table:
-        print(table.asFea())
-
