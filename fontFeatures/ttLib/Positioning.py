@@ -4,5 +4,5 @@ def lookup_type(self):
             return 1
         if len(self.glyphs) == 2:
             return 2
-    return 7
+    return 8
 
