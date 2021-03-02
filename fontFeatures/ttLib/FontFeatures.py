@@ -6,6 +6,7 @@ import itertools
 
 
 def buildGPOSGSUB(self, font):
+    # XXX first build gdef for mark positioning classes
     for tag in ["GSUB", "GPOS"]:
         table = makeTable(self, tag, font)
         fontTable = font[tag] = newTable(tag)

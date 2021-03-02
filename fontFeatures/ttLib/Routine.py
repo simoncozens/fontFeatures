@@ -20,9 +20,8 @@ def buildPos(self, font, lookuptype):
                 x.toOTLookup(pairPosContext=False) for x in rule.valuerecords
             ]
             builder.addPos(rule.address, rule.glyphs[0], ot_valuerecs[0])
-        return builder.build()
 
-    if lookuptype == 2:
+    elif lookuptype == 2:
         builder = otl.PairPosBuilder(font, self.address)
         for rule in self.rules:
             ot_valuerecs = [
@@ -44,7 +43,20 @@ def buildPos(self, font, lookuptype):
                     rule.glyphs[1],
                     ot_valuerecs[1],
                 )
-        return builder.build()
+    elif lookuptype == 3:
+        builder = otl.CursivePosBuilder(font, self.address)
+        for rule in self.rules:
+            allglyphs = set(rule.bases.keys()) | set(rule.marks.keys())
+            for g in allglyphs:
+                builder.attachments[g] = (
+                    g in rule.bases and otl.buildAnchor(*rule.bases[g]) or None,
+                    g in rule.marks and otl.buildAnchor(*rule.marks[g]) or None,
+                )
+    else:
+        raise ValueError("Don't know how to build a POS type %i lookup" % lookuptype)
+    builder.lookupflag = self.flags
+    # XXX mark filtering set
+    return builder.build()
 
 
 def buildSub(self, font, lookuptype):
@@ -52,4 +64,13 @@ def buildSub(self, font, lookuptype):
         builder = otl.SingleSubstBuilder(font, self.address)
         for rule in self.rules:
             builder.mapping[rule.input[0][0]] = rule.replacement[0][0]
-        return builder.build()
+    elif lookuptype == 2:
+        builder = otl.MultipleSubstBuilder(font, self.address)
+        for rule in self.rules:
+            builder.mapping[rule.input[0][0]] = [ x[0] for x in rule.replacement ]
+    else:
+        raise ValueError("Don't know how to build a SUB type %i lookup" % lookuptype)
+
+    builder.lookupflag = self.flags
+    # XXX mark filtering set
+    return builder.build()

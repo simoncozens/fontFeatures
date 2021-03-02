@@ -713,6 +713,7 @@ class Attachment(Rule):
     from .feaLib.Attachment import asFeaAST, feaPreamble
     from .shaperLib.Attachment import shaper_inputs, _do_apply, would_apply_at_position
     from .xmlLib.Attachment import _toXML, fromXML
+    from .ttLib.Attachment import lookup_type
 
     @property
     def involved_glyphs(self):
