@@ -1,20 +1,16 @@
 import io
 import fontFeatures
+from fontTools.feaLib.parser import Parser
 
 
-class FeaUnparser:
+class FeaParser:
     """Turns a AFDKO feature file or string into a FontFeatures object.
 
     Args:
         featurefile: File object or string.
         font: Optionally, a TTFont object.
-
-    Returns:
-        An object with a ``ff`` property, which is the ``FontFeatures`` object
-        containing the rules of this file.
     """
     def __init__(self, featurefile, font=None):
-        from fontTools.feaLib.parser import Parser
 
         self.ff = fontFeatures.FontFeatures()
         self.markclasses = {}
@@ -22,14 +18,23 @@ class FeaUnparser:
         self.currentRoutine = None
         self.gensym = 1
         self.language_systems = []
-        glyphmap = ()
+        self.glyphmap = ()
         if font:
-            glyphmap = font.getReverseGlyphMap()
+            self.glyphmap = font.getReverseGlyphMap()
         if isinstance(featurefile, str):
             featurefile = io.StringIO(featurefile)
-        parsetree = Parser(featurefile, glyphmap).parse()
+        self.featurefile = featurefile
+
+    def parse(self):
+        """Parse the feature code.
+
+        Returns:
+            A ``FontFeatures`` object containing the rules of this file.
+        """
+        parsetree = Parser(self.featurefile, self.glyphmap).parse()
         self.features_ = {}
         parsetree.build(self)
+        return self.ff
 
     def find_named_routine(self, name):
         candidates = list(filter(lambda x: x.name == name, self.ff.routines))
@@ -225,8 +230,9 @@ class FeaUnparser:
     def end_feature(self):
         self._discard_empty_routine()
         self.currentFeature = None
-        for rule in self.currentRoutine.rules:
-            rule.flags = self.currentRoutineFlag
+        if self.currentRoutine:
+            for rule in self.currentRoutine.rules:
+                rule.flags = self.currentRoutineFlag
 
     def _discard_empty_routine(self):
         if not self.currentFeature:
@@ -238,4 +244,8 @@ class FeaUnparser:
             del(self.ff.routines[self.ff.routines.index(self.currentRoutine)])
             if self.currentFeature in self.ff.features:
                 del(self.ff.features[self.currentFeature][-1])
+        pass
+
+    def add_feature_reference(self, location, featurename):
+        # XXX
         pass
