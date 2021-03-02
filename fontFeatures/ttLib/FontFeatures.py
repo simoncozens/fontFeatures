@@ -5,8 +5,52 @@ from collections import OrderedDict
 import itertools
 
 
-def buildGPOSGSUB(self, font):
+def buildBinaryFeatures(self, font):
     # XXX first build gdef for mark positioning classes
+    buildGDEF(self, font)
+    buildGPOSGSUB(self, font)
+
+# I am stealing the fontTools.feaLib.builder stuff here
+def buildGDEF(self, font):
+    gdef = otTables.GDEF()
+    gdef.GlyphClassDef = _buildGDEFGlyphClassDef(self)
+
+    # gdef.AttachList = otl.buildAttachList(self.attachPoints_, self.glyphMap)
+    # gdef.LigCaretList = otl.buildLigCaretList(
+        # self.ligCaretCoords_, self.ligCaretPoints_, self.glyphMap
+    # )
+    # gdef.MarkAttachClassDef = self.buildGDEFMarkAttachClassDef_()
+    # gdef.MarkGlyphSetsDef = self.buildGDEFMarkGlyphSetsDef_()
+    # gdef.Version = 0x00010002 if gdef.MarkGlyphSetsDef else 0x00010000
+    gdef.Version = 0x00010000
+    # XXX Variations!
+    if any(
+        (
+            gdef.GlyphClassDef,
+            # gdef.AttachList,
+            # gdef.LigCaretList,
+            # gdef.MarkAttachClassDef,
+            # gdef.MarkGlyphSetsDef,
+        )
+    ):
+        font["GDEF"] = newTable("GDEF")
+        font["GDEF"].table = gdef
+
+
+classnames = ["", "base", "ligature", "mark", "component"]
+
+def _buildGDEFGlyphClassDef(self):
+    classes = {}
+    for g, c in self.glyphclasses.items():
+        classes[g] = classnames.index(c)
+    if classes:
+        result = otTables.GlyphClassDef()
+        result.classDefs = classes
+        return result
+    else:
+        return None
+
+def buildGPOSGSUB(self, font):
     for tag in ["GSUB", "GPOS"]:
         table = makeTable(self, tag, font)
         fontTable = font[tag] = newTable(tag)

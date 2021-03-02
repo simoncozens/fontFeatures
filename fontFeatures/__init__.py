@@ -280,7 +280,7 @@ class FontFeatures:
         return allroutines
 
     from .feaLib.FontFeatures import asFea, asFeaAST
-    from .ttLib.FontFeatures import buildGPOSGSUB
+    from .ttLib.FontFeatures import buildBinaryFeatures
 
 
 class Routine:
