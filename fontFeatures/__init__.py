@@ -694,6 +694,7 @@ class Attachment(Rule):
         flags=0,
         address=None,
         font=None,
+        languages=None
     ):
         self.base_name = base_name
         self.mark_name = mark_name
@@ -703,6 +704,7 @@ class Attachment(Rule):
         self.address = address
         self.font = font
         self.stage = "pos"
+        self.languages = languages or []
 
     @property
     def is_cursive(self):
