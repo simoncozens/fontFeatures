@@ -2,6 +2,7 @@
 import fontTools.feaLib.ast as feaast
 from glyphtools import categorize_glyph
 import warnings
+from fontFeatures.variableScalar import VariableScalar
 
 
 def glyphref(g):
@@ -48,6 +49,11 @@ def feaPreamble(self, ff):
 
 def asFeaAST(self):
     b = feaast.Block()
+    if any(
+        isinstance(x[0], VariableScalar) or isinstance(x[1], VariableScalar)
+        for x in list(self.bases.values()) + list(self.marks.values())
+    ):
+        raise ValueError("Can't directly express a variable anchor in FEA")
     if self.is_cursive:
         allglyphs = set(self.bases.keys()) | set(self.marks.keys())
         for g in allglyphs:
@@ -64,7 +70,7 @@ def asFeaAST(self):
         for base in self.baseslist:
             statementtype = feaast.MarkBasePosStatement
             if self.font:
-                if categorize_glyph(self.font,base[0][0])[0] == "mark":
+                if categorize_glyph(self.font, base[0][0])[0] == "mark":
                     statementtype = feaast.MarkMarkPosStatement
             b.statements.append(
                 statementtype(

@@ -23,6 +23,7 @@ from fontTools.feaLib.ast import ValueRecord as feaLibValueRecord
 from itertools import chain
 from bidict import bidict
 from copy import copy
+from .variableScalar import VariableScalar
 
 
 class FontFeatures:
@@ -560,66 +561,24 @@ class Chaining(Rule):
 
 
 class ValueRecord(feaLibValueRecord):
-    """An extension of the fontTools.feaLib ValueRecord representation to support
-    variable font item variation stores."""
+    from .ttLib.ValueRecord import toOTLookup
 
-    # Actually until we have a binary compiler, we're just going to cheat and store
-    # a value record for each master.
-    def set_value_for_master(self, vf, master, vr):
-        """Set a master-specific value record.
-
-        Args:
-            vf: a babelfont.VariableFont instance
-            master: name of the master to set
-            vr: a ``ValueRecord`` specific to this master.
-        """
-        if not hasattr(self, "masters"):
-            self.masters = {}
-            # Clone this value record to all masters
-            for mastername in vf.masters.keys():
-                self.masters[mastername] = ValueRecord(
-                    xPlacement=vr.xPlacement,
-                    yPlacement=vr.yPlacement,
-                    xAdvance=vr.xAdvance,
-                    yAdvance=vr.yAdvance,
-                )
-        else:
-            self.masters[master] = vr
-
-    def get_value_for_master(self, vf, master):
-        """Get a master-specific value record.
-
-        Args:
-            vf: a ``babelfont.VariableFont`` instance
-            master: name of the master to get
-        """
-        if not hasattr(self, "masters"):
-            return self
-        return self.masters[master]
-
-    def get_value_for_location(self, vf, location):
-        """Get an interpolated value record for a particular location.
-
-        Args:
-            vf: a ``babelfont.VariableFont`` instance
-            location: A dictionary mapping axis names to user space coordinates.
-        """
-        if not hasattr(self, "masters"):
-            return self
-        locs = {
-            k: (v.xPlacement, v.yPlacement, v.xAdvance, v.yAdvance)
-            for k, v in self.masters.items()
-        }
-        values = vf.interpolate_tuples(locs, location)
-        xPlacement, yPlacement, xAdvance, yAdvance = values
-        return ValueRecord(
-            xPlacement=xPlacement,
-            yPlacement=yPlacement,
-            xAdvance=xAdvance,
-            yAdvance=yAdvance,
+    @property
+    def is_variable(self):
+        return any(
+            isinstance(x, VariableScalar)
+            for x in [
+                self.xPlacement,
+                self.yPlacement,
+                self.xAdvance,
+                self.yAdvance,
+            ]
         )
 
-    from .ttLib.ValueRecord import toOTLookup
+    def asFea(self):
+        if not self.is_variable:
+            return super().asFea()
+        raise ValueError("Variable value records cannot directly be expressed as FEA")
 
 
 class Positioning(Rule):
@@ -694,7 +653,7 @@ class Attachment(Rule):
         flags=0,
         address=None,
         font=None,
-        languages=None
+        languages=None,
     ):
         self.base_name = base_name
         self.mark_name = mark_name
