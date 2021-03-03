@@ -1,18 +1,39 @@
 import fontTools.otlLib.builder as otl
+from fontTools.varLib.builder import buildVarDevTable
+from fontFeatures.variableScalar import VariableScalar
 
 
-def toOTLookup(self, font):
+def toOTLookup(self, font, ff):
     lookuptypes = [x.lookup_type() for x in self.rules]
     if not all([lu == lookuptypes[0] for lu in lookuptypes]):
         raise ValueError("For now, a routine can only contain rules of the same type")
 
     if self.stage == "pos":
-        return buildPos(self, font, lookuptypes[0])
+        return buildPos(self, font, lookuptypes[0], ff)
     if self.stage == "sub":
-        return buildSub(self, font, lookuptypes[0])
+        return buildSub(self, font, lookuptypes[0], ff)
 
 
-def buildPos(self, font, lookuptype):
+def makeAnchor(x, y, ff):
+    if isinstance(x, VariableScalar):
+        x_def, x_index = x.add_to_variation_store(ff.varstorebuilder)
+    else:
+        x_def, x_index = x, None
+    if isinstance(y, VariableScalar):
+        y_def, y_index = y.add_to_variation_store(ff.varstorebuilder)
+    else:
+        y_def, y_index = y, None
+    anchor = otl.buildAnchor(x_def, y_def)
+    if x_index:
+        anchor.XDeviceTable = buildVarDevTable(x_index)
+        anchor.Format = 3
+    if y_index:
+        anchor.YDeviceTable = buildVarDevTable(y_index)
+        anchor.Format = 3
+    return anchor
+
+
+def buildPos(self, font, lookuptype, ff):
     if lookuptype == 1:
         builder = otl.SinglePosBuilder(font, self.address)
         for rule in self.rules:
@@ -49,8 +70,8 @@ def buildPos(self, font, lookuptype):
             allglyphs = set(rule.bases.keys()) | set(rule.marks.keys())
             for g in allglyphs:
                 builder.attachments[g] = (
-                    g in rule.bases and otl.buildAnchor(*rule.bases[g]) or None,
-                    g in rule.marks and otl.buildAnchor(*rule.marks[g]) or None,
+                    g in rule.bases and makeAnchor(*rule.bases[g], ff) or None,
+                    g in rule.marks and makeAnchor(*rule.marks[g], ff) or None,
                 )
     else:
         raise ValueError("Don't know how to build a POS type %i lookup" % lookuptype)
@@ -59,7 +80,7 @@ def buildPos(self, font, lookuptype):
     return builder.build()
 
 
-def buildSub(self, font, lookuptype):
+def buildSub(self, font, lookuptype, ff):
     if lookuptype == 1:
         builder = otl.SingleSubstBuilder(font, self.address)
         for rule in self.rules:

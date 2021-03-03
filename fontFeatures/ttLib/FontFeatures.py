@@ -3,12 +3,25 @@ from fontTools.ttLib.tables import otBase, otTables
 from fontTools.ttLib import newTable
 from collections import OrderedDict
 import itertools
+from fontTools.varLib.varStore import OnlineVarStoreBuilder
 
 
-def buildBinaryFeatures(self, font):
-    # XXX first build gdef for mark positioning classes
+def buildBinaryFeatures(self, font, axes=[]):
+    # XXX first build gdef for mark attachment classes
+    if axes:
+        self.varstorebuilder = OnlineVarStoreBuilder([ax.tag for ax in axes])
+        self.axes = axes
     buildGDEF(self, font)
     buildGPOSGSUB(self, font)
+    if axes and self.varstorebuilder._varDataIndices:
+        store = self.varstorebuilder.finish()
+        font["GDEF"].table.Version = 0x00010003
+        font["GDEF"].table.VarStore = store
+        varidx_map = store.optimize()
+
+        font["GDEF"].table.remap_device_varidxes(varidx_map)
+        if 'GPOS' in font:
+            font['GPOS'].table.remap_device_varidxes(varidx_map)
 
 # I am stealing the fontTools.feaLib.builder stuff here
 def buildGDEF(self, font):
@@ -121,7 +134,7 @@ def makeTable(self, tag, font):
 
     stage_map = separate_by_stage(arrangeByScripts(self), tag[1:].lower())
     stage_routines = [x for x in self.routines if x.stage == tag[1:].lower() ]
-    lookups = [ x.toOTLookup(font) for x in stage_routines ]
+    lookups = [ x.toOTLookup(font, self) for x in stage_routines ]
 
     table.LookupList.Lookup = lookups
 
