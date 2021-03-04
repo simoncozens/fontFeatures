@@ -13,15 +13,16 @@ def buildBinaryFeatures(self, font, axes=[]):
         self.axes = axes
     buildGDEF(self, font)
     buildGPOSGSUB(self, font)
-    if axes and self.varstorebuilder.VarData:
+    if axes:
         store = self.varstorebuilder.finish()
-        font["GDEF"].table.Version = 0x00010003
-        font["GDEF"].table.VarStore = store
-        varidx_map = store.optimize()
+        if store.VarData:
+            font["GDEF"].table.Version = 0x00010003
+            font["GDEF"].table.VarStore = store
+            varidx_map = store.optimize()
 
-        font["GDEF"].table.remap_device_varidxes(varidx_map)
-        if 'GPOS' in font:
-            font['GPOS'].table.remap_device_varidxes(varidx_map)
+            font["GDEF"].table.remap_device_varidxes(varidx_map)
+            if 'GPOS' in font:
+                font['GPOS'].table.remap_device_varidxes(varidx_map)
 
 # I am stealing the fontTools.feaLib.builder stuff here
 def buildGDEF(self, font):
