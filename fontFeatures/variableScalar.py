@@ -16,6 +16,9 @@ class VariableScalar:
         for location, value in location_value.items():
             self.add_value(location, value)
 
+    def __repr__(self):
+        return ",".join([ "%s@%s" % i for i in self.values.items() ])
+
     def _normalized_location(self, location):
         normalized_location = {}
         for axtag in location.keys():
