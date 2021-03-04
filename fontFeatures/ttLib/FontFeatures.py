@@ -13,7 +13,7 @@ def buildBinaryFeatures(self, font, axes=[]):
         self.axes = axes
     buildGDEF(self, font)
     buildGPOSGSUB(self, font)
-    if axes and self.varstorebuilder._varDataIndices:
+    if axes and self.varstorebuilder.VarData:
         store = self.varstorebuilder.finish()
         font["GDEF"].table.Version = 0x00010003
         font["GDEF"].table.VarStore = store
