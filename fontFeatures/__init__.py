@@ -570,7 +570,7 @@ class Chaining(Rule):
     def dependencies(self):
         deps = []
         for l in self.lookups:
-            for aLookup in l:
+            for aLookup in (l or []):
                 if isinstance(aLookup, RoutineReference):
                     deps.append(aLookup.routine)
                 else:

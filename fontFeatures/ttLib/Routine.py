@@ -95,7 +95,7 @@ def buildPos(self, font, lookuptype, ff):
         for r in self.rules:
             new_lookup_list = []
             for list_of_lookups in r.lookups:
-                new_lookup_list.append([lu.routine.__builder for lu in list_of_lookups])
+                new_lookup_list.append([lu.routine.__builder for lu in (list_of_lookups or [])])
             builder.rules.append( otl.ChainContextualRule(
                 r.precontext or [],
                 r.input or [],
