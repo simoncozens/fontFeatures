@@ -561,7 +561,7 @@ class Chaining(Rule):
 
 
 class ValueRecord(feaLibValueRecord):
-    from .ttLib.ValueRecord import toOTLookup
+    from .ttLib.ValueRecord import toOTValueRecord
 
     @property
     def is_variable(self):
