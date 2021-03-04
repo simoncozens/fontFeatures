@@ -14,7 +14,8 @@ def toOTLookup(self, font, ff):
         return buildSub(self, font, lookuptypes[0], ff)
 
 
-def makeAnchor(x, y, ff):
+def makeAnchor(anchor, ff):
+    x,y = anchor
     if isinstance(x, VariableScalar):
         x_def, x_index = x.add_to_variation_store(ff.varstorebuilder)
     else:
@@ -70,9 +71,25 @@ def buildPos(self, font, lookuptype, ff):
             allglyphs = set(rule.bases.keys()) | set(rule.marks.keys())
             for g in allglyphs:
                 builder.attachments[g] = (
-                    g in rule.bases and makeAnchor(*rule.bases[g], ff) or None,
-                    g in rule.marks and makeAnchor(*rule.marks[g], ff) or None,
+                    g in rule.bases and makeAnchor(rule.bases[g], ff) or None,
+                    g in rule.marks and makeAnchor(rule.marks[g], ff) or None,
                 )
+    elif lookuptype == 4 or lookuptype == 6:
+        if lookuptype == 4:
+            builder = otl.MarkBasePosBuilder(font, self.address)
+            baseholder = builder.bases
+        else:
+            builder = otl.MarkMarkPosBuilder(font, self.address)
+            baseholder = builder.baseMarks
+        marktypes = list(set([x.mark_name for x in self.rules]))
+        for r in self.rules:
+            markclass = marktypes.index(r.mark_name)
+            for mark, anchor in r.marks.items():
+                builder.marks[mark] = (markclass, makeAnchor(anchor, ff))
+            for base, anchor in r.bases.items():
+                if base not in baseholder:
+                    baseholder[base] = {}
+                baseholder[base][markclass] = makeAnchor(anchor, ff)
     else:
         raise ValueError("Don't know how to build a POS type %i lookup" % lookuptype)
     builder.lookupflag = self.flags
