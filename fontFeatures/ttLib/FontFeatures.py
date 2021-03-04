@@ -7,6 +7,8 @@ from fontTools.varLib.varStore import OnlineVarStoreBuilder
 
 
 def buildBinaryFeatures(self, font, axes=[]):
+    self.resolveAllRoutines()
+    reorderRoutines(self)
     # XXX first build gdef for mark attachment classes
     if axes:
         self.varstorebuilder = OnlineVarStoreBuilder([ax.tag for ax in axes])
@@ -24,6 +26,22 @@ def buildBinaryFeatures(self, font, axes=[]):
             if 'GPOS' in font:
                 font['GPOS'].table.remap_device_varidxes(varidx_map)
 
+def reorderRoutines(self):
+    # We must ensure that all routines which are referenced appear before
+    # the things which reference them
+    newroutines = []
+    i = 0
+    while i < len(self.routines):
+        r = self.routines[i]
+        if r in newroutines:
+            i = i + 1
+            continue
+        for dep in r.dependencies:
+            if dep not in newroutines:
+                newroutines.append(dep)
+        newroutines.append(r)
+        i = i + 1
+    self.routines = newroutines
 # I am stealing the fontTools.feaLib.builder stuff here
 def buildGDEF(self, font):
     gdef = otTables.GDEF()
@@ -135,7 +153,11 @@ def makeTable(self, tag, font):
 
     stage_map = separate_by_stage(arrangeByScripts(self), tag[1:].lower())
     stage_routines = [x for x in self.routines if x.stage == tag[1:].lower() ]
-    lookups = [ x.toOTLookup(font, self) for x in stage_routines ]
+    builders = [ x.toOTLookup(font, self) for x in stage_routines ]
+    lookups = []
+    for builder in builders:
+        builder.lookup_index = len(lookups)
+        lookups.append(builder.build())
 
     table.LookupList.Lookup = lookups
 

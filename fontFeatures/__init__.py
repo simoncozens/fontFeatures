@@ -356,6 +356,13 @@ class Routine:
             if isinstance(r, Chaining):
                 return r.stage
 
+    @property
+    def dependencies(self):
+        deps = []
+        for r in self.rules:
+            deps.extend(r.dependencies)
+        return deps
+
     from .feaLib.Routine import asFea, asFeaAST, feaPreamble
     from .shaperLib.Routine import apply_to_buffer
     from .xmlLib.Routine import toXML, fromXML
@@ -438,6 +445,10 @@ class Rule:
     @property
     def has_context(self):
         return len(self.precontext) or len(self.postcontext)
+
+    @property
+    def dependencies(self):
+        return []
 
 
 class Substitution(Rule):
@@ -555,9 +566,21 @@ class Chaining(Rule):
         a = set(chain.from_iterable(self.postcontext))
         return i | b | a
 
+    @property
+    def dependencies(self):
+        deps = []
+        for l in self.lookups:
+            for aLookup in l:
+                if isinstance(aLookup, RoutineReference):
+                    deps.append(aLookup.routine)
+                else:
+                    deps.append(aLookup)
+        return deps
+
     from .feaLib.Chaining import asFeaAST, feaPreamble
     from .shaperLib.Chaining import shaper_inputs, _do_apply
     from .xmlLib.Chaining import _toXML, fromXML
+    from .ttLib.Chaining import lookup_type
 
 
 class ValueRecord(feaLibValueRecord):

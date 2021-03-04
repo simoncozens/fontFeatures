@@ -90,11 +90,24 @@ def buildPos(self, font, lookuptype, ff):
                 if base not in baseholder:
                     baseholder[base] = {}
                 baseholder[base][markclass] = makeAnchor(anchor, ff)
+    elif lookuptype == 8:
+        builder = otl.ChainContextPosBuilder(font, self.address)
+        for r in self.rules:
+            new_lookup_list = []
+            for list_of_lookups in r.lookups:
+                new_lookup_list.append([lu.routine.__builder for lu in list_of_lookups])
+            builder.rules.append( otl.ChainContextualRule(
+                r.precontext or [],
+                r.input or [],
+                r.postcontext or [],
+                new_lookup_list
+            ) )
     else:
         raise ValueError("Don't know how to build a POS type %i lookup" % lookuptype)
     builder.lookupflag = self.flags
     # XXX mark filtering set
-    return builder.build()
+    self.__builder = builder
+    return builder
 
 
 def buildSub(self, font, lookuptype, ff):
@@ -111,4 +124,5 @@ def buildSub(self, font, lookuptype, ff):
 
     builder.lookupflag = self.flags
     # XXX mark filtering set
-    return builder.build()
+    self.__builder = builder
+    return builder
