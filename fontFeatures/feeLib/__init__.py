@@ -6,7 +6,7 @@ from babelfont.font import Font
 from ometa.grammar import OMeta
 import warnings
 from more_itertools import collapse
-
+from fontFeatures.variableScalar import VariableScalar
 
 def warning_on_one_line(message, category, filename, lineno, file=None, line=None):
     return "# %s\n" % (message)
@@ -62,7 +62,7 @@ class GlyphSelector:
 
     def resolve(self, fontfeatures, font, mustExist=True):
         returned = []
-        assert isinstance(font, Font)
+        # assert isinstance(font, Font)
         glyphs = font.exportedGlyphs()
         if "barename" in self.selector:
             returned = [self.selector["barename"]]
@@ -175,7 +175,10 @@ valuerecord = integer_value_record | fee_value_record | traditional_value_record
 integer_value_record = integer:xAdvance -> (0, 0, xAdvance, 0)
 traditional_value_record = '<' integer:xPlacement ws integer:yPlacement ws integer:xAdvance ws integer:yAdvance '>' -> (xPlacement, yPlacement, xAdvance, yAdvance)
 fee_value_record = '<' ws fee_value_record_member+:m '>' -> { "members": m }
-fee_value_record_member = ("xAdvance"| "xPlacement" | "yAdvance" | "yPlacement"):d '=' integer:pos ws -> {"dimension": d, "position": pos}
+fee_value_record_member = ("xAdvance"| "xPlacement" | "yAdvance" | "yPlacement"):d '=' ws (varscalar|integer):pos ws -> {"dimension": d, "position": pos}
+varscalar = '[' ws varscalaritem+:vsi ']' -> parser.makeVarScalar(vsi)
+varscalaritem = integer:i "@" varscalarlocation:l ws -> (i,l)
+varscalarlocation = barename:axis "=" integer:loc -> (axis,loc)
 
 """
 
@@ -276,3 +279,10 @@ fee_value_record_member = ("xAdvance"| "xPlacement" | "yAdvance" | "yPlacement")
 
     def filterResults(self, results):
         return [x for x in collapse(results) if x]
+
+    def makeVarScalar(self, vsf):
+        vs = VariableScalar(self.font.axes)
+        for value, locationtuple in vsf:
+            location = { locationtuple[0]["barename"]: locationtuple[1] }
+            vs.add_value(location, value)
+        return vs
