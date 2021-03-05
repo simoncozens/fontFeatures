@@ -102,6 +102,7 @@ class FeaParser:
         self.currentRoutine.addRule(s)
 
     def add_alternate_subst(self, location, prefix, glyph, suffix, replacement):
+        self._start_routine_if_necessary(location)
         location = "%s:%i:%i" % (location)
         s = fontFeatures.Substitution(
             input_=[[glyph]],
@@ -115,6 +116,7 @@ class FeaParser:
     def add_ligature_subst(
         self, location, prefix, glyphs, suffix, replacement, forceChain
     ):
+        self._start_routine_if_necessary(location)
         location = "%s:%i:%i" % (location)
         s = fontFeatures.Substitution(
             input_=[list(x) for x in glyphs],
@@ -126,6 +128,7 @@ class FeaParser:
         self.currentRoutine.addRule(s)
 
     def add_chain_context_subst(self, location, prefix, glyphs, suffix, lookups):
+        self._start_routine_if_necessary(location)
         location = "%s:%i:%i" % (location)
         # Find named feature
         mylookups = []
@@ -144,6 +147,7 @@ class FeaParser:
         self.currentRoutine.addRule(s)
 
     def add_single_pos(self, location, prefix, suffix, pos, forceChain):
+        self._start_routine_if_necessary(location)
         location = "%s:%i:%i" % (location)
         s = fontFeatures.Positioning(
             glyphs=[p[0] for p in pos],
@@ -155,6 +159,7 @@ class FeaParser:
         self.currentRoutine.addRule(s)
 
     def add_specific_pair_pos(self, location, glyph1, value1, glyph2, value2):
+        self._start_routine_if_necessary(location)
         location = "%s:%i:%i" % (location)
         s = fontFeatures.Positioning(
             glyphs=[[glyph1], [glyph2]], valuerecords=[value1, value2], address=location
@@ -162,6 +167,7 @@ class FeaParser:
         self.currentRoutine.addRule(s)
 
     def add_class_pair_pos(self, location, glyphclass1, value1, glyphclass2, value2):
+        self._start_routine_if_necessary(location)
         location = "%s:%i:%i" % (location)
         s = fontFeatures.Positioning(
             glyphs=[glyphclass1, glyphclass2],
@@ -171,6 +177,7 @@ class FeaParser:
         self.currentRoutine.addRule(s)
 
     def add_cursive_pos(self, location, glyphclass, entryAnchor, exitAnchor):
+        self._start_routine_if_necessary(location)
         location = "%s:%i:%i" % (location)
         basedict, markdict = {}, {}
         if entryAnchor:
@@ -187,6 +194,7 @@ class FeaParser:
         self.currentRoutine.addRule(s)
 
     def add_mark_base_pos(self, location, bases, marks):
+        self._start_routine_if_necessary(location)
         location = "%s:%i:%i" % (location)
         for baseanchor, markclass in marks:
             assert len(markclass.definitions) == 1
