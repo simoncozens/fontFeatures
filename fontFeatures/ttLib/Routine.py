@@ -1,6 +1,7 @@
 import fontTools.otlLib.builder as otl
 from fontTools.varLib.builder import buildVarDevTable
 from fontFeatures.variableScalar import VariableScalar
+import itertools
 
 
 def toOTLookup(self, font, ff):
@@ -119,6 +120,11 @@ def buildSub(self, font, lookuptype, ff):
         builder = otl.MultipleSubstBuilder(font, self.address)
         for rule in self.rules:
             builder.mapping[rule.input[0][0]] = [ x[0] for x in rule.replacement ]
+    elif lookuptype == 4:
+        builder = otl.LigatureSubstBuilder(font, self.address)
+        for rule in self.rules:
+            for sequence in itertools.product(*rule.input):
+                builder.ligatures[sequence] = rule.replacement[0][0]
     else:
         raise ValueError("Don't know how to build a SUB type %i lookup" % lookuptype)
 
