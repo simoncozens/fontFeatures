@@ -82,15 +82,14 @@ def buildPos(self, font, lookuptype, ff):
         else:
             builder = otl.MarkMarkPosBuilder(font, self.address)
             baseholder = builder.baseMarks
-        marktypes = list(set([x.mark_name for x in self.rules]))
         for r in self.rules:
-            markclass = marktypes.index(r.mark_name)
             for mark, anchor in r.marks.items():
-                builder.marks[mark] = (markclass, makeAnchor(anchor, ff))
+                builder.marks[mark] = (r.mark_name, makeAnchor(anchor, ff))
             for base, anchor in r.bases.items():
                 if base not in baseholder:
                     baseholder[base] = {}
-                baseholder[base][markclass] = makeAnchor(anchor, ff)
+                baseholder[base][r.mark_name] = makeAnchor(anchor, ff)
+        # XXX. We may need to express this as multiple lookups
     elif lookuptype == 8:
         builder = otl.ChainContextPosBuilder(font, self.address)
         for r in self.rules:
