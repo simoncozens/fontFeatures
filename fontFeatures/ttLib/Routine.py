@@ -26,10 +26,10 @@ def makeAnchor(anchor, ff):
     else:
         y_def, y_index = y, None
     anchor = otl.buildAnchor(x_def, y_def)
-    if x_index is not None and x_index != 0xFFFF:
+    if x_index is not None and x_index != 0xFFFFFFFF:
         anchor.XDeviceTable = buildVarDevTable(x_index)
         anchor.Format = 3
-    if y_index is not None and x_index != 0xFFFF:
+    if y_index is not None and x_index != 0xFFFFFFFF:
         anchor.YDeviceTable = buildVarDevTable(y_index)
         anchor.Format = 3
     return anchor
