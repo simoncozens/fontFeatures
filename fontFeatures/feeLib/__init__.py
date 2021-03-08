@@ -233,6 +233,8 @@ class FeeParser:
     def load_plugin(self, plugin) -> bool:
         if "." not in plugin:
             resolved_plugin = "fontFeatures.feeLib." + plugin
+        else:
+            resolved_plugin = plugin
 
         mod = import_module(resolved_plugin)
 

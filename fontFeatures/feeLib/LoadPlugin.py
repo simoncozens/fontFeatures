@@ -2,9 +2,11 @@ import lark
 
 PARSEOPTS = dict(use_helpers=True)
 
+# We need a Python package name here, but a bare glyph name looks
+# just like one.
 GRAMMAR = """
     ?start: action
-    action: VERB
+    action: BARENAME
 
     %import common(WS, LETTER, DIGIT)
     %ignore WS
