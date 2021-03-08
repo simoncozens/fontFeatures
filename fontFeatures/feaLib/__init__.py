@@ -1,7 +1,7 @@
 import io
 import fontFeatures
 from fontTools.feaLib.parser import Parser
-
+from warnings import warn
 
 class FeaParser:
     """Turns a AFDKO feature file or string into a FontFeatures object.
@@ -24,6 +24,7 @@ class FeaParser:
         if isinstance(featurefile, str):
             featurefile = io.StringIO(featurefile)
         self.featurefile = featurefile
+        self.parser = Parser(self.featurefile, self.glyphmap)
 
     def parse(self):
         """Parse the feature code.
@@ -31,7 +32,7 @@ class FeaParser:
         Returns:
             A ``FontFeatures`` object containing the rules of this file.
         """
-        parsetree = Parser(self.featurefile, self.glyphmap).parse()
+        parsetree = self.parser.parse()
         self.features_ = {}
         parsetree.build(self)
         return self.ff
@@ -73,6 +74,11 @@ class FeaParser:
         pass
 
     def set_script(self, location, script):
+        warn("Seen (and ignored) 'script ...' statement")
+        pass
+
+    def set_language(self, location, language, include_default, required):
+        warn("Seen (and ignored) 'language ...' statement")
         pass
 
     def add_single_subst(self, location, prefix, suffix, mapping, forceChain):
