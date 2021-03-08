@@ -229,6 +229,7 @@ class FeeParser:
         self.transformer = FeeTransformer(self)
         self.fontfeatures = FontFeatures()
         self.fontfeatures.setGlyphClassesFromFont(self.font)
+        self.current_feature = None
 
     def load_plugin(self, plugin) -> bool:
         if "." not in plugin:
