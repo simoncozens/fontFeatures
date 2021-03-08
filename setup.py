@@ -20,8 +20,9 @@ config = {
     'url': 'https://github.com/simoncozens/fontFeatures',
     'description': 'Python library for manipulating OpenType font features',
     'long_description': open('README.md', 'r').read(),
+    'long_description_content_type': 'text/markdown',
     'license': 'MIT',
-    'version': '1.0.3',
+    'version': '1.0.5',
     'install_requires': install_requires,
     'classifiers': [
         "Programming Language :: Python",

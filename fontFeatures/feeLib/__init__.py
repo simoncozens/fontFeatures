@@ -9,6 +9,14 @@ from importlib import import_module
 from fontFeatures import FontFeatures
 from babelfont.font import Font
 from more_itertools import collapse
+from fontFeatures.variableScalar import VariableScalar
+
+def warning_on_one_line(message, category, filename, lineno, file=None, line=None):
+    return "# %s\n" % (message)
+
+
+warnings.formatwarning = warning_on_one_line
+
 
 class GlyphSelector:
     def __init__(self, selector, suffixes, location):
@@ -53,7 +61,7 @@ class GlyphSelector:
 
     def resolve(self, fontfeatures, font, mustExist=True):
         returned = []
-        assert isinstance(font, Font)
+        # assert isinstance(font, Font)
         glyphs = font.exportedGlyphs()
         if "barename" in self.selector:
             returned = [self.selector["barename"]]
@@ -287,6 +295,14 @@ class FeeParser:
         ret = [x for x in collapse(results) if x and not isinstance(x, str)]
         return ret
 
+    def makeVarScalar(self, vsf):
+        vs = VariableScalar(self.font.axes)
+        for value, locationtuple in vsf:
+            location = { locationtuple[0]["barename"]: locationtuple[1] }
+            vs.add_value(location, value)
+        return vs
+
+      
 class FeeTransformer(lark.Transformer):
     def __init__(self, parser):
         self.parser = parser

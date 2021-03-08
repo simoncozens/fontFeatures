@@ -1,5 +1,5 @@
 from fontFeatures import Substitution
-from fontFeatures.feaLib import FeaUnparser
+from fontFeatures.feaLib import FeaParser
 
 import pytest
 
@@ -60,7 +60,9 @@ def assertSufficientlyEqual(s1, s2):
     # pytest.param("feature calt { sub x by y; lookupflag IgnoreMarks; sub a b by c; } calt;", id="switch_flags"),
 ])
 def test_round_trip(s):
-    assertSufficientlyEqual(FeaUnparser(s).ff.asFea(), s)
+    parser = FeaParser(s)
+    parser.parse()
+    assertSufficientlyEqual(parser.ff.asFea(), s)
 
 # Mark to mark
 # Mark to lig

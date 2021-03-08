@@ -38,10 +38,11 @@ class Include(FEEVerb):
         (filename,) = args
         return self.parser.parseString(_file_to_string_or_error(self.parser, filename))
 
-from fontFeatures.feaLib import FeaUnparser
+from fontFeatures.feaLib import FeaParser
 
 class IncludeFEA(Include):
     def action(self, args):
         (filename,) = args
-        fea = FeaUnparser(_file_to_string_or_error(self.parser, filename))
-        self.parser.fontfeatures += fea.ff
+        feaparser = FeaParser(_file_to_string_or_error(self.parser, filename))
+        feaparser.ff = parser.fontfeatures
+        feaparser.parse()

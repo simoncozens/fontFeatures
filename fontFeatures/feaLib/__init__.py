@@ -1,20 +1,16 @@
 import io
 import fontFeatures
+from fontTools.feaLib.parser import Parser
 
 
-class FeaUnparser:
+class FeaParser:
     """Turns a AFDKO feature file or string into a FontFeatures object.
 
     Args:
         featurefile: File object or string.
         font: Optionally, a TTFont object.
-
-    Returns:
-        An object with a ``ff`` property, which is the ``FontFeatures`` object
-        containing the rules of this file.
     """
     def __init__(self, featurefile, font=None):
-        from fontTools.feaLib.parser import Parser
 
         self.ff = fontFeatures.FontFeatures()
         self.markclasses = {}
@@ -22,14 +18,23 @@ class FeaUnparser:
         self.currentRoutine = None
         self.gensym = 1
         self.language_systems = []
-        glyphmap = ()
+        self.glyphmap = ()
         if font:
-            glyphmap = font.getReverseGlyphMap()
+            self.glyphmap = font.getReverseGlyphMap()
         if isinstance(featurefile, str):
             featurefile = io.StringIO(featurefile)
-        parsetree = Parser(featurefile, glyphmap).parse()
+        self.featurefile = featurefile
+
+    def parse(self):
+        """Parse the feature code.
+
+        Returns:
+            A ``FontFeatures`` object containing the rules of this file.
+        """
+        parsetree = Parser(self.featurefile, self.glyphmap).parse()
         self.features_ = {}
         parsetree.build(self)
+        return self.ff
 
     def find_named_routine(self, name):
         candidates = list(filter(lambda x: x.name == name, self.ff.routines))
@@ -97,6 +102,7 @@ class FeaUnparser:
         self.currentRoutine.addRule(s)
 
     def add_alternate_subst(self, location, prefix, glyph, suffix, replacement):
+        self._start_routine_if_necessary(location)
         location = "%s:%i:%i" % (location)
         s = fontFeatures.Substitution(
             input_=[[glyph]],
@@ -110,6 +116,7 @@ class FeaUnparser:
     def add_ligature_subst(
         self, location, prefix, glyphs, suffix, replacement, forceChain
     ):
+        self._start_routine_if_necessary(location)
         location = "%s:%i:%i" % (location)
         s = fontFeatures.Substitution(
             input_=[list(x) for x in glyphs],
@@ -121,6 +128,7 @@ class FeaUnparser:
         self.currentRoutine.addRule(s)
 
     def add_chain_context_subst(self, location, prefix, glyphs, suffix, lookups):
+        self._start_routine_if_necessary(location)
         location = "%s:%i:%i" % (location)
         # Find named feature
         mylookups = []
@@ -139,6 +147,7 @@ class FeaUnparser:
         self.currentRoutine.addRule(s)
 
     def add_single_pos(self, location, prefix, suffix, pos, forceChain):
+        self._start_routine_if_necessary(location)
         location = "%s:%i:%i" % (location)
         s = fontFeatures.Positioning(
             glyphs=[p[0] for p in pos],
@@ -150,6 +159,7 @@ class FeaUnparser:
         self.currentRoutine.addRule(s)
 
     def add_specific_pair_pos(self, location, glyph1, value1, glyph2, value2):
+        self._start_routine_if_necessary(location)
         location = "%s:%i:%i" % (location)
         s = fontFeatures.Positioning(
             glyphs=[[glyph1], [glyph2]], valuerecords=[value1, value2], address=location
@@ -157,6 +167,7 @@ class FeaUnparser:
         self.currentRoutine.addRule(s)
 
     def add_class_pair_pos(self, location, glyphclass1, value1, glyphclass2, value2):
+        self._start_routine_if_necessary(location)
         location = "%s:%i:%i" % (location)
         s = fontFeatures.Positioning(
             glyphs=[glyphclass1, glyphclass2],
@@ -166,6 +177,7 @@ class FeaUnparser:
         self.currentRoutine.addRule(s)
 
     def add_cursive_pos(self, location, glyphclass, entryAnchor, exitAnchor):
+        self._start_routine_if_necessary(location)
         location = "%s:%i:%i" % (location)
         basedict, markdict = {}, {}
         if entryAnchor:
@@ -182,6 +194,7 @@ class FeaUnparser:
         self.currentRoutine.addRule(s)
 
     def add_mark_base_pos(self, location, bases, marks):
+        self._start_routine_if_necessary(location)
         location = "%s:%i:%i" % (location)
         for baseanchor, markclass in marks:
             assert len(markclass.definitions) == 1
@@ -225,8 +238,9 @@ class FeaUnparser:
     def end_feature(self):
         self._discard_empty_routine()
         self.currentFeature = None
-        for rule in self.currentRoutine.rules:
-            rule.flags = self.currentRoutineFlag
+        if self.currentRoutine:
+            for rule in self.currentRoutine.rules:
+                rule.flags = self.currentRoutineFlag
 
     def _discard_empty_routine(self):
         if not self.currentFeature:
@@ -238,4 +252,8 @@ class FeaUnparser:
             del(self.ff.routines[self.ff.routines.index(self.currentRoutine)])
             if self.currentFeature in self.ff.features:
                 del(self.ff.features[self.currentFeature][-1])
+        pass
+
+    def add_feature_reference(self, location, featurename):
+        # XXX
         pass

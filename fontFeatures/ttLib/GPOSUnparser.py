@@ -34,16 +34,20 @@ class GPOSUnparser(GTableUnparser):
             ("YPlacement", 0x0002),  # Includes vertical adjustment for placement
             ("XAdvance", 0x0004),  # Includes horizontal adjustment for advance
             ("YAdvance", 0x0008),  # Includes vertical adjustment for advance
-            ("XPlaDevice", 0x0010),  # Includes horizontal Device table for placement
-            ("YPlaDevice", 0x0020),  # Includes vertical Device table for placement
-            ("XAdvDevice", 0x0040),  # Includes horizontal Device table for advance
-            ("YAdvDevice", 0x0080)  # Includes vertical Device table for advance
+
+            # Currently we don't have a way to express or represent value records
+            # with Device tables, whether old-style (ppem adjustment) or new-style
+            # (VariationIndex). Even if we could represent them, then what? See
+            # issue #31.
+
+            #("XPlaDevice", 0x0010),  # Includes horizontal Device table for placement
+            #("YPlaDevice", 0x0020),  # Includes vertical Device table for placement
+            #("XAdvDevice", 0x0040),  # Includes horizontal Device table for advance
+            #("YAdvDevice", 0x0080)  # Includes vertical Device table for advance
             # , 'Reserved': 0xF000 For future use (set to zero)
         )
 
         # defaults to 0
-        # NOTE: this is likely not correct anymore when we start doing the
-        # <device> tables in Value record format C.
         values = [getattr(valueRecord, name, 0) or None for name, _ in valueFormatFlags]
         return fontFeatures.ValueRecord(*values)
 
@@ -215,12 +219,12 @@ class GPOSUnparser(GTableUnparser):
         id2Name = markCoverage.glyphs
         marks = {}
         for i, markRecord in enumerate(markArray.MarkRecord):
-            # if markRecord.Class == classId:
-            marks[id2Name[i]] = (
-                markRecord.MarkAnchor.XCoordinate,
-                markRecord.MarkAnchor.YCoordinate,
-                markRecord.Class
-            )
+            if markRecord.Class == classId:
+                marks[id2Name[i]] = (
+                    markRecord.MarkAnchor.XCoordinate,
+                    markRecord.MarkAnchor.YCoordinate,
+                    # markRecord.Class
+                )
         return marks
 
     def formatMark2Array(self, markArray, markCoverage, anchorClassPrefix):
@@ -258,20 +262,21 @@ class GPOSUnparser(GTableUnparser):
         self._fix_flags(b, lookup)
         for subtable in lookup.SubTable:  # fontTools.ttLib.tables.otTables.MarkBasePos
             assert subtable.Format == 1
-            anchorClassPrefix = "Anchor" + self.gensym()
-            marks = self.formatMarkArray(
-                subtable.Mark1Array, subtable.Mark1Coverage, anchorClassPrefix
-            )
-            bases = self.formatMark2Array(
-                subtable.Mark2Array, subtable.Mark2Coverage, anchorClassPrefix
-            )
-            b.addRule(
-                fontFeatures.Attachment(
-                    anchorClassPrefix, anchorClassPrefix + "_", bases, marks,
-                    font = self.font,
-                    address=self.currentLookup,
-                    flags=lookup.LookupFlag,
-
+            for classId in range(0,subtable.ClassCount):
+                anchorClassPrefix = "Anchor" + self.gensym()
+                marks = self.formatMarkArray(
+                    subtable.Mark1Array, subtable.Mark1Coverage, classId
                 )
-            )
+                bases = self.formatMark2Array(
+                    subtable.Mark2Array, subtable.Mark2Coverage, classId
+                )
+                b.addRule(
+                    fontFeatures.Attachment(
+                        anchorClassPrefix, anchorClassPrefix + "_", bases, marks,
+                        font = self.font,
+                        address=self.currentLookup,
+                        flags=lookup.LookupFlag,
+
+                    )
+                )
         return b, []

@@ -19,6 +19,8 @@ parser.add_argument("--master",
 parser.add_argument("-c",
                     help="FEE string to execute")
 
+parser.add_argument("--omit-gdef", action='store_false', dest='do_gdef',
+                    help="Don't add a GDEF table to output")
 parser.add_argument("font",
                     help="Font file (.otf/.glyphs) to process", metavar="FONT")
 
@@ -39,7 +41,7 @@ if args.c:
 else:
     p.parseFile(args.fee)
 Optimizer(p.fontfeatures).optimize(level=args.O)
-print(p.fontfeatures.asFea())
+print(p.fontfeatures.asFea(do_gdef=args.do_gdef))
 if p.font_modified:
 	modified = "modified-%s" % os.path.basename(args.font)
 	p.font.save(modified)

@@ -22,6 +22,8 @@ from collections import OrderedDict, namedtuple
 from fontTools.feaLib.ast import ValueRecord as feaLibValueRecord
 from itertools import chain
 from bidict import bidict
+from copy import copy
+from .variableScalar import VariableScalar
 
 
 class FontFeatures:
@@ -155,10 +157,11 @@ class FontFeatures:
                     continue
                 for routine in routinelist:
                     # Using a set here so it is safe to call more than once
-                    routine.usedin.add(chain)
+                    if isinstance(routine, RoutineReference):
+                        routine.routine.usedin.add(chain)
+                    else:
+                        routine.usedin.add(chain)
         self.doneUsageMarking = True
-
-    from .feaLib.FontFeatures import asFea, asFeaAST
 
     def hoist_languages(self):
         """Sort routines into scripts and languages and resolve wildcards."""
@@ -219,7 +222,69 @@ class FontFeatures:
 
     def setGlyphClassesFromFont(self, font):
         for g in font.exportedGlyphs():
-            self.glyphclasses[g] = font[g].category
+            if hasattr(font, "glyphs"):
+                self.glyphclasses[g] = font.glyphs[g].category
+            else:
+                self.glyphclasses[g] = font[g].category
+
+    def partitionRoutine(self, routine, factor):
+        if not routine.rules:
+            return
+        self.doneUsageMarking = False
+        self.markRoutineUseInChains()
+        usedin = routine.usedin
+
+        index = self.routines.index(routine)
+
+        split_routines = {}
+        split_rules = {}
+        # The first rule stays in the original
+        split_routines[factor(routine.rules[0])] = (routine, [routine.rules[0]])
+        for rule in routine.rules[1:]:
+            thisfactor = factor(rule)
+            if thisfactor not in split_routines:
+                rulelist = []
+                newroutine = copy(routine)
+                newroutine.rules = rulelist
+                split_routines[thisfactor] = (newroutine, rulelist)
+            split_routines[thisfactor][1].append(rule)
+
+        # Alter the first rule's routine's rulelist (we couldn't alter it on
+        # the fly because we were iterating over it).
+        routine_with_first_rule, rulelist = split_routines[factor(routine.rules[0])]
+        routine_with_first_rule.rules = rulelist
+
+        allroutines = [x[0] for x in split_routines.values()]
+        self.routines[index : index + 1] = allroutines
+        for user in usedin:
+            for lookuplist in user.lookups:
+                i = 0
+                while i < len(lookuplist):
+                    lookup = lookuplist[i]
+                    if lookup == routine or (
+                        isinstance(lookup, RoutineReference)
+                        and lookup.routine == routine
+                    ):
+                        lookuplist[i : i + 1] = [
+                            RoutineReference(routine=r) for r in allroutines
+                        ]
+                    i = i + 1
+        # Same trick for features
+        for lookuplist in self.features.values():
+            i = 0
+            while i < len(lookuplist):
+                lookup = lookuplist[i]
+                if lookup == routine or (
+                    isinstance(lookup, RoutineReference) and lookup.routine == routine
+                ):
+                    lookuplist[i : i + 1] = [
+                        RoutineReference(routine=r) for r in allroutines
+                    ]
+                i = i + 1
+        return allroutines
+
+    from .feaLib.FontFeatures import asFea, asFeaAST
+    from .ttLib.FontFeatures import buildBinaryFeatures
 
 
 class Routine:
@@ -294,9 +359,17 @@ class Routine:
             if isinstance(r, Chaining):
                 return r.stage
 
+    @property
+    def dependencies(self):
+        deps = []
+        for r in self.rules:
+            deps.extend(r.dependencies)
+        return deps
+
     from .feaLib.Routine import asFea, asFeaAST, feaPreamble
     from .shaperLib.Routine import apply_to_buffer
     from .xmlLib.Routine import toXML, fromXML
+    from .ttLib.Routine import toOTLookup
 
 
 class ExtensionRoutine(Routine):
@@ -372,6 +445,14 @@ class Rule:
     from .shaperLib.Rule import would_apply_at_position, pre_post_context_matches
     from .xmlLib.Rule import fromXML, toXML, _makeglyphslots, _slotArray
 
+    @property
+    def has_context(self):
+        return len(self.precontext) or len(self.postcontext)
+
+    @property
+    def dependencies(self):
+        return []
+
 
 class Substitution(Rule):
     """Represents a Substitution rule.
@@ -431,6 +512,7 @@ class Substitution(Rule):
     from .feaLib.Substitution import asFeaAST
     from .shaperLib.Substitution import shaper_inputs, _do_apply
     from .xmlLib.Substitution import _toXML, fromXML
+    from .ttLib.Substitution import lookup_type
 
 
 class Chaining(Rule):
@@ -487,70 +569,42 @@ class Chaining(Rule):
         a = set(chain.from_iterable(self.postcontext))
         return i | b | a
 
+    @property
+    def dependencies(self):
+        deps = []
+        for l in self.lookups:
+            for aLookup in (l or []):
+                if isinstance(aLookup, RoutineReference):
+                    deps.append(aLookup.routine)
+                else:
+                    deps.append(aLookup)
+        return deps
+
     from .feaLib.Chaining import asFeaAST, feaPreamble
     from .shaperLib.Chaining import shaper_inputs, _do_apply
     from .xmlLib.Chaining import _toXML, fromXML
+    from .ttLib.Chaining import lookup_type
 
 
 class ValueRecord(feaLibValueRecord):
-    """An extension of the fontTools.feaLib ValueRecord representation to support
-    variable font item variation stores."""
+    from .ttLib.ValueRecord import toOTValueRecord
 
-    # Actually until we have a binary compiler, we're just going to cheat and store
-    # a value record for each master.
-    def set_value_for_master(self, vf, master, vr):
-        """Set a master-specific value record.
-
-        Args:
-            vf: a babelfont.VariableFont instance
-            master: name of the master to set
-            vr: a ``ValueRecord`` specific to this master.
-        """
-        if not hasattr(self, "masters"):
-            self.masters = {}
-            # Clone this value record to all masters
-            for mastername in vf.masters.keys():
-                self.masters[mastername] = ValueRecord(
-                    xPlacement=vr.xPlacement,
-                    yPlacement=vr.yPlacement,
-                    xAdvance=vr.xAdvance,
-                    yAdvance=vr.yAdvance,
-                )
-        else:
-            self.masters[master] = vr
-
-    def get_value_for_master(self, vf, master):
-        """Get a master-specific value record.
-
-        Args:
-            vf: a ``babelfont.VariableFont`` instance
-            master: name of the master to get
-        """
-        if not hasattr(self, "masters"):
-            return self
-        return self.masters[master]
-
-    def get_value_for_location(self, vf, location):
-        """Get an interpolated value record for a particular location.
-
-        Args:
-            vf: a ``babelfont.VariableFont`` instance
-            location: A dictionary mapping axis names to user space coordinates.
-        """
-        if not hasattr(self, "masters"):
-            return self
-        locs = {
-            k: (v.xPlacement, v.yPlacement, v.xAdvance, v.yAdvance)
-            for k, v in self.masters.items()
-        }
-        values = vf.interpolate_tuples(locs, location)
-        xPlacement, yPlacement, xAdvance, yAdvance = values
-        return ValueRecord(
-            xPlacement=xPlacement,
-            yPlacement=yPlacement,
-            xAdvance=xAdvance,
-            yAdvance=yAdvance,
+    @property
+    def is_variable(self):
+        return any(
+            isinstance(x, VariableScalar)
+            for x in [
+                self.xPlacement,
+                self.yPlacement,
+                self.xAdvance,
+                self.yAdvance,
+            ]
         )
+
+    def asFea(self):
+        if not self.is_variable:
+            return super().asFea()
+        raise ValueError("Variable value records cannot directly be expressed as FEA")
 
 
 class Positioning(Rule):
@@ -598,6 +652,7 @@ class Positioning(Rule):
     from .feaLib.Positioning import asFeaAST
     from .shaperLib.Positioning import shaper_inputs, _do_apply
     from .xmlLib.Positioning import _toXML, fromXML
+    from .ttLib.Positioning import lookup_type
 
 
 class Attachment(Rule):
@@ -624,6 +679,7 @@ class Attachment(Rule):
         flags=0,
         address=None,
         font=None,
+        languages=None,
     ):
         self.base_name = base_name
         self.mark_name = mark_name
@@ -633,6 +689,7 @@ class Attachment(Rule):
         self.address = address
         self.font = font
         self.stage = "pos"
+        self.languages = languages or []
 
     @property
     def is_cursive(self):
@@ -641,6 +698,7 @@ class Attachment(Rule):
     from .feaLib.Attachment import asFeaAST, feaPreamble
     from .shaperLib.Attachment import shaper_inputs, _do_apply, would_apply_at_position
     from .xmlLib.Attachment import _toXML, fromXML
+    from .ttLib.Attachment import lookup_type
 
     @property
     def involved_glyphs(self):
