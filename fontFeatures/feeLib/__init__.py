@@ -230,6 +230,7 @@ class FeeParser:
         self.fontfeatures = FontFeatures()
         self.fontfeatures.setGlyphClassesFromFont(self.font)
         self.current_feature = None
+        self.font_modified = False
 
     def load_plugin(self, plugin) -> bool:
         if "." not in plugin:
@@ -305,7 +306,7 @@ class FeeParser:
             vs.add_value(location, value)
         return vs
 
-      
+
 class FeeTransformer(lark.Transformer):
     def __init__(self, parser):
         self.parser = parser
