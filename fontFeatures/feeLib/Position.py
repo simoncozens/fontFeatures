@@ -8,7 +8,7 @@ forms of this verb:
 - a simple positioning, which simply has one or more glyph selectors each
   optionally followed by a value record.
 - a contextual positioning, which wraps the main glyphs and value records in
-  curly braces, and optionally surrounds them with prefix and/or suffix glyphs.
+  brackets, and optionally surrounds them with prefix and/or suffix glyphs.
 
 A value record can be specified either as a bare integer, in which case it
 represents an X advance adjustment, or a tuple of four integers surrounded by
@@ -25,7 +25,7 @@ Here are examples of each form of the positioning verb::
 
     # Initial forms will get more space if they have consecutive dotted glyphs
     # and appear after a word-final glyph.
-    Position @endofword { @inits 200 } @below_dots @medis @below_dots;
+    Position @endofword ( @inits 200 ) @below_dots @medis @below_dots;
 
     # Move marks back and up.
     Position @marks <xPlacement=-50 yPlacement=10>;
@@ -45,7 +45,7 @@ gspos: glyphselector valuerecord?
 gsposes: gspos+
 normal_action: gsposes maybe_languages
 maybe_languages: languages?
-contextual_action: pre "(" normal_action ")" post
+contextual_action: pre "(" normal_action ")" post maybe_languages
 """
 
 VERBS = ["Position"]
@@ -61,7 +61,7 @@ def makeValueRecord(valuerecord):
 class Position(Substitute):
     def contextual_action(self, args):
         args = extend_args_until(args, 4)
-        (pre, stuff, languages, post) = args
+        (pre, stuff, post, languages) = args
         args = [stuff, languages, pre, post]
         return args
 
@@ -94,12 +94,12 @@ class Position(Substitute):
         args = args[0]
         args = extend_args_until(args, 4)
         (l, languages, pre, post) = args
-
         inputs = []
         valuerecords = []
         pre     = [g.resolve(self.parser.fontfeatures, self.parser.font) for g in pre]
         post     = [g.resolve(self.parser.fontfeatures, self.parser.font) for g in post]
-        for glyphselector, valuerecord in l:
+        for pair in l[0]:
+            glyphselector, valuerecord = pair
             inputs.append(glyphselector.resolve(self.parser.fontfeatures, self.parser.font))
             if valuerecord:
                 valuerecords.append(makeValueRecord(valuerecord))
