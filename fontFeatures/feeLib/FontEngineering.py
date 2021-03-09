@@ -43,39 +43,52 @@ The `SetCategory` verb sets a glyph's OpenType category::
 
 import warnings
 
+from . import FEEVerb
 
-GRAMMAR = """
-SetWidth_Args = glyphselector:g ws integer:width "%"?:p -> (g,width,p)
-DuplicateGlyphs_Args = glyphselector:e ws glyphselector:n -> (e,n)
-SetCategory_Args = glyphselector:g ws ("base"|"ligature"|"mark"|"component"):c -> (g,c)
+GRAMMAR = ""
+
+SetWidth_GRAMMAR = """
+?start: action
+action: glyphselector integer_container PERCENT?
+PERCENT: "%"
 """
 
-VERBS = ["SetWidth", "DuplicateGlyphs", "SetCategory"]
+SetCategory_GRAMMAR = """
+?start: action
+action: glyphselector GLYPH_CATEGORY
+GLYPH_CATEGORY: "base" | "mark" | "ligature" | "component"
+"""
 
-class SetWidth:
-    @classmethod
-    def action(self, parser, glyphs, width, is_relative):
-        glyphs = glyphs.resolve(parser.fontfeatures, parser.font)
-        for g in glyphs:
-            glyph = parser.font[g]
+DuplicateGlyphs_GRAMMAR = """
+?start: action
+action: glyphselector glyphselector
+"""
+
+PARSEOPTS = dict(use_helpers=True)
+VERBS = ["SetWidth", "SetCategory"]
+
+class SetWidth(FEEVerb):
+    def action(self, args):
+        (glyphs, width, is_relative) = args
+        for g in glyphs.resolve(self.parser.fontfeatures, self.parser.font):
+            glyph = self.parser.font[g]
             if is_relative:
                 glyph.width = glyph.width * width / 100
             else:
                 glyph.width = width
-        parser.font_modified = True
+        self.parser.font_modified = True
         return []
 
 class DuplicateGlyphs:
-    @classmethod
     def action(self, parser, existing, new):
-        oldglyphs = existing.resolve(parser.fontfeatures, parser.font)
-        newglyphs = new.resolve(parser.fontfeatures, parser.font, mustExist = False)
+        oldglyphs = existing.resolve(self.parser.fontfeatures, self.parser.font)
+        newglyphs = new.resolve(self.parser.fontfeatures, self.parser.font, mustExist = False)
         if len(oldglyphs) != len(newglyphs):
             raise ValueError(
                 "Length of new glyphs should be the same as old glyphs"
             )
         for o,n in zip(oldglyphs, newglyphs):
-            if n in parser.glyphs:
+            if n in self.parser.glyphs:
                 warnings.warn("Glyph '%s' already exists" % n)
                 continue
             oldglyph = parser.font[o]
@@ -83,15 +96,15 @@ class DuplicateGlyphs:
             newglyph.name = n
             newglyph.category = oldglyph.category
             # XXX mark attachment class
-            parser.font_modified = True
-        parser.glyphs = list(parser.font.keys())
+            self.parser.font_modified = True
+        self.parser.glyphs = list(parser.font.keys())
         return []
 
-class SetCategory:
-    @classmethod
-    def action(self, parser, glyphs, category):
-        glyphs = glyphs.resolve(parser.fontfeatures, parser.font)
-        for g in glyphs:
-            parser.fontfeatures.glyphclasses[g] = category
+class SetCategory(FEEVerb):
+    def action(self, args):
+        glyphs = args[0]
+        category = args[1].value
+        for g in glyphs.resolve(self.parser.fontfeatures, self.parser.font):
+            self.parser.fontfeatures.glyphclasses[g] = category
         return []
 

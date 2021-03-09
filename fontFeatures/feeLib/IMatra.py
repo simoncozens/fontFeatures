@@ -28,16 +28,22 @@ For more on how this plugin actually operates, see :ref:`imatra`.
 import fontFeatures
 import warnings
 
+from fontFeatures.feeLib import FEEVerb
+
+PARSEOPTS = dict(use_helpers=True)
+
 GRAMMAR = """
-IMatra_Args = glyphselector:bases ws ':' ws glyphselector:matra ws '->' ws glyphselector:matras -> (bases,matra,matras)
+?start: action
+action: glyphselector ":" glyphselector "->" glyphselector
 """
 
 VERBS = ["IMatra"]
 
 
-class IMatra:
-    @classmethod
-    def action(self, parser, bases, matra, matras):
+class IMatra(FEEVerb):
+    def action(self, args):
+        parser = self.parser
+        (bases, matra, matras) = args
         bases = bases.resolve(parser.fontfeatures, parser.font)
         matra = matra.resolve(parser.fontfeatures, parser.font)
         matras = matras.resolve(parser.fontfeatures, parser.font)
@@ -63,7 +69,6 @@ class IMatra:
             )
         return [fontFeatures.Routine(rules=rv)]
 
-    @classmethod
     def find_stem(self, font, base):
         glyph = font[base]
         # Try stem anchors first

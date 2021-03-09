@@ -23,6 +23,8 @@ emitted which chains to the ``LiftDamma`` routine at *each glyph position*.
 If there are *lots* of collisions in the expansion (where 'lots' is defined as
 >60%), then a chaining rule is emitted for the whole sequence, and you get
 a warning telling you that this may not be what you want.
+
+XXX This module needs to be updated to use the new shaping engine.
 """
 
 import fontFeatures
@@ -33,17 +35,22 @@ import beziers
 import itertools
 from functools import reduce
 
+from . import FEEVerb
+
 GRAMMAR = """
-IfCollides_Args = (gsws)+:sequence '->' ws <letter+>:routine -> (sequence,routine)
-gsws = glyphselector:g ws? -> g
+?start: action
+action: glyphselector* "->" BARENAME
 """
 
+PARSEOPTS = dict(use_helpers=True)
 VERBS = ["IfCollides"]
 
 
-class IfCollides:
-    @classmethod
-    def action(self, parser, sequence, routine):
+class IfCollides(FEEVerb):
+    def action(self, args)
+        parser = self.parser
+        sequence = args[:-1]
+        routine = args[-1]
         combinations = [g.resolve(parser.fontfeatures, parser.font) for g in sequence]
         named = [x for x in parser.fontfeatures.routines if x.name == routine]
         if len(named) != 1:

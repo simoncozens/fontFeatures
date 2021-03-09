@@ -15,18 +15,21 @@ If you have glyphs `kinzi_ai`, `kinzi` and `ai`, this will write a rule
 """
 
 import fontFeatures
+from . import FEEVerb
 
+PARSEOPTS = dict(use_helpers=True)
 GRAMMAR = """
-LigatureFinder_Args = glyphselector:g -> (g,)
+?start: action
+action: glyphselector
 """
 import re
 
 VERBS = ["LigatureFinder"]
 
-class LigatureFinder:
-    @classmethod
-    def action(cls, parser, ligatures):
-        ligatures = sorted(ligatures.resolve(parser.fontfeatures, parser.font),key=lambda a:len(a))
+class LigatureFinder(FEEVerb):
+    def action(self, args):
+        parser = self.parser
+        ligatures = sorted(args[0].resolve(parser.fontfeatures, parser.font),key=lambda a:len(a))
         rv = []
         glyphnames = "|".join(sorted(parser.font.keys(),key=lambda a:len(a)))
         for l in ligatures:

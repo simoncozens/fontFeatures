@@ -11,20 +11,28 @@ Same as IMatra, but for Myanmar::
 """
 
 import fontFeatures
+from . import FEEVerb
 
+PARSEOPTS = dict(use_helpers=True)
 GRAMMAR = """
-MedialRa_Args = glyphselector:bases ws ':' ws glyphselector:medialra ws integer?:overshoot ws '->' ws glyphselector:otherras -> (bases,medialra,otherras, overshoot)
+?start: action
+action: glyphselector ":" glyphselector integer_container? "->" glyphselector
 """
 
 VERBS = ["MedialRa"]
 
 
-class MedialRa:
-    @classmethod
-    def action(cls, parser, bases, medialra, otherras, overshoot):
-        bases = bases.resolve(parser.fontfeatures, parser.font)
-        medialra = medialra.resolve(parser.fontfeatures, parser.font)
-        otherras = otherras.resolve(parser.fontfeatures, parser.font)
+class MedialRa(FEEVerb):
+    def action(self, args):
+        parser = self.parser
+        bases = args[0].resolve(parser.fontfeatures, parser.font)
+        medialra = args[1].resolve(parser.fontfeatures, parser.font)
+        if len(args) == 3:
+            otherras = args[2].resolve(parser.fontfeatures, parser.font)
+            overshoot = 0
+        else:
+            overshoot = args[2]
+            otherras = args[3].resolve(parser.fontfeatures, parser.font)
 
         # Chuck the original ra in the basket
         if overshoot is None:

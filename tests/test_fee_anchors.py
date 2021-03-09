@@ -21,17 +21,17 @@ class TestFeeAnchors(unittest.TestCase):
         p = FeeParser(Babelfont.load("fonts/Roboto-Regular.ttf"))
         p.parseString(
             """
-      Anchors A {
+      Anchors A
         top <679 1600>
         bottom <691 0>
-      };
+      ;
 
-      Anchors B {
+      Anchors B
         top <611 1612>
-      };
+      ;
 
-      Anchors acutecomb { _top <-570 1290> };
-      Anchors tildecomb { _top <-542 1256> };
+      Anchors acutecomb _top <-570 1290>;
+      Anchors tildecomb _top <-542 1256>;
 
       Feature mark { Attach &top &_top bases; };
 """

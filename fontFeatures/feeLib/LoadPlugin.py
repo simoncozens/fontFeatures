@@ -1,26 +1,23 @@
-"""
-Loading Plugins
-===============
+import lark
 
-Additional functionality is provided by plugins, which register additional
-FEE verbs. To load a plugin, use the ``LoadPlugin`` verb. This takes
-the name of a Python module. If the name does *not* contain a period character,
-the plugin is expected to be found under the ``fontFeatures.feeLib`` package::
+PARSEOPTS = dict(use_helpers=True)
 
-    LoadPlugin IMatra; # Loads the plugin fontFeatures.feeLib.IMatra
-
-To load a custom plugin of your own, specify a Python module with a period in
-the name::
-
-    LoadPlugin myTools.myFEEPlugin; # Loads myTools.myFEEPlugin
-
-"""
-
+# We need a Python package name here, but a bare glyph name looks
+# just like one.
 GRAMMAR = """
-LoadPlugin_Args = <(letter|".")+>:x -> [x]
+    ?start: action
+    action: BARENAME
+
+    %import common(WS, LETTER, DIGIT)
+    %ignore WS
 """
+
 VERBS = ["LoadPlugin"]
-class LoadPlugin:
-    @classmethod
-    def action(self, parser, name):
-        parser._load_plugin(name)
+
+class LoadPlugin(lark.Transformer):
+    def __init__(self, parser):
+        self.parser = parser
+
+    def action(self, args):
+        self.parser.load_plugin(args[0].value)
+        return args[0].value

@@ -72,9 +72,21 @@ import itertools
 import math
 import statistics
 
-GRAMMAR = """
-BYMoveDots_Args = <('AlwaysDrop'|'TryToFit')>:w ws glyphselector:g -> [w,g]
-BYFixOverhang_Args = <'-'? (digit+)>:overhang_padding ws glyphselector:g -> [overhang_padding, g]
+from fontFeatures.feeLib import FEEVerb
+
+PARSEOPTS = dict(use_helpers=True)
+
+GRAMMAR = ""
+
+BYMoveDots_GRAMMAR="""
+?start: action
+action: STRATEGY glyphselector
+STRATEGY: "AlwaysDrop" | "TryToFit"
+"""
+
+BYFixOverhang_GRAMMAR = """
+?start: action
+action: integer_container glyphselector
 """
 
 VERBS = ["BYMoveDots", "BYFixOverhang"]
@@ -100,14 +112,15 @@ failsafe_max_length = 4
 failsafe_min_run = 100
 
 
-class BYMoveDots:
-    @classmethod
-    def action(self, parser, w, below_dots):
+class BYMoveDots(FEEVerb):
+    def action(self, args):
+        strategy, below_dots = args
+        parser = self.parser
         for c in ["inits", "medis", "bariye", "behs"]:
             if c not in parser.fontfeatures.namedClasses:
                 raise ValueError("Please define @%s class before calling" % c)
 
-        alwaysDrop = w == "AlwaysDrop"
+        alwaysDrop = strategy == "AlwaysDrop"
 
         # OK, here's the plan of attack for bari ye.
         # First, we find the length of the longest possible sequence.
@@ -288,7 +301,6 @@ class BYMoveDots:
             routines.append(dropBYsRoutine)
         return routines
 
-    @classmethod
     def get_yb_clearance(self, parser, bariye):
         font = parser.font
         paths = get_bezier_paths(font, bariye)
@@ -306,7 +318,6 @@ class BYMoveDots:
         i = intersections[-1]
         return i.point.y
 
-    @classmethod
     def compute_threshold(self, parser, below_dots):
         from fontFeatures.ttLib import unparse
 
@@ -359,9 +370,10 @@ class BYMoveDots:
         displacement = anchor2_y - anchor1_y
         return -(bottomOfDot + displacement)
 
-class BYFixOverhang:
-    @classmethod
-    def action(self, parser, overhang_padding, glyphs):
+class BYFixOverhang(FEEVerb):
+    def action(self, args):
+        overhang_padding, glyphs = args
+        parser = self.parser
         for c in ["inits", "medis"]:
             if c not in parser.fontfeatures.namedClasses:
                 raise ValueError("Please define @%s class before calling")

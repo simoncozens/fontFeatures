@@ -32,7 +32,7 @@ def test_swap2(parser):
     parser.parseString("""
 LoadPlugin Swap;
 Feature liga {
-  Swap C { A B } E;
+  Swap C ( A B ) E;
 };
 """)
     buf = Buffer(parser.font, unicodes="XABDCABDCABE")

@@ -14,43 +14,59 @@ Examples::
 """
 
 import fontFeatures
+from .util import compare
+from . import FEEVerb
+
+PARSEOPTS = dict(use_helpers=True)
 
 GRAMMAR = """
-If_Args = boolean_condition:c wsc '{' wsc statement+:s wsc '}' -> (c,s)
-boolean_condition = or | and | boolean_term
-boolean_term = bracketed | not | boolean_factor
-boolean_factor = integer:l ws comparison?:r -> parser.plugin_classes["If"].docomparison(l,r)
-comparison = ('>='|'>'|'<='|'<'|'=='|'!='):cmp ws integer:r -> (cmp,r)
-not = "not" ws boolean_condition:b -> not bool(b)
-bracketed = "(" ws boolean_condition:b ws ")" -> b
-or = boolean_term:a ws "or" ws boolean_term:b -> (a or b)
-and = boolean_term:a ws "and" ws boolean_term:b -> (a and b)
+boolean_condition: comparison | (boolean_term | not_boolean_term)
+boolean_term: integer_container COMPARATOR integer_container
+not_boolean_term: "not" boolean_term
+comparison: (boolean_term | not_boolean_term) AND_OR (boolean_term | not_boolean_term)
+AND_OR: ("&" | "|")
+"""
+
+If_GRAMMAR = """
+?start: action
+action: boolean_condition "{" statement+ "}"
+"""
+
+If_beforebrace_GRAMMAR = """
+?start: beforebrace
+beforebrace: boolean_condition
 """
 
 VERBS = ["If"]
 
-class If:
-    @classmethod
-    def action(self, parser, condition, statements):
-        if bool(condition):
-            return parser.filterResults(statements)
+class If(FEEVerb):
+    def __init__(self, parser):
+        self.parser = parser
+
+    def comparison(self, args):
+        (l, comparator, r) = args
+        if comparator.value == "&":
+            return l and r
+        elif comparator.value == "|":
+            return l or r
+        else:
+            raise ValueError("Unrecognized comparator")
+
+    def boolean_term(self, args):
+        (l, comparator, r) = args
+        return compare(l, comparator, r)
+
+    def boolean_condition(self, args):
+        return args[0]
+
+    def not_boolean_term(self, args):
+        (boolean_term,) = args
+        return not boolean_term
+
+    def action(self, args):
+        (boolean, statements, _) = args
+
+        if bool(boolean):
+            return statements
         else:
             return []
-
-    @classmethod
-    def docomparison(self, l,r):
-        if not r:
-            return bool(l)
-        left,operator, right = l,r[0],r[1]
-        if operator == "<":
-            return left < right
-        if operator == "<=":
-            return left < right
-        if operator == "==":
-            return left == right
-        if operator == ">":
-            return left > right
-        if operator == ">=":
-            return left >= right
-        if operator == "!=":
-            return left != right
