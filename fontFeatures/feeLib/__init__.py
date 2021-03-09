@@ -161,7 +161,7 @@ HELPERS="""
     unicoderange: UNICODEGLYPH "=>" UNICODEGLYPH
 
     SUFFIXTYPE: ("." | "~")
-    glyphsuffix: SUFFIXTYPE STARTGLYPHNAME+
+    glyphsuffix: SUFFIXTYPE BARENAME
     glyphselector: (unicoderange | UNICODEGLYPH | REGEX | BARENAME | CLASSNAME | inlineclass) glyphsuffix*
 
     valuerecord: SIGNED_NUMBER | fee_value_record | fea_value_record
