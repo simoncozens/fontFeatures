@@ -5,6 +5,6 @@ DefineClass @seps = [AlefSep RehSep];
 LoadPlugin KernToDistance;
 
 Feature kern {
-    KernToDistance @seps @inits @finas 150;
+    KernToDistance @seps ( @inits @finas ) 150;
 };
 

@@ -1,36 +1,46 @@
-# XXX This currently will not work. It requires porting to the new system.
+# This is a good idea but needs a bit of rethinking.
 
-class KernToDistance:
-    takesBlock = False
+from fontFeatures.feeLib import FEEVerb
+from glyphtools import determine_kern, bin_glyphs_by_metric
+import fontFeatures
+import itertools
+from fontFeatures.feeLib.util import extend_args_until
 
-    @classmethod
-    def validate(self, tokens, verbaddress):
-        from fontFeatures.parserTools import ParseError
 
-        if len(tokens) < 3:
-            raise ParseError("Too few arguments", verbaddress, self)
+PARSEOPTS = dict(use_helpers=True)
 
-        try:
-            int(tokens[-1].token)
-        except Exception as e:
-            raise ParseError(
-                "Distance value should be positive integer", token[-1].address, self
-            )
+GRAMMAR = """
+?start: action
+action: normal_action | contextual_action
+normal_action: glyphselector glyphselector integer_container
+contextual_action: pre "(" glyphselector glyphselector ")" integer_container
+pre: glyphselector*
+"""
 
-        return True
+VERBS = ["KernToDistance"]
 
-    @classmethod
-    def store(self, parser, tokens):
-        from glyphtools import determine_kern, bin_glyphs_by_metric
-        import fontFeatures
-        import itertools
 
-        units = int(tokens[-1].token)
-        kerns = []
+class KernToDistance(FEEVerb):
+    def contextual_action(self, args):
+        args = extend_args_until(args, 4)
+        (pre, l, r, languages) = args
+        args = [l, r, languages, pre]
+        return args
 
+    def pre(self, args):
+        return args
+
+    def normal_action(self, args):
+        args = extend_args_until(args, 4)
+        return args
+
+    def action(self, args):
+        parser = self.parser
         bincount = 5
-        lefts = parser.expandGlyphOrClassName(tokens[0].token)
-        rights = parser.expandGlyphOrClassName(tokens[1].token)
+        lefts, rights, units, pre = args[0]
+        lefts = lefts.resolve(parser.fontfeatures, parser.font)
+        rights = rights.resolve(parser.fontfeatures, parser.font)
+        pre = [ g.resolve(parser.fontfeatures, parser.font) for g in pre ]
 
         def make_kerns(rise=0, context=[], direction="LTR"):
             kerns = []
@@ -50,14 +60,13 @@ class KernToDistance:
                     )
             return kerns
 
-        context = [parser.expandGlyphOrClassName(x.token) for x in tokens[2:-1]]
-        if len(context) == 0:
+        if not pre:
             return [fontFeatures.Routine(rules=make_kerns())]
 
         kerns = []
         binned_contexts = [
             bin_glyphs_by_metric(parser.font, glyphs, "rise", bincount=bincount)
-            for glyphs in context
+            for glyphs in pre
         ]
         for c in itertools.product(*binned_contexts):
             totalrise = sum([x[1] for x in c])
