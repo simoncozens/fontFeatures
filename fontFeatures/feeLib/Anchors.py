@@ -122,8 +122,11 @@ class Attach(FEEVerb):
 
         bases = {}
         marks = {}
+        catcache = {}
         def _category(k):
-            return self.parser.fontfeatures.glyphclasses.get(k, self.parser.font[k].category)
+            if k not in catcache:
+                catcache[k] = self.parser.fontfeatures.glyphclasses.get(k, self.parser.font[k].category)
+            return catcache[k]
 
         for k, v in self.parser.fontfeatures.anchors.items():
             if aFrom in v:
