@@ -55,8 +55,8 @@ PERCENT: "%"
 
 SetCategory_GRAMMAR = """
 ?start: action
-action: glyphselector glyph_category
-glyph_category: "base" | "mark" | "ligature" | "component"
+action: glyphselector GLYPH_CATEGORY
+GLYPH_CATEGORY: "base" | "mark" | "ligature" | "component"
 """
 
 DuplicateGlyphs_GRAMMAR = """
@@ -102,7 +102,8 @@ class DuplicateGlyphs:
 
 class SetCategory(FEEVerb):
     def action(self, args):
-        glyphs, category = args
+        glyphs = args[0]
+        category = args[1].value
         for g in glyphs.resolve(self.parser.fontfeatures, self.parser.font):
             self.parser.fontfeatures.glyphclasses[g] = category
         return []
