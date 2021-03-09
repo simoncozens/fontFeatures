@@ -370,9 +370,9 @@ class BYMoveDots(FEEVerb):
         displacement = anchor2_y - anchor1_y
         return -(bottomOfDot + displacement)
 
-class BYFixOverhang:
+class BYFixOverhang(FEEVerb):
     def action(self, args):
-        overhang_padding, glyphs = args:
+        overhang_padding, glyphs = args
         parser = self.parser
         for c in ["inits", "medis"]:
             if c not in parser.fontfeatures.namedClasses:
