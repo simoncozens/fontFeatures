@@ -419,4 +419,4 @@ class FEEVerb(lark.Transformer):
     def glyphselector(self, args):
         token, suffixes = args[0], args[1:]
         gs = self._glyphselector(token)
-        return GlyphSelector(gs, suffixes, token.pos_in_stream)
+        return GlyphSelector(gs, suffixes, (token.line, token.column))
