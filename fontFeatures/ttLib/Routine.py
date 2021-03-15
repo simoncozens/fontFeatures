@@ -84,6 +84,11 @@ def buildPos(self, font, lookuptype, ff):
             baseholder = builder.baseMarks
         for r in self.rules:
             for mark, anchor in r.marks.items():
+                if mark in builder.marks:
+                    raise ValueError(
+                        "A mark glyph %s tried to be in two categories (%s, %s)"
+                        % (mark, r.mark_name, builder.marks[mark][0])
+                    )
                 builder.marks[mark] = (r.mark_name, makeAnchor(anchor, ff))
             for base, anchor in r.bases.items():
                 if base not in baseholder:
