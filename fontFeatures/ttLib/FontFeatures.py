@@ -9,6 +9,11 @@ from fontTools.varLib.varStore import OnlineVarStoreBuilder
 def buildBinaryFeatures(self, font, axes=[]):
     self.resolveAllRoutines()
     reorderRoutines(self)
+
+    # Partition rules based on lookup types
+    for r in self.routines:
+        self.partitionRoutine(r, lambda rule: rule.lookup_type())
+
     # XXX first build gdef for mark attachment classes
     if axes:
         self.varstorebuilder = OnlineVarStoreBuilder([ax.tag for ax in axes])
