@@ -21,7 +21,6 @@ from fontTools.ttLib import TTFont
 from collections import OrderedDict, namedtuple
 from fontTools.feaLib.ast import ValueRecord as feaLibValueRecord
 from itertools import chain
-from bidict import bidict
 from copy import copy
 from .variableScalar import VariableScalar
 
@@ -30,7 +29,7 @@ class FontFeatures:
     """An object representing the layout rules in a font."""
 
     def __init__(self):
-        self.namedClasses = bidict({})
+        self.namedClasses = {}
         self.routines = []
         self.features = OrderedDict()
         self.anchors = {}
@@ -42,7 +41,7 @@ class FontFeatures:
     def __add__(self, other):
         combined = FontFeatures()
         for k in ["namedClasses", "routines", "features", "anchors", "symbols"]:
-            if any([isinstance(getattr(combined, k), c) for c in [dict, bidict]]):
+            if any([isinstance(getattr(combined, k), c) for c in dict]):
                 getattr(combined, k).update(getattr(self, k))
                 getattr(combined, k).update(getattr(other, k))
             else:
@@ -84,9 +83,10 @@ class FontFeatures:
             class will be returned. If not, then the class will be stored
             and the name provided as the ``name`` argument will be returned.
         """
-        if tuple(glyphs) in self.namedClasses.inverse:
-            return self.namedClasses.inverse[tuple(glyphs)]
-        self.namedClasses[name] = tuple(glyphs)
+        for k,v in self.namedClasses.items():
+            if sorted(glyphs) == sorted(v):
+                return k
+        self.namedClasses[name] = glyphs
         return name
 
     def addFeature(self, name, rs):

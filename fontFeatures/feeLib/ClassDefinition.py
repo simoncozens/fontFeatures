@@ -111,7 +111,6 @@ will take any glyph selector and display its contents on standard error.
 import lark
 import re
 from glyphtools import get_glyph_metrics, bin_glyphs_by_metric
-from bidict import ValueDuplicationError
 
 import warnings
 
@@ -149,13 +148,7 @@ VERBS = ["DefineClass", "DefineClassBinned"]
 
 class DefineClass(FEEVerb):
     def _add_glyphs_to_named_class(self, glyphs, classname):
-        try:
-            self.parser.fontfeatures.namedClasses[classname] = tuple(glyphs)
-        except ValueDuplicationError as e:
-            import warnings
-            warnings.warn("Could not define class %s as it contains the same"
-                    " glyphs as an existing class %s" % (classname,
-                        self.parser.fontfeatures.namedClasses.inverse[tuple(glyphs)]))
+        self.parser.fontfeatures.namedClasses[classname] = glyphs
 
     def has_glyph_predicate(self, args):
         glyphre, withs = args

@@ -5,7 +5,6 @@ beziers>=0.1.0
 lark
 booleanOperations
 more_itertools
-bidict
 lxml
 youseedee>=0.3.0
 dataclasses; python_version < '3.7'
