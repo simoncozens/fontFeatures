@@ -217,6 +217,8 @@ class FeaParser:
         self.currentRoutine.addRule(s)
 
     def set_lookup_flag(self, location, value, markAttach, markFilter):
+        if self.currentRoutine and value == self.currentRoutineFlag:
+            return
         # If we're mid-feature, start a new routine here
         if self.currentFeature:
             self.end_lookup_block()
