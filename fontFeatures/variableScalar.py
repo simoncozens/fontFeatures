@@ -66,4 +66,4 @@ class VariableScalar:
         deltas, supports = self.get_deltas_and_supports()
         store_builder.setSupports(supports)
         index = store_builder.storeDeltas(deltas)
-        return self.default, index
+        return int(self.default), index

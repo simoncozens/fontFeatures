@@ -20,11 +20,11 @@ def makeAnchor(anchor, ff):
     if isinstance(x, VariableScalar):
         x_def, x_index = x.add_to_variation_store(ff.varstorebuilder)
     else:
-        x_def, x_index = x, None
+        x_def, x_index = int(x), None
     if isinstance(y, VariableScalar):
         y_def, y_index = y.add_to_variation_store(ff.varstorebuilder)
     else:
-        y_def, y_index = y, None
+        y_def, y_index = int(y), None
     anchor = otl.buildAnchor(x_def, y_def)
     if x_index is not None and x_index != 0xFFFFFFFF:
         anchor.XDeviceTable = buildVarDevTable(x_index)
