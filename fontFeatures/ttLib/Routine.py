@@ -61,9 +61,9 @@ def buildPos(self, font, lookuptype, ff):
             else:
                 builder.addClassPair(
                     rule.address,
-                    rule.glyphs[0],
+                    tuple(rule.glyphs[0]),
                     ot_valuerecs[0],
-                    rule.glyphs[1],
+                    tuple(rule.glyphs[1]),
                     ot_valuerecs[1],
                 )
     elif lookuptype == 3:
