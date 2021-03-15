@@ -16,7 +16,7 @@ def toOTLookup(self, font, ff):
 
 
 def makeAnchor(anchor, ff):
-    x,y = anchor
+    x, y = anchor
     if isinstance(x, VariableScalar):
         x_def, x_index = x.add_to_variation_store(ff.varstorebuilder)
     else:
@@ -100,13 +100,17 @@ def buildPos(self, font, lookuptype, ff):
         for r in self.rules:
             new_lookup_list = []
             for list_of_lookups in r.lookups:
-                new_lookup_list.append([lu.routine.__builder for lu in (list_of_lookups or [])])
-            builder.rules.append( otl.ChainContextualRule(
-                r.precontext or [],
-                r.input or [],
-                r.postcontext or [],
-                new_lookup_list
-            ) )
+                new_lookup_list.append(
+                    [lu.routine.__builder for lu in (list_of_lookups or [])]
+                )
+            builder.rules.append(
+                otl.ChainContextualRule(
+                    r.precontext or [],
+                    r.input or [],
+                    r.postcontext or [],
+                    new_lookup_list,
+                )
+            )
     else:
         raise ValueError("Don't know how to build a POS type %i lookup" % lookuptype)
     builder.lookupflag = self.flags
@@ -123,7 +127,7 @@ def buildSub(self, font, lookuptype, ff):
     elif lookuptype == 2:
         builder = otl.MultipleSubstBuilder(font, self.address)
         for rule in self.rules:
-            builder.mapping[rule.input[0][0]] = [ x[0] for x in rule.replacement ]
+            builder.mapping[rule.input[0][0]] = [x[0] for x in rule.replacement]
     elif lookuptype == 4:
         builder = otl.LigatureSubstBuilder(font, self.address)
         for rule in self.rules:
