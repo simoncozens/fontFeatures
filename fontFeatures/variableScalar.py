@@ -17,7 +17,11 @@ class VariableScalar:
             self.add_value(location, value)
 
     def __repr__(self):
-        return ",".join([ "%s@%s" % i for i in self.values.items() ])
+        items = []
+        for location,value in self.values.items():
+            loc = ",".join(["%s=%i" % (ax,loc) for ax,loc in location.items()])
+            items.append("%s:%i" % (loc, value))
+        return "("+(" ".join(items))+")"
 
     def _normalized_location(self, location):
         normalized_location = {}
