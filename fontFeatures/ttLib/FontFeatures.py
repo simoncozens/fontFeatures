@@ -113,6 +113,8 @@ def arrangeByScripts(self):
     self.hoist_languages()
     script_lang_pairs = []
     for script in self.scripts_and_languages.keys():
+        if not (script, "dflt") in script_lang_pairs:
+            script_lang_pairs.append((script, "dflt"))
         for lang in self.scripts_and_languages[script]:
             script_lang_pairs.append((script, lang))
 
@@ -136,7 +138,6 @@ def arrangeByScripts(self):
         for r in routinereferences:
             for script, lang in r.routine.languages:
                 put_in_map_with_default(tag, script, lang, r)
-
     return the_big_map
 
 def separate_by_stage(the_big_map, stage):
