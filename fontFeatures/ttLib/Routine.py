@@ -116,14 +116,16 @@ def buildPos(self, font, lookuptype, ff):
     builder.lookupflag = self.flags
     # XXX mark filtering set
     self.__builder = builder
-    return builder
+    return [ builder ]
 
 
 def buildSub(self, font, lookuptype, ff):
+    builders = []
     if lookuptype == 1:
         builder = otl.SingleSubstBuilder(font, self.address)
         for rule in self.rules:
-            builder.mapping[rule.input[0][0]] = rule.replacement[0][0]
+            for left, right in zip(rule.input[0], rule.replacement[0]):
+                builder.mapping[left] = right
     elif lookuptype == 2:
         builder = otl.MultipleSubstBuilder(font, self.address)
         for rule in self.rules:
@@ -133,10 +135,40 @@ def buildSub(self, font, lookuptype, ff):
         for rule in self.rules:
             for sequence in itertools.product(*rule.input):
                 builder.ligatures[sequence] = rule.replacement[0][0]
+    elif lookuptype == 6:
+        builder = otl.ChainContextSubstBuilder(font, self.address)
+        for r in self.rules:
+            import fontFeatures
+            if r.replacement:
+                lookups = []
+                for left, right in zip(r.input, r.replacement):
+                    # Make a fake sub routine
+
+                    subbuilder = buildSub(fontFeatures.Routine(rules=[fontFeatures.Substitution(
+                        [left],
+                        replacement = [right]
+                    )]), font, 1, ff)
+                    builders.extend(subbuilder)
+                    lookups.append(subbuilder)
+            else:
+                lookups = []
+                for list_of_lookups in r.lookups:
+                    lookups.append(
+                        [lu.routine.__builder for lu in (list_of_lookups or [])]
+                    )
+            builder.rules.append(
+                otl.ChainContextualRule(
+                    r.precontext or [],
+                    r.input or [],
+                    r.postcontext or [],
+                    lookups,
+                )
+            )
     else:
         raise ValueError("Don't know how to build a SUB type %i lookup" % lookuptype)
 
     builder.lookupflag = self.flags
     # XXX mark filtering set
     self.__builder = builder
-    return builder
+    builders.append(builder)
+    return builders

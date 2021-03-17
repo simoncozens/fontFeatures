@@ -100,6 +100,8 @@ def arrangeByScripts(self):
             self.partitionRoutine(r, lambda rule: tuple(rule.languages or []))
 
     for r in self.routines:
+        if not r.rules:
+            continue
         r.languages = r.rules[0].languages # Guaranteed to be the same
         if r.languages:
             for ix,langpair in enumerate(r.languages):
@@ -159,11 +161,14 @@ def makeTable(self, tag, font):
 
     stage_map = separate_by_stage(arrangeByScripts(self), tag[1:].lower())
     stage_routines = [x for x in self.routines if x.stage == tag[1:].lower() ]
-    builders = [ x.toOTLookup(font, self) for x in stage_routines ]
+    buildersset = [ x.toOTLookup(font, self) for x in stage_routines ]
     lookups = []
-    for builder in builders:
-        builder.lookup_index = len(lookups)
-        lookups.append(builder.build())
+    builderlist = []
+    for builders in buildersset:
+        for builder in builders:
+            builder.lookup_index = len(lookups)
+            builderlist.append(builder)
+            lookups.append(builder.build())
 
     table.LookupList.Lookup = lookups
 
@@ -180,7 +185,7 @@ def makeTable(self, tag, font):
         # l.lookup_index will be None when a lookup is not needed
         # for the table under construction. For example, substitution
         # rules will have no lookup_index while building GPOS tables.
-        lookup_indices = tuple([stage_routines.index(x.routine) for x in lookups ])
+        lookup_indices = tuple([builderlist.index(x.routine.__builder) for x in lookups ])
 
         size_feature = tag == "GPOS" and feature_tag == "size"
         if len(lookup_indices) == 0 and not size_feature:
