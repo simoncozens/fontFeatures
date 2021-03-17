@@ -56,6 +56,12 @@ class FontFeatures:
         self.symbols[category] += 1
         return f"{category}{self.symbols[category]}"
 
+    def routineNamed(self, name):
+        for r in self.routines:
+            if r.name == name:
+                return r
+        raise ValueError("Can't find routine '%s'" % name)
+
     def referenceRoutine(self, r):
         """Store a routine and return a reference to it.
 
@@ -600,11 +606,6 @@ class ValueRecord(feaLibValueRecord):
                 self.yAdvance,
             ]
         )
-
-    def asFea(self):
-        if not self.is_variable:
-            return super().asFea()
-        raise ValueError("Variable value records cannot directly be expressed as FEA")
 
 
 class Positioning(Rule):
