@@ -17,8 +17,8 @@ class FeaParser:
         self.currentFeature = None
         self.currentRoutine = None
         self.gensym = 1
-        self.language_systems = []
         self.glyphmap = ()
+        self.currentLanguage = None
         if font:
             self.glyphmap = font.getReverseGlyphMap()
         if isinstance(featurefile, str):
@@ -74,12 +74,10 @@ class FeaParser:
         pass
 
     def set_script(self, location, script):
-        warn("Seen (and ignored) 'script ...' statement")
-        pass
+        self.currentLanguage = [(script, "*")]
 
     def set_language(self, location, language, include_default, required):
-        warn("Seen (and ignored) 'language ...' statement")
-        pass
+        self.currentLanguage = [(self.currentLanguage[0][0], language)]
 
     def add_single_subst(self, location, prefix, suffix, mapping, forceChain):
         self._start_routine_if_necessary(location)
@@ -87,9 +85,10 @@ class FeaParser:
         s = fontFeatures.Substitution(
             input_=[list(mapping.keys())],
             replacement=[list(mapping.values())],
-            precontext=prefix,
-            postcontext=suffix,
+            precontext= [[str(g) for g in group] for group in prefix],
+            postcontext= [[str(g) for g in group] for group in suffix],
             address=location,
+            languages=self.currentLanguage
         )
         self.currentRoutine.addRule(s)
 
@@ -101,9 +100,10 @@ class FeaParser:
         s = fontFeatures.Substitution(
             input_=[[glyph]],
             replacement=[[g] for g in replacements],
-            precontext=prefix,
-            postcontext=suffix,
+            precontext= [[str(g) for g in group] for group in prefix],
+            postcontext= [[str(g) for g in group] for group in suffix],
             address=location,
+            languages=self.currentLanguage
         )
         self.currentRoutine.addRule(s)
 
@@ -113,9 +113,10 @@ class FeaParser:
         s = fontFeatures.Substitution(
             input_=[[glyph]],
             replacement=[replacement],
-            precontext=prefix,
-            postcontext=suffix,
+            precontext= [[str(g) for g in group] for group in prefix],
+            postcontext= [[str(g) for g in group] for group in suffix],
             address=location,
+            languages=self.currentLanguage
         )
         self.currentRoutine.addRule(s)
 
@@ -127,9 +128,10 @@ class FeaParser:
         s = fontFeatures.Substitution(
             input_=[list(x) for x in glyphs],
             replacement=[[replacement]],
-            precontext=prefix,
-            postcontext=suffix,
+            precontext= [[str(g) for g in group] for group in prefix],
+            postcontext= [[str(g) for g in group] for group in suffix],
             address=location,
+            languages=self.currentLanguage
         )
         self.currentRoutine.addRule(s)
 
@@ -145,10 +147,11 @@ class FeaParser:
                 mylookups.append(None)
         s = fontFeatures.Chaining(
             input_=[list(x) for x in glyphs],
-            precontext=prefix,
-            postcontext=suffix,
+            precontext= [[str(g) for g in group] for group in prefix],
+            postcontext= [[str(g) for g in group] for group in suffix],
             lookups=mylookups,
             address=location,
+            languages=self.currentLanguage
         )
         self.currentRoutine.addRule(s)
 
@@ -158,9 +161,10 @@ class FeaParser:
         s = fontFeatures.Positioning(
             glyphs=[p[0] for p in pos],
             valuerecords=[p[1] for p in pos],
-            precontext=prefix,
-            postcontext=suffix,
+            precontext= [[str(g) for g in group] for group in prefix],
+            postcontext= [[str(g) for g in group] for group in suffix],
             address=location,
+            languages=self.currentLanguage
         )
         self.currentRoutine.addRule(s)
 
@@ -168,7 +172,8 @@ class FeaParser:
         self._start_routine_if_necessary(location)
         location = "%s:%i:%i" % (location)
         s = fontFeatures.Positioning(
-            glyphs=[[glyph1], [glyph2]], valuerecords=[value1, value2], address=location
+            glyphs=[[glyph1], [glyph2]], valuerecords=[value1, value2], address=location,
+            languages=self.currentLanguage
         )
         self.currentRoutine.addRule(s)
 
@@ -179,6 +184,7 @@ class FeaParser:
             glyphs=[glyphclass1, glyphclass2],
             valuerecords=[value1, value2],
             address=location,
+            languages=self.currentLanguage
         )
         self.currentRoutine.addRule(s)
 
@@ -196,6 +202,7 @@ class FeaParser:
             bases=basedict,
             marks=markdict,
             address=location,
+            languages=self.currentLanguage
         )
         self.currentRoutine.addRule(s)
 
@@ -213,6 +220,7 @@ class FeaParser:
                     g: (markanchor.x, markanchor.y) for g in markclass.glyphs.keys()
                 },
                 address=location,
+            languages=self.currentLanguage
             )
         self.currentRoutine.addRule(s)
 
@@ -227,7 +235,7 @@ class FeaParser:
         self.currentRoutineFlag = value
 
     def add_language_system(self, location, script, language):
-        self.language_systems.append((script, language))
+        pass
 
     def add_lookup_call(self, lookup_name):
 
