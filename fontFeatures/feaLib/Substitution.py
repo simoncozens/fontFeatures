@@ -124,6 +124,14 @@ def asFeaAST(self):
     if not lut:
         return feaast.Comment("")
 
+    if not self.replacement: # Delete
+        return feaast.MultipleSubstStatement(
+            [glyphref(x) for x in self.precontext],
+            glyphref(self.input[0]),
+            [glyphref(x) for x in self.postcontext],
+            [],
+        )
+
     if lut == 1: # GSUB 1 Single Substitution
         return feaast.SingleSubstStatement(
             [glyphref(x) for x in self.input],

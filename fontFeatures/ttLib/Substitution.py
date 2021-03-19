@@ -1,6 +1,8 @@
 def lookup_type(self):
     if self.reverse:
         return 8
+    if not self.replacement:
+        return 2 # Deletion but treat as mult sub
     if len(self.lookups) > 0 and any([x is not None for x in self.lookups]) or self.has_context:
         return 6  # Chaining
     # if self.input == self.replacement: # It's an ignore
