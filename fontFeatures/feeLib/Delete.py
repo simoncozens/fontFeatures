@@ -8,7 +8,7 @@ Examples::
 
     Routine DeleteUMark { Delete UMark; };
     Routine MedialRaToRaU { Substitute medialRa-myanmar -> medialRa_uMark-myanmar; };
-    Substitute (medialRa-myanmar ^MedialRaToRaU @Consonant uMark-myanmar ^DeleteUMark);
+    Chain (medialRa-myanmar ^MedialRaToRaU @Consonant uMark-myanmar ^DeleteUMark);
 
 """
 
