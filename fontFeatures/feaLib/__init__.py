@@ -1,6 +1,7 @@
 import io
 import fontFeatures
 from fontTools.feaLib.parser import Parser
+import fontTools.feaLib.ast as ast
 from warnings import warn
 
 class FeaParser:
@@ -32,7 +33,21 @@ class FeaParser:
         Returns:
             A ``FontFeatures`` object containing the rules of this file.
         """
+
+        # Borrow glyph classes
+        for name, members in self.ff.namedClasses.items():
+            glyphclass = ast.GlyphClassDefinition(
+                name, ast.GlyphClass([m for m in members])
+            )
+            self.parser.glyphclasses_.define(name, glyphclass)
+
         parsetree = self.parser.parse()
+
+        # Return glyph classes
+        if len(self.parser.glyphclasses_.scopes_):
+            for name, definition in self.parser.glyphclasses_.scopes_[-1].items():
+                self.ff.namedClasses[name] = definition.glyphs.glyphs
+
         self.features_ = {}
         parsetree.build(self)
         return self.ff
@@ -71,6 +86,13 @@ class FeaParser:
         self.currentFeature = name
 
     def set_font_revision(self, location, revision):
+        pass
+
+    def add_name_record(self, *args):
+        pass
+
+    def add_featureName(self, tag):
+        # XXX support this
         pass
 
     def set_script(self, location, script):
