@@ -79,5 +79,5 @@ class IMatra(FEEVerb):
         if "dvmE" in font:
             margin = [a.x for a in font["dvmE"].anchors if a.name == "_abvm.e" or a.name == "_abvm" ]
             if margin:
-                return glyph.width - margin[0]
+                return glyph.width + margin[0]
         return glyph.width / 2
