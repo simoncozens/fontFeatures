@@ -40,7 +40,7 @@ def buildPos(self, font, lookuptype, ff):
         builder = otl.SinglePosBuilder(font, self.address)
         for rule in self.rules:
             ot_valuerecs = [
-                x.toOTValueRecord(ff, pairPosContext=False) for x in rule.valuerecords
+                x and x.toOTValueRecord(ff, pairPosContext=False) for x in rule.valuerecords
             ]
             for glyph in rule.glyphs[0]:
                 builder.add_pos(rule.address, glyph, ot_valuerecs[0])
@@ -48,7 +48,7 @@ def buildPos(self, font, lookuptype, ff):
         builder = otl.PairPosBuilder(font, self.address)
         for rule in self.rules:
             ot_valuerecs = [
-                x.toOTValueRecord(ff, pairPosContext=True) for x in rule.valuerecords
+                x and x.toOTValueRecord(ff, pairPosContext=True) for x in rule.valuerecords
             ]
             if len(rule.glyphs[0]) == 1 and len(rule.glyphs[1]) == 1:
                 builder.addGlyphPair(
