@@ -143,7 +143,7 @@ def buildSub(self, font, lookuptype, ff):
         builder = otl.ChainContextSubstBuilder(font, self.address)
         for r in self.rules:
             import fontFeatures
-            if r.replacement:
+            if isinstance(r, fontFeatures.Substitution) and r.replacement:
                 lookups = []
                 for left, right in zip(r.input, r.replacement):
                     # Make a fake sub routine
