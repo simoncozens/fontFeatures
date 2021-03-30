@@ -9,6 +9,10 @@ def toOTLookup(self, font, ff):
     if not all([lu == lookuptypes[0] for lu in lookuptypes]):
         raise ValueError("For now, a routine can only contain rules of the same type")
 
+    if not all([self.rules[0].flags == rule.flags for rule in self.rules]):
+        raise ValueError("For now, a routine can only contain rules of the same flags")
+    self.flags = self.rules[0].flags
+
     if self.stage == "pos":
         return buildPos(self, font, lookuptypes[0], ff)
     if self.stage == "sub":
