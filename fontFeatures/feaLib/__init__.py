@@ -114,6 +114,21 @@ class FeaParser:
         )
         self.currentRoutine.addRule(s)
 
+
+    def add_reverse_chain_single_subst(self, location, prefix, suffix, mapping):
+        self._start_routine_if_necessary(location)
+        location = "%s:%i:%i" % (location)
+        s = fontFeatures.Substitution(
+            input_=[list(mapping.keys())],
+            replacement=[list(mapping.values())],
+            precontext= [[str(g) for g in group] for group in prefix],
+            postcontext= [[str(g) for g in group] for group in suffix],
+            address=location,
+            languages=self.currentLanguage,
+            reverse=True
+        )
+        self.currentRoutine.addRule(s)
+
     def add_multiple_subst(
         self, location, prefix, glyph, suffix, replacements, forceChain
     ):
