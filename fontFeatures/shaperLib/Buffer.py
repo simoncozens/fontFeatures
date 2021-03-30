@@ -110,6 +110,7 @@ class BufferItem:
 
 
 class Buffer:
+    """A buffer holding either characters to be shaped or shaped glyphs."""
     itemclass = BufferItem
 
     def __init__(self, font, glyphs=[], unicodes=[], direction=None, script=None, language=None):
@@ -131,12 +132,23 @@ class Buffer:
             self.guess_segment_properties()
 
     def store_glyphs(self, glyphs):
+        """Initialize the buffer with list of glyphs.
+
+        Args:
+            glyphs (list): A list of glyph names.
+        """
         self.items = [self.itemclass.new_glyph(g, self.font) for g in glyphs]
 
     def store_unicode(self, unistring):
+        """Initialize the buffer with list of Unicode codepoints.
+
+        Args:
+            glyphs (list or str): A list of characters.
+        """
         self.items = [self.itemclass.new_unicode(ord(char)) for char in unistring ]
 
     def guess_segment_properties(self):
+        """Try to automatically determine the script and direction properties."""
         for u in self.items:
             # Guess segment properties
             if not self.script:
@@ -148,6 +160,7 @@ class Buffer:
             self.direction = _script_direction(self.script)
 
     def map_to_glyphs(self):
+        """Convert a buffer of codepoints to its initial glyph mapping."""
         glyphs = []
         for u in self.items:
             u.map_to_glyph(self.font)
@@ -155,10 +168,12 @@ class Buffer:
 
     @property
     def is_all_glyphs(self):
+        """Returns true if the contents are glyph items."""
         return all([x.glyph is not None for x in self.items])
 
     @property
     def is_all_unicodes(self):
+        """Returns true if the contents are character items."""
         return all([x.codepoint is not None for x in self.items])
 
     def __getitem__(self, key):
@@ -186,23 +201,34 @@ class Buffer:
         return len(self.mask)
 
     def update(self):
+        """Categorises glyphs and recomputes masks.
+
+        Called internally when the contents of the buffer changes."""
         for g in self.items:
             g.recategorize(self.font)
         self.recompute_mask()
 
     def clear_mask(self):
+        """Clear the buffer mask."""
         self.flags = 0
         self.markFilteringSet = None
         self.current_feature_mask = None
         self.recompute_mask()
 
     def set_mask(self, flags, markFilteringSet=None, markAttachmentSet=None):
+        """Apply a routine's flags and mark filtering set to the buffer."""
         self.flags = flags
         self.markFilteringSet = markFilteringSet
         self.markAttachmentSet = markAttachmentSet
         self.recompute_mask()
 
     def recompute_mask(self):
+        """Computes the mask property
+
+        ``buffer.mask`` is a list of buffer item indices which is the current
+        "view" of the buffer. For example, if ``buffer.flags == 0x8``, then the
+        indices of all mark glyphs will be excluded from ``buffer.mask``.
+        """
         mask = range(0, len(self.items))
         self.flags = self.flags or 0
         if self.flags & 0x2:  # IgnoreBases
@@ -242,13 +268,16 @@ class Buffer:
         self.mask = mask
 
     def set_feature_mask(self, feature):
+        """Applies the mask for a particular feature."""
         self.current_feature_mask = feature
         self.recompute_mask()
 
     def move_item(self, src, dest):
+        """Moves an item from src to dest."""
         self.items[dest:dest] = [ self.items.pop(src) ]
 
     def merge_clusters(self, start, end):
+        """Currently unimplemented."""
         pass  # XXX
 
     def serialize(self, additional = None, position=True, names=True, ned=False):

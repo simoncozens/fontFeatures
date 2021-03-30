@@ -1,3 +1,8 @@
+"""The base class for complex shapers.
+
+Shaper.py is the top-level interface to shaperlib. This is a lower-level
+module implementing common routines used to the individual complex shapers."""
+
 from fontFeatures.shaperLib.Buffer import Buffer, BufferItem
 from copy import copy
 import unicodedata
@@ -21,6 +26,7 @@ def _is_default_ignorable(c):
 
 
 class BaseShaper:
+    """A complex shaper object."""
     def __init__(self, plan, font, buf, features=[]):
         self.plan = plan
         self.font = font
@@ -28,6 +34,7 @@ class BaseShaper:
         self.features = features
 
     def shape(self):
+        """Shape a buffer."""
         self.plan.fontfeatures.resolveAllRoutines()
         # self.buffer.set_unicode_props()
         # self.insert_dotted_circles()
@@ -46,12 +53,15 @@ class BaseShaper:
         # self.buffer.propagate_flags()
 
     def preprocess_text(self):
+        """Do any processing which needs to happen to character items before shaping."""
         pass
 
     def postprocess_glyphs(self):
+        """Do any processing which needs to happen to glyph items after shaping."""
         pass
 
     def substitute_default(self):
+        """Do initial subsitution processing: buffer normalization and mapping."""
         self.normalize_unicode_buffer()
         self.buffer.map_to_glyphs()
         self.plan.msg("Initial glyph mapping", self.buffer)
@@ -61,6 +71,7 @@ class BaseShaper:
         pass
 
     def normalize_unicode_buffer(self):
+        """Normalize an OpenType buffer."""
         unistring = "".join([chr(item.codepoint) for item in self.buffer.items])
         self.buffer.store_unicode(unicodedata.normalize("NFC", unistring))
 
@@ -75,12 +86,15 @@ class BaseShaper:
                 item.codepoint = 0x2010
 
     def collect_features(self, shaper):
+        """Collect all complex features to be run by this shaper. (Abstract method.)"""
         return []
 
     def substitute_complex(self):
+        """Run the substitution stage."""
         self._run_stage("sub")
 
     def position(self):
+        """Run the positioning stage."""
         self._run_stage("pos")
         # zero width marks
         # for i in self.buffer.items:
@@ -92,6 +106,7 @@ class BaseShaper:
             self.propagate_attachment_offsets(i)
 
     def propagate_attachment_offsets(self, i):
+        """Resolve attachment offsets for item ``i``."""
         if not hasattr(self.buffer.items[i], "attach_type"):
             return
         attach_type = self.buffer.items[i].attach_type
@@ -161,9 +176,11 @@ class BaseShaper:
             return [x for x in routines if not x.languages or ("DFLT", language) in x.languages]
 
     def delete_default_ignorables(self):
+        """Remove all items from the buffer which are ignorable."""
         self.buffer.items = [x for x in self.buffer.items if not(x.codepoint) or not _is_default_ignorable(x.codepoint)]
 
     def zero_width_default_ignorables(self):
+        """Set all items from the buffer which are ignorable to zero advance width."""
         space = BufferItem.new_unicode(0x20)
         space.map_to_glyph(self.buffer.font)
         if space.glyph == -1:
@@ -177,6 +194,7 @@ class BaseShaper:
                         i.syllable_index += 1
 
     def would_substitute(self, feature, subbuffer_items):
+        """Test whether the feature would apply to a list of BufferItem objects."""
         if not feature in self.plan.fontfeatures.features:
             return False
         subbuffer = Buffer(

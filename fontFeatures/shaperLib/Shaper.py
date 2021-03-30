@@ -1,3 +1,5 @@
+"""A Python Unicode Shaping Engine."""
+
 from babelfont.font import Font
 from fontFeatures import FontFeatures
 import unicodedata
@@ -14,6 +16,13 @@ import re
 
 
 class Shaper:
+    """Initialize a shaping engine.
+
+    Args:
+        ff: A :py:class:`fontFeatures.FontFeatures` object.
+        font: A ``Babelfont`` font object.
+        message_function: A function called with a message and buffer object.
+    """
     def __init__(self, ff, font, message_function=None):
         assert isinstance(ff, FontFeatures)
         assert isinstance(font, Font)
@@ -25,12 +34,18 @@ class Shaper:
             self.msg = self.default_message_function
 
     def execute(self, buf, features=[]):
+        """Run the shaper on a given buffer.
+
+        Args:
+            buf: :py:class:`fontFeatures.shaperLib.buffer.Buffer` object.
+            features: either a list of feature tags or a feature string ("+foox,-barx")
+        """
         # Choose complex shaper
         self.complexshaper = self.categorize(buf)(self, self.babelfont, buf, features)
         self.msg("Using %s" % type(self.complexshaper).__name__)
         self.stages = [[]]
         if isinstance(features, str):
-            self.user_features = self.parse_user_feature_string(features)
+            self.user_features = self._parse_user_feature_string(features)
         else:
             self.user_features = features
         self.collect_features(buf)
@@ -38,13 +53,17 @@ class Shaper:
         return buf
 
     def default_message_function(self, msg, buffer=None, serialize_options=None):
+        """A logger function to be used if one is not provided in the constructor.
+
+        By default, debugging and informational log messages are reported to the
+        ``fontFeatures.shaperLib`` facility."""
         ser = ""
         if buffer:
             ser = buffer.serialize(additional=serialize_options)
             msg = msg + " : " + ser
         logging.getLogger("fontFeatures.shaperLib").info(msg)
 
-    def parse_user_feature_string(self, features):
+    def _parse_user_feature_string(self, features):
         features = features.split(",")
         outfeat = []
         for f in features:
@@ -61,22 +80,26 @@ class Shaper:
         return outfeat
 
     def add_pause(self, thing = None):
+        """Add a pause in the shaping stage. Used internally."""
         if thing:
             self.stages.append(thing)
         self.stages.append([])
 
     def add_features(self, *tags):
+        """Adds feature tags to the current shaping stage."""
         for t in tags:
             if any([isinstance(x, list) and t in x for x in self.stages]):
                 continue
             self.stages[-1].append(t)
 
     def disable_feature(self, tag):
+        """Removes a feature from processing."""
         for s in self.stages:
             if isinstance(s, list) and tag in s:
                 s.remove(tag)
 
     def collect_features(self, buf):
+        """Determine the features, and their order, to process the buffer."""
         self.add_features("rvrn")
         self.add_pause()
         if buf.direction == "LTR":
@@ -101,6 +124,7 @@ class Shaper:
             self.complexshaper.override_features(self)
 
     def categorize(self, buf):
+        """Returns the appropriate complex shaper class to shape this buffer."""
         if buf.script == "Arabic":
             return ArabicShaper
 

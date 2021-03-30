@@ -3,9 +3,12 @@ from fontFeatures import Rule
 
 
 def shaper_inputs(self):
+    """Returns a list of potential glyphs to determine whether to test if this
+    rule applies at a given point."""
     return [self.bases.keys(), self.marks.keys()]
 
 def find_base_backwards(self, buf, ix):
+    """Looks backwards in a buffer from index ``ix`` to find the nearest base."""
     start_ix = ix
     ix = ix - 1
     while ix >= 0:
@@ -21,6 +24,7 @@ def find_base_backwards(self, buf, ix):
     return None
 
 def would_apply_at_position(self, buf, ix, namedclasses={}):
+    """Tests to see if this rule would apply at position ``ix`` of the buffer."""
     from fontFeatures.shaperLib.Rule import _expand_slot
 
     logging.getLogger("fontFeatures.shaperLib").debug("Testing if %s would apply at position %i" % (self.asFea(), ix))
