@@ -26,6 +26,7 @@ class FeaParser:
             featurefile = io.StringIO(featurefile)
         self.featurefile = featurefile
         self.parser = Parser(self.featurefile, self.glyphmap)
+        self.parser.ast.ValueRecord = fontFeatures.ValueRecord
 
     def parse(self):
         """Parse the feature code.
