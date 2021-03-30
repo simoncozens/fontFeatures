@@ -39,6 +39,7 @@ class FontFeatures:
         self.doneUsageMarking = False
 
     def __add__(self, other):
+        """Combine two FontFeatures objects together."""
         combined = FontFeatures()
         for k in ["namedClasses", "routines", "features", "anchors", "symbols", "glyphclasses"]:
             if isinstance(getattr(combined, k), dict):
@@ -49,12 +50,25 @@ class FontFeatures:
         return combined
 
     def gensym(self, category):
+        """Generate a new unique symbol (used for labeling unlabeled data).
+
+        Args:
+            category (str): The category for this symbol
+
+        Returns: a string representing a unique label."""
         if not category in self.symbols:
             self.symbols[category] = 0
         self.symbols[category] += 1
         return f"{category}{self.symbols[category]}"
 
     def routineNamed(self, name):
+        """Finds a routine with the given name.
+
+        Args:
+            name (str): The name to find
+
+        Returns: a :py:class:`Routine` object if the named routine was found
+          in the features object. Raises a ``ValueError`` if not."""
         for r in self.routines:
             if r.name == name:
                 return r
@@ -182,10 +196,23 @@ class FontFeatures:
         self.scripts_and_languages = scripts
 
     def hasScriptSupport(self, script):
+        """Check if the features object has support for a particular script.
+
+        Args:
+            script (str): A four-character OpenType script code.
+
+        Returns: boolean
+        """
         self.hoist_languages()
         return script in self.scripts_and_languages
 
     def resolveAllRoutines(self):
+        """Resolve reference use in chains.
+
+        Checks that all routines referenced in chain rules can actually
+        be found within the object, and adds pointers to match named routine
+        references with the relevant :py:class:`Routine` object.
+        """
         for routine in self.routines:
             for r in routine.rules:
                 if not isinstance(r, Chaining):
@@ -196,6 +223,10 @@ class FontFeatures:
                     )
 
     def ensureLookupsAreReferences(self, lookuplist):
+        """Ensures that all references are lookups.
+
+        Naughty people might put :py:class:`Routine` objects directly into
+        :py:class:`Chain` lookups. This tidies them up."""
         rv = []
         if not lookuplist:
             return None
@@ -209,6 +240,7 @@ class FontFeatures:
         return rv
 
     def setGlyphClassesFromFont(self, font):
+        """Loads glyph classes from the font."""
         for g in font.exportedGlyphs():
             if hasattr(font, "glyphs"):
                 self.glyphclasses[g] = font.glyphs[g].category
@@ -216,6 +248,20 @@ class FontFeatures:
                 self.glyphclasses[g] = font[g].category
 
     def partitionRoutine(self, routine, factor):
+        """Splits a routine based on a predicate.
+
+        This method applies a function to each rule in the routine and creates
+        distinct routines, each containing rules with the same return value
+        from the function. This is useful, for example, when exporting to
+        OpenType, to ensure that all rules in a routine must have the same type,
+        same flags, etc.
+
+        Args:
+            routine: A :py:class:`Routine` object.
+            factor: A function applied to each of the :py:class:`Rule` objects.
+
+        Returns: A list of :py:class:`Routine` objects. Additionally, modifies
+        the ``.routines`` list of the FontFeatures object."""
         if not routine.rules:
             return
         self.doneUsageMarking = False
@@ -337,6 +383,9 @@ class Routine:
 
     @property
     def stage(self):
+        """Returns which shaping stage this routine is used in.
+
+        Returns: ``sub`` for substitution stage, ``pos`` for positioning stage."""
         for r in self.rules:
             if isinstance(r, Substitution):
                 return "sub"
@@ -349,6 +398,8 @@ class Routine:
 
     @property
     def dependencies(self):
+        """Returns a list of :py:class:`Routine` objects called as lookups in
+        this Routine."""
         deps = []
         for r in self.rules:
             deps.extend(r.dependencies)
@@ -361,6 +412,7 @@ class Routine:
 
 
 class ExtensionRoutine(Routine):
+    """OpenType-specific concept: A routine which contains other routines."""
     def __init__(self, **kwargs):
         if "routines" in kwargs:
             self.routines = kwargs["routines"]
@@ -368,10 +420,20 @@ class ExtensionRoutine(Routine):
         super().__init__(**kwargs)
 
     def apply_to_buffer(self, buf, stage=None, feature=None):
+        """Applies shaping rules from this routine to a buffer.
+
+        Args:
+            buf: A :py:class:`fontFeatures.shaperLib.Buffer` object.
+            stage (str): Shaping stage - ``sub`` or ``pos``.
+            feature (str): The feature being processed. (For debugging.)
+
+        Modifies the ``buf`` object.
+        """
         for r in self.routines:
             r.apply_to_buffer(buf, stage, feature)
 
     def asFeaAST(self):
+        """Returns this extension routine as ``fontTools.feaLib.ast`` objects."""
         import fontTools.feaLib.ast as feaast
 
         f = feaast.Block()
@@ -381,18 +443,30 @@ class ExtensionRoutine(Routine):
 
     @property
     def stage(self):
+        """Returns which shaping stage this routine is used in.
+
+        Returns: ``sub`` for substitution stage, ``pos`` for positioning stage."""
         return self.routines[0].stage
 
     @property
     def rules(self):
+        """All rules under this extension.
+
+        Returns: A flattened list of :py:class:`Rule` objects."""
         return list(chain(*[routine.rules for routine in self.routines]))
 
     @rules.setter
     def rules(self, foo):
+        """Does nothing. Don't set rules here."""
         pass
 
 
 class RoutineReference:
+    """A reference to a Routine object, used in a lookup.
+
+    Routines can be referenced either by name (for example, when loaded from a
+    textual representation), in which case they will be resolved at a later time,
+    or by providing a pointer to the :py:class:`Routine` object."""
     def __init__(self, name=None, routine=None):
         self.routine = routine
         if self.routine:
@@ -401,11 +475,13 @@ class RoutineReference:
             self.name = name
 
     def resolve(self, ff):
+        """Resolves the reference in the context of a :py:class:`FontFeatures`
+        object.
+
+        Raises a ``ValueError`` if a named routine cannot be found.
+        """
         if not self.routine:
-            for r in ff.routines:
-                if r.name == self.name:
-                    self.routine = r
-                    break
+            self.routine = ff.routineNamed(self.name)
             if not self.routine:
                 raise ValueError("Could not resolve routine")
         if not self.name:
@@ -413,6 +489,9 @@ class RoutineReference:
 
     @property
     def stage(self):
+        """Returns which shaping stage this routine is used in.
+
+        Returns: ``sub`` for substitution stage, ``pos`` for positioning stage."""
         if not self.routine:
             raise ValueError("Routine reference not resolved")
         return self.routine.stage
@@ -425,6 +504,7 @@ class RoutineReference:
         return self.asFeaAST().asFea()
 
 class Rule:
+    """A base class for all rules."""
     def asFea(self):
         """Returns this Rule as a string of AFDKO feature text."""
         return self.asFeaAST().asFea()
@@ -438,10 +518,13 @@ class Rule:
 
     @property
     def has_context(self):
+        """Does this rule have any pre- or post-context defined?"""
         return len(self.precontext) or len(self.postcontext)
 
     @property
     def dependencies(self):
+        """Returns a list of :py:class:`Routine` objects called as lookups in
+        this Routine."""
         return []
 
 
@@ -494,6 +577,7 @@ class Substitution(Rule):
 
     @property
     def involved_glyphs(self):
+        """Returns a set of all glyphs involved in this rule."""
         i = set(chain.from_iterable(self.input))
         o = set(chain.from_iterable(self.replacement))
         b = set(chain.from_iterable(self.precontext))
@@ -545,6 +629,9 @@ class Chaining(Rule):
 
     @property
     def stage(self):
+        """Returns which shaping stage this routine is used in.
+
+        Returns: ``sub`` for substitution stage, ``pos`` for positioning stage."""
         for l in self.lookups:
             if not l:
                 continue
@@ -555,6 +642,7 @@ class Chaining(Rule):
 
     @property
     def involved_glyphs(self):
+        """Returns a set of all glyphs involved in this rule."""
         i = set(chain.from_iterable(self.input))
         b = set(chain.from_iterable(self.precontext))
         a = set(chain.from_iterable(self.postcontext))
@@ -562,6 +650,8 @@ class Chaining(Rule):
 
     @property
     def dependencies(self):
+        """Returns a list of :py:class:`Routine` objects called as lookups in
+        this Routine."""
         deps = []
         for l in self.lookups:
             for aLookup in (l or []):
@@ -578,10 +668,16 @@ class Chaining(Rule):
 
 
 class ValueRecord(feaLibValueRecord):
+    """A value record for representing positional changes in advance and placement.
+
+    See :py:class:`fontTools.feaLib.ValueRecord`, from which this inherits.
+    """
     from .ttLib.ValueRecord import toOTValueRecord
 
     @property
     def is_variable(self):
+        """Returns true if any of the elements of the value record are a
+        :py:class:`fontFeatures.variableScalar.VariableScalar`."""
         return any(
             isinstance(x, VariableScalar)
             for x in [
@@ -630,6 +726,7 @@ class Positioning(Rule):
 
     @property
     def involved_glyphs(self):
+        """Returns a set of all glyphs involved in this rule."""
         i = set(chain.from_iterable(self.glyphs))
         b = set(chain.from_iterable(self.precontext))
         a = set(chain.from_iterable(self.postcontext))
@@ -679,6 +776,7 @@ class Attachment(Rule):
 
     @property
     def is_cursive(self):
+        """Returns true if this is a cursive attachment rule."""
         return self.base_name == "cursive_entry" or self.base_name == "entry"  # XXX
 
     from .feaLib.Attachment import asFeaAST, feaPreamble
@@ -688,6 +786,7 @@ class Attachment(Rule):
 
     @property
     def involved_glyphs(self):
+        """Returns a set of all glyphs involved in this rule."""
         b = set(self.bases.keys())
         m = set(self.marks.keys())
         return b | m
