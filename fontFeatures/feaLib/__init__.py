@@ -197,6 +197,8 @@ class FeaParser:
         )
         self.currentRoutine.addRule(s)
 
+    add_chain_context_pos = add_chain_context_subst
+
     def add_single_pos(self, location, prefix, suffix, pos, forceChain):
         self._start_routine_if_necessary(location)
         location = "%s:%i:%i" % (location)
@@ -264,7 +266,10 @@ class FeaParser:
                 address=location,
             languages=self.currentLanguage
             )
+            s.fontfeatures = self.ff
         self.currentRoutine.addRule(s)
+
+    add_mark_mark_pos = add_mark_base_pos
 
     def set_lookup_flag(self, location, value, markAttach, markFilter):
         if self.currentRoutine and value == self.currentRoutineFlag:
