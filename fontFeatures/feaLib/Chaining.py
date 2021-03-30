@@ -92,6 +92,3 @@ def asFeaAST(self):
             ]
         )
 
-
-def asFea(self):
-    return self.asFeaAST().asFea()

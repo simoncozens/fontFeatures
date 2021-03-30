@@ -1,4 +1,4 @@
-from fontFeatures import Chaining, Positioning, ValueRecord, Routine, Substitution, RoutineReference
+from fontFeatures import Chaining, Positioning, ValueRecord, Routine, Substitution, RoutineReference, FontFeatures
 from lxml import etree
 
 
@@ -42,3 +42,13 @@ class TestChaining(unittest.TestCase):
 
         c = Chaining([["a"], ["b"]], lookups=[[rr1, rr2], None])
         self.assertEqual(c.asFea(), "sub a' lookup dummy1 lookup dummy2 b';")
+
+    def test_complex_pos(self):
+        v = ValueRecord(xAdvance=120)
+        pos1 = Positioning(["a"], [v])
+        r1 = Routine(rules=[pos1])
+        rr1 = RoutineReference(routine=r1)
+
+        c = Chaining([["a"], ["b"]], lookups=[[rr1], None])
+        c.feaPreamble(FontFeatures())
+        self.assertEqual(c.asFea(), "pos a' lookup ChainedRoutine1 b';")
