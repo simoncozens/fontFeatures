@@ -8,10 +8,6 @@ def glyph(x):
     return [x]
 
 
-def singleglyph(x):
-    return [glyph(x)]
-
-
 class GTableUnparser:
     def __init__(self, table, ff, languageSystems, font=None, config={}):
         self.table = table.table
