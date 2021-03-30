@@ -5,7 +5,7 @@ import warnings
 from fontFeatures.variableScalar import VariableScalar
 
 
-def glyphref(g):
+def _glyphref(g):
     if len(g) == 1:
         return feaast.GlyphName(g[0])
     return feaast.GlyphClass([feaast.GlyphName(x) for x in g])
@@ -40,7 +40,7 @@ def feaPreamble(self, ff):
                 feaast.MarkClassDefinition(
                     feaast.MarkClass(self.base_name),
                     feaast.Anchor(*mark[1]),
-                    glyphref(mark[0]),
+                    _glyphref(mark[0]),
                 )
             )
             ff.scratch["mark_classes_done"][(self.base_name, tuple(mark[0]))] = True
@@ -59,7 +59,7 @@ def asFeaAST(self):
         for g in allglyphs:
             b.statements.append(
                 feaast.CursivePosStatement(
-                    glyphref([g]),
+                    _glyphref([g]),
                     g in self.bases and feaast.Anchor(*self.bases[g]),
                     g in self.marks and feaast.Anchor(*self.marks[g]),
                 )
@@ -74,7 +74,7 @@ def asFeaAST(self):
                     statementtype = feaast.MarkMarkPosStatement
             b.statements.append(
                 statementtype(
-                    glyphref(base[0]),
+                    _glyphref(base[0]),
                     [[feaast.Anchor(*base[1]), feaast.MarkClass(self.base_name)]],
                 )
             )
