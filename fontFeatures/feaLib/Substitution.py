@@ -120,7 +120,7 @@ def paired_mult(self) -> feaast.MultipleSubstStatement:
     return b
 
 def asFeaAST(self):
-    lut = lookup_type(self)
+    lut = lookup_type(self, forFea=True)
     if not lut:
         return feaast.Comment("")
 
