@@ -168,6 +168,11 @@ def buildSub(self, font, lookuptype, ff):
                     lookups,
                 )
             )
+    elif lookuptype == 8:
+        builder = otl.ReverseChainSingleSubstBuilder(font, self.address)
+        for rule in self.rules:
+            mapping = { l[0]:r[0] for l,r in zip(rule.input, rule.replacement) }
+            builder.rules.append((rule.precontext, rule.postcontext, mapping))
     else:
         raise ValueError("Don't know how to build a SUB type %i lookup" % lookuptype)
 
