@@ -40,6 +40,7 @@ def makeAnchor(anchor, ff):
 
 
 def buildPos(self, font, lookuptype, ff):
+    builders = []
     if lookuptype == 1:
         builder = otl.SinglePosBuilder(font, self.address)
         for rule in self.rules:
@@ -103,14 +104,28 @@ def buildPos(self, font, lookuptype, ff):
         builder = otl.ChainContextPosBuilder(font, self.address)
         for r in self.rules:
             new_lookup_list = []
-            for list_of_lookups in r.lookups:
-                new_lookup_list.append(
-                    [lu.routine.__builder for lu in (list_of_lookups or [])]
-                )
+            import fontFeatures
+            if isinstance(r, fontFeatures.Positioning):
+                lookups = []
+                for glyphs, vr in zip(r.glyphs, r.valuerecords):
+                    # Make a fake pos routine
+                    subbuilder = buildPos(fontFeatures.Routine(rules=[fontFeatures.Positioning(
+                        [glyphs],
+                        valuerecords = [vr]
+                    )]), font, 1, ff)
+                    builders.extend(subbuilder)
+                    lookups.append(subbuilder)
+                glyphs = r.glyphs
+            else:
+                for list_of_lookups in r.lookups:
+                    new_lookup_list.append(
+                        [lu.routine.__builder for lu in (list_of_lookups or [])]
+                    )
+                glyphs = r.input
             builder.rules.append(
                 otl.ChainContextualRule(
                     r.precontext or [],
-                    r.input or [],
+                    glyphs or [],
                     r.postcontext or [],
                     new_lookup_list,
                 )
@@ -120,7 +135,8 @@ def buildPos(self, font, lookuptype, ff):
     builder.lookupflag = self.flags
     # XXX mark filtering set
     self.__builder = builder
-    return [ builder ]
+    builders.append(builder)
+    return builders
 
 
 def buildSub(self, font, lookuptype, ff):

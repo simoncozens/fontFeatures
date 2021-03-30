@@ -302,11 +302,15 @@ def test_different_pos_types():
     parser = FeaParser("""
 markClass [acute grave] <anchor 150 -10> @TOP_MARKS;
 lookup single { pos a 50; } single;
-lookup pair { pos a 20 b 50; } pair;
+lookup pair_and_class_pair { pos a 20 b 50; pos [a b] 15 c 10; } pair_and_class_pair;
 lookup cursive { pos cursive c <anchor 500 200> <anchor 0 0>; } cursive;
 lookup markbase { position base [a b] <anchor 250 450> mark @TOP_MARKS; } markbase;
+lookup markmark { position mark [dieresis] <anchor 20 40> mark @TOP_MARKS; } markmark;
+lookup chain1 { pos a' 50 b; } chain1;
+lookup chain2 { pos a' lookup single b; } chain2;
 """)
     parser.parse()
+    parser.ff.glyphclasses["dieresis"] = "mark"
     parser.ff.buildBinaryFeatures(font)
     gpos = "\n".join(getXML(font["GPOS"].toXML))
     assert gpos == """<Version value="0x00010000"/>
@@ -317,7 +321,7 @@ lookup markbase { position base [a b] <anchor 250 450> mark @TOP_MARKS; } markba
   <!-- FeatureCount=0 -->
 </FeatureList>
 <LookupList>
-  <!-- LookupCount=4 -->
+  <!-- LookupCount=8 -->
   <Lookup index="0">
     <LookupType value="1"/>
     <LookupFlag value="0"/>
@@ -333,7 +337,7 @@ lookup markbase { position base [a b] <anchor 250 450> mark @TOP_MARKS; } markba
   <Lookup index="1">
     <LookupType value="2"/>
     <LookupFlag value="0"/>
-    <!-- SubTableCount=1 -->
+    <!-- SubTableCount=2 -->
     <PairPos index="0" Format="1">
       <Coverage>
         <Glyph value="a"/>
@@ -349,6 +353,29 @@ lookup markbase { position base [a b] <anchor 250 450> mark @TOP_MARKS; } markba
           <Value2 XAdvance="50"/>
         </PairValueRecord>
       </PairSet>
+    </PairPos>
+    <PairPos index="1" Format="2">
+      <Coverage>
+        <Glyph value="a"/>
+        <Glyph value="b"/>
+      </Coverage>
+      <ValueFormat1 value="4"/>
+      <ValueFormat2 value="4"/>
+      <ClassDef1>
+      </ClassDef1>
+      <ClassDef2>
+        <ClassDef glyph="c" class="1"/>
+      </ClassDef2>
+      <!-- Class1Count=1 -->
+      <!-- Class2Count=2 -->
+      <Class1Record index="0">
+        <Class2Record index="0">
+        </Class2Record>
+        <Class2Record index="1">
+          <Value1 XAdvance="15"/>
+          <Value2 XAdvance="10"/>
+        </Class2Record>
+      </Class1Record>
     </PairPos>
   </Lookup>
   <Lookup index="2">
@@ -419,5 +446,96 @@ lookup markbase { position base [a b] <anchor 250 450> mark @TOP_MARKS; } markba
         </BaseRecord>
       </BaseArray>
     </MarkBasePos>
+  </Lookup>
+  <Lookup index="4">
+    <LookupType value="6"/>
+    <LookupFlag value="0"/>
+    <!-- SubTableCount=1 -->
+    <MarkMarkPos index="0" Format="1">
+      <Mark1Coverage>
+        <Glyph value="grave"/>
+        <Glyph value="acute"/>
+      </Mark1Coverage>
+      <Mark2Coverage>
+        <Glyph value="dieresis"/>
+      </Mark2Coverage>
+      <!-- ClassCount=1 -->
+      <Mark1Array>
+        <!-- MarkCount=2 -->
+        <MarkRecord index="0">
+          <Class value="0"/>
+          <MarkAnchor Format="1">
+            <XCoordinate value="150"/>
+            <YCoordinate value="-10"/>
+          </MarkAnchor>
+        </MarkRecord>
+        <MarkRecord index="1">
+          <Class value="0"/>
+          <MarkAnchor Format="1">
+            <XCoordinate value="150"/>
+            <YCoordinate value="-10"/>
+          </MarkAnchor>
+        </MarkRecord>
+      </Mark1Array>
+      <Mark2Array>
+        <!-- Mark2Count=1 -->
+        <Mark2Record index="0">
+          <Mark2Anchor index="0" Format="1">
+            <XCoordinate value="20"/>
+            <YCoordinate value="40"/>
+          </Mark2Anchor>
+        </Mark2Record>
+      </Mark2Array>
+    </MarkMarkPos>
+  </Lookup>
+  <Lookup index="5">
+    <LookupType value="1"/>
+    <LookupFlag value="0"/>
+    <!-- SubTableCount=1 -->
+    <SinglePos index="0" Format="1">
+      <Coverage>
+        <Glyph value="a"/>
+      </Coverage>
+      <ValueFormat value="4"/>
+      <Value XAdvance="50"/>
+    </SinglePos>
+  </Lookup>
+  <Lookup index="6">
+    <LookupType value="8"/>
+    <LookupFlag value="0"/>
+    <!-- SubTableCount=1 -->
+    <ChainContextPos index="0" Format="3">
+      <!-- BacktrackGlyphCount=0 -->
+      <!-- InputGlyphCount=1 -->
+      <InputCoverage index="0">
+        <Glyph value="a"/>
+      </InputCoverage>
+      <!-- LookAheadGlyphCount=1 -->
+      <LookAheadCoverage index="0">
+        <Glyph value="b"/>
+      </LookAheadCoverage>
+      <!-- PosCount=0 -->
+    </ChainContextPos>
+  </Lookup>
+  <Lookup index="7">
+    <LookupType value="8"/>
+    <LookupFlag value="0"/>
+    <!-- SubTableCount=1 -->
+    <ChainContextPos index="0" Format="3">
+      <!-- BacktrackGlyphCount=0 -->
+      <!-- InputGlyphCount=1 -->
+      <InputCoverage index="0">
+        <Glyph value="a"/>
+      </InputCoverage>
+      <!-- LookAheadGlyphCount=1 -->
+      <LookAheadCoverage index="0">
+        <Glyph value="b"/>
+      </LookAheadCoverage>
+      <!-- PosCount=1 -->
+      <PosLookupRecord index="0">
+        <SequenceIndex value="0"/>
+        <LookupListIndex value="0"/>
+      </PosLookupRecord>
+    </ChainContextPos>
   </Lookup>
 </LookupList>"""
