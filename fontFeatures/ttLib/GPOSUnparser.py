@@ -54,52 +54,6 @@ class GPOSUnparser(GTableUnparser):
     def isChaining(self, lookupType):
         return lookupType >= 7
 
-    def getDependencies(self, lookup):
-        deps = []
-        if lookup.LookupType == 9:
-            for xt in lookup.SubTable:
-                subLookupType = xt.ExtSubTable.LookupType
-                if self.isChaining(subLookupType):
-                    deps.extend(self.getDependencies(xt.ExtSubTable))
-                else:
-                    return []
-
-        elif hasattr(lookup, "SubTable"):
-            for sub in lookup.SubTable:
-                deps.extend(self.getChainingDeps(sub))
-        else:
-            deps.extend(self.getChainingDeps(lookup))
-        return set(deps)
-
-    def getChainingDeps(self, sub):
-        deps = []
-        if hasattr(sub, "ChainPosClassSet") or hasattr(sub, "PosClassSet"):
-            rulesets = (
-                hasattr(sub, "ChainPosClassSet")
-                and sub.ChainPosClassSet
-                or sub.PosClassSet
-            )
-            for classId, ruleset in enumerate(rulesets):
-                if not ruleset:
-                    continue
-                if hasattr(ruleset, "ChainPosClassRule"):
-                    rules = ruleset.ChainPosClassRule
-                else:
-                    rules = ruleset.PosClassRule
-                for r in rules:
-                    for sl in r.PosLookupRecord:
-                        deps.append(sl.LookupListIndex)
-        elif hasattr(sub, "PosRuleSet"):
-            for subrulesets, input_ in zip(sub.PosRuleSet, sub.Coverage.glyphs):
-                for subrule in subrulesets.PosRule:
-                    for sl in subrule.PosLookupRecord:
-                        deps.append(sl.LookupListIndex)
-
-        elif hasattr(sub, "PosLookupRecord"):
-            for sl in sub.PosLookupRecord:
-                deps.append(sl.LookupListIndex)
-        return deps
-
     def unparseSinglePositioning(self, lookup):
         b = fontFeatures.Routine(name=self.getname("SinglePositioning" + self.gensym()))
         self._fix_flags(b, lookup)
