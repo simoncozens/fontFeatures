@@ -6,8 +6,12 @@ import unittest
 
 
 class TestChaining(unittest.TestCase):
-    def roundTrip(self, thing):
+    def roundTrip(self, thing, dependencies):
+        f = FontFeatures()
+        f.routines.extend(dependencies)
         rt = thing.__class__.fromXML(thing.toXML())
+        f.routines.append(Routine(rules=[rt]))
+        f.resolveAllRoutines()
         self.assertEqual(rt.asFea(), thing.asFea())
 
     def test_simple_pos(self):
@@ -18,7 +22,9 @@ class TestChaining(unittest.TestCase):
 
         c = Chaining([["a"], ["b"]], lookups=[[rr], None])
         self.assertEqual(c.asFea(), "pos a' lookup dummy b';")
-        self.assertEqual(etree.tostring(c.toXML()), '<chaining><lookups><slot><routinereference name="dummy"/></slot><slot><lookup/></slot></lookups><input><slot><glyph>a</glyph></slot><slot><glyph>b</glyph></slot></input></chaining>'.encode("utf-8"))
+        xml = c.toXML()
+        self.assertEqual(etree.tostring(xml), '<chaining><lookups><slot><routinereference name="dummy"/></slot><slot><lookup/></slot></lookups><input><slot><glyph>a</glyph></slot><slot><glyph>b</glyph></slot></input></chaining>'.encode("utf-8"))
+        self.roundTrip(c, [r])
 
     def test_simple_sub(self):
         pos = Substitution(["a"], ["b"])
@@ -52,3 +58,4 @@ class TestChaining(unittest.TestCase):
         c = Chaining([["a"], ["b"]], lookups=[[rr1], None])
         c.feaPreamble(FontFeatures())
         self.assertEqual(c.asFea(), "pos a' lookup ChainedRoutine1 b';")
+

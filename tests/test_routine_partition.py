@@ -49,3 +49,7 @@ def test_routine_partition_not_needed():
     f.partitionRoutine(r, lambda rule: tuple(rule.languages or []))
 
     assert len(f.routines) == 1
+
+    r.rules = []
+    f.partitionRoutine(r, lambda rule: tuple(rule.languages or []))
+    assert len(f.routines) == 1
