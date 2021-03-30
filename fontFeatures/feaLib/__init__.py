@@ -46,7 +46,11 @@ class FeaParser:
         # Return glyph classes
         if len(self.parser.glyphclasses_.scopes_):
             for name, definition in self.parser.glyphclasses_.scopes_[-1].items():
-                self.ff.namedClasses[name] = definition.glyphs.glyphs
+                if isinstance(definition, ast.MarkClass):
+                    pass
+                    # self.ff.namedClasses[name] = list(definition.glyphs.keys())
+                else:
+                    self.ff.namedClasses[name] = definition.glyphs.glyphs
 
         self.features_ = {}
         parsetree.build(self)
