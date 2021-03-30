@@ -14,12 +14,13 @@ def alltrim(a):
     a = re.sub("table GDEF.*GDEF;", "", a)
     return a.strip()
 
+path, _ = os.path.split(__file__)
+fontpath = os.path.join(path, "data", "LibertinusSans-Regular.otf")
+font = Babelfont.load(fontpath)
 
 @pytest.fixture
 def parser():
-    path, _ = os.path.split(__file__)
-    fontpath = os.path.join(path, "data", "LibertinusSans-Regular.otf")
-    return FeeParser(Babelfont.load(fontpath))
+    return FeeParser(font)
 
 ############
 # BareName #
