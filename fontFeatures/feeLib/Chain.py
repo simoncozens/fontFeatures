@@ -68,7 +68,6 @@ class Chain(Substitute):
             lookups.append([fontFeatures.RoutineReference(name=x) for x in lu])
         pre     = [g.resolve(self.parser.fontfeatures, self.parser.font) for g in pre]
         post     = [g.resolve(self.parser.fontfeatures, self.parser.font) for g in post]
-        languages = None # For now
         return [fontFeatures.Chaining(inputs, lookups = lookups,
             precontext = pre,
             postcontext = post,

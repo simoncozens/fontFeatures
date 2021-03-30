@@ -6,11 +6,13 @@ from fontFeatures.shaperLib.Shaper import Shaper
 import pytest
 import os
 
+path, _ = os.path.split(__file__)
+fontpath = os.path.join(path, "data", "LibertinusSans-Regular.otf")
+font = Babelfont.load(fontpath)
+
 @pytest.fixture
 def parser():
-    path, _ = os.path.split(__file__)
-    fontpath = os.path.join(path, "data", "LibertinusSans-Regular.otf")
-    return FeeParser(Babelfont.load(fontpath))
+    return FeeParser(font)
 
 
 def test_swap(parser):
@@ -39,4 +41,18 @@ Feature liga {
     shaper = Shaper(parser.fontfeatures, parser.font)
     shaper.execute(buf)
     assert buf.serialize(position=False) == "X|A|B|D|C|A|B|D|C|B|A|E"
+
+
+
+def test_chain(parser):
+    parser.parseString("""
+Routine a_to_b { Substitute A -> B; };
+Feature liga {
+  Chain X ( A ^a_to_b) Y;
+};
+""")
+    buf = Buffer(parser.font, unicodes="XAYXAX")
+    shaper = Shaper(parser.fontfeatures, parser.font)
+    shaper.execute(buf)
+    assert buf.serialize(position=False) == "X|B|Y|X|A|X"
 
