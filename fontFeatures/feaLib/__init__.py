@@ -57,14 +57,6 @@ class FeaParser:
         parsetree.build(self)
         return self.ff
 
-    def find_named_routine(self, name):
-        candidates = list(filter(lambda x: x.name == name, self.ff.routines))
-        if not candidates:
-            raise ValueError("Reference to undefined routine " + name)
-        if len(candidates) > 1:
-            raise ValueError("This can't happen")
-        return candidates[0]
-
     def _start_routine_if_necessary(self, location):
         if not self.currentRoutine:
             self._start_routine(location, "")
@@ -184,7 +176,7 @@ class FeaParser:
         mylookups = []
         for x in lookups:
             if x:
-                mylookups.append([self.find_named_routine(y.name) for y in x])
+                mylookups.append([self.ff.routineNamed(y.name) for y in x])
             else:
                 mylookups.append(None)
         s = fontFeatures.Chaining(
