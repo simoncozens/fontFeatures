@@ -23,6 +23,3 @@ def asFeaAST(self, allLanguages=[("DFLT", "dflt")]):
         f.statements.append(feaast.LookupReferenceStatement(self.routine.asFeaAST()))
     return f
 
-
-def asFea(self):
-    return self.asFeaAST().asFea()

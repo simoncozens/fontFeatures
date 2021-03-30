@@ -7,7 +7,7 @@ from fontTools.feaLib.ast import ValueRecord
 import warnings
 
 
-class FontDameUnparser:
+class FontDameParser:
     """Convert layout files in Monotype's FontDame format to fontFeatures.
 
     Args:
@@ -35,8 +35,8 @@ class FontDameUnparser:
         self.backtrackclassContexts = {}
         self.lookaheadclassContexts = {}
 
-    def unparse(self):
-        """Unparses the font file, creating a fontFeatures object.
+    def parse(self):
+        """Parses the font file, creating a fontFeatures object.
 
         Returns: A fontFeatures object containing the rules in the FontDame file."""
         # Parse lookups
@@ -413,8 +413,8 @@ def unparse(filename, config={}, font=None):
     else:
         glyphset = ()
     with open(filename) as file_in:
-        parser = FontDameUnparser(file_in, config, glyphset)
-        parser.unparse()
+        parser = FontDameParser(file_in, config, glyphset)
+        parser.parse()
     output = ""
     done = {}
 

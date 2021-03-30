@@ -47,7 +47,7 @@ VERBS = ["IfCollides"]
 
 
 class IfCollides(FEEVerb):
-    def action(self, args)
+    def action(self, args):
         parser = self.parser
         sequence = args[:-1]
         routine = args[-1]

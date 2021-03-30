@@ -12,7 +12,7 @@ def fromXML(klass, el):
 
 def toXML(self):
     root = etree.Element(self.__class__.__name__.lower())
-    if hasattr(self, "languages") and self.address:
+    if hasattr(self, "address") and self.address:
         root.attrib["address"] = str(self.address)
     if hasattr(self, "languages") and self.languages:
         root.attrib["languages"] = self.languages

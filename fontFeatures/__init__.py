@@ -40,14 +40,12 @@ class FontFeatures:
 
     def __add__(self, other):
         combined = FontFeatures()
-        for k in ["namedClasses", "routines", "features", "anchors", "symbols"]:
-            if any([isinstance(getattr(combined, k), c) for c in dict]):
+        for k in ["namedClasses", "routines", "features", "anchors", "symbols", "glyphclasses"]:
+            if isinstance(getattr(combined, k), dict):
                 getattr(combined, k).update(getattr(self, k))
                 getattr(combined, k).update(getattr(other, k))
             else:
                 setattr(combined, k, getattr(self, k) + getattr(other, k))
-        for mine, theirs in zip(self.glyphclasses, other.glyphclasses):
-            mine |= theirs
         return combined
 
     def gensym(self, category):
@@ -110,18 +108,6 @@ class FontFeatures:
                 r = self.referenceRoutine(r)
             self.features[name].append(r)
 
-    def allRoutines(self):
-        """Return all Routines in the font.
-
-        Returns:
-            Routines stored in the preamble and within features.
-        """
-        routines = set(self.routines)
-        for k, v in self.features.items():
-            for n in v:
-                if isinstance(n, Routine):
-                    routines.add(n)
-        return list(routines)
 
     def allRules(self, ruletype=None):
         """Return all rules in the font, optionally filtered by type
@@ -135,12 +121,8 @@ class FontFeatures:
         """
 
         rules = []
-        for r in self.allRoutines():
+        for r in self.routines:
             rules.extend(r.rules)
-        for k, v in self.features.items():
-            for n in v:
-                if isinstance(n, Routine):
-                    rules.extend(n.rules)
 
         if ruletype:
             rules = filter(lambda x: isinstance(x, ruletype), rules)
@@ -155,7 +137,7 @@ class FontFeatures:
         """
         if self.doneUsageMarking:
             return
-        for r in self.allRoutines():
+        for r in self.routines:
             r.usedin = set()
         for chain in self.allRules(Chaining):
             for routinelist in chain.lookups:
@@ -436,8 +418,11 @@ class RoutineReference:
         return self.routine.stage
 
     from .xmlLib.RoutineReference import fromXML, toXML
-    from .feaLib.RoutineReference import asFea, asFeaAST, feaPreamble
+    from .feaLib.RoutineReference import asFeaAST, feaPreamble
 
+    def asFea(self):
+        """Returns this Rule as a string of AFDKO feature text."""
+        return self.asFeaAST().asFea()
 
 class Rule:
     def asFea(self):
