@@ -1,6 +1,9 @@
-from fontTools.misc.py23 import *
-import fontTools
-from fontTools.feaLib.ast import *
+"""ttLib: Interfacing with TrueType fonts.
+
+This package contains routines for converting between fontTools objects
+(representing TrueType/OpenType fonts) and fontFeatures. This particular
+module is mainly concerned with getting information out of binary OTF/TTF
+fonts and into fontFeatures."""
 from collections import OrderedDict
 
 from .GDEFUnparser import GDEFUnparser
@@ -9,6 +12,15 @@ from .GPOSUnparser import GPOSUnparser
 
 
 def unparseLanguageSystems(tables):
+    """Build a set of script / language pairs from a GSUB/GPOS table.
+
+    Args:
+        tables: A list of ``fontTools.ttLib.tables.G_S_U_B_.table_G_S_U_B_`` /
+            ``fontTools.ttLib.tables.G_P_O_S_.table_G_P_O_S_`` objects.
+
+    Returns an ordered dictionary whose keys are four-character script tags and
+      whose values are a set of four-character language tags.
+    """
     scripts = OrderedDict()
     for table in tables:
         if not table.table.ScriptList:

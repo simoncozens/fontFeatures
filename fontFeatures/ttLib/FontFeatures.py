@@ -1,3 +1,16 @@
+"""Convert a fontFeatures object to GPOS/GSUB/GDEF tables
+
+This module contains routines for building binary layout tables from a
+fontFeatures object. These are implemented as mixins loaded into the
+fontFeatures object. e.g. instead of::
+
+    fontFeatures.ttLib.FontFeatures.buildBinaryFeatures(ff, font)
+
+call::
+
+    ff.buildBinaryFeatures(font)
+
+"""
 import copy
 from fontTools.ttLib.tables import otBase, otTables
 from fontTools.ttLib import newTable
@@ -7,6 +20,13 @@ from fontTools.varLib.varStore import OnlineVarStoreBuilder
 
 
 def buildBinaryFeatures(self, font, axes=[]):
+    """Adds GDEF, GSUB and GPOS tables to a font object.
+
+    Args:
+        font: a fontTools ``ttFont`` object.
+        axes: an optional list of objects conforming to the
+          ``fontTools.designspaceLib.AxisDescriptor`` protocol.
+    """
     self.resolveAllRoutines()
     reorderRoutines(self)
 
@@ -32,8 +52,8 @@ def buildBinaryFeatures(self, font, axes=[]):
                 font['GPOS'].table.remap_device_varidxes(varidx_map)
 
 def reorderRoutines(self):
-    # We must ensure that all routines which are referenced appear before
-    # the things which reference them
+    """Reorders the routines table to ensure that all routines which are
+    referenced in chaining rules appear before the routines which reference them."""
     newroutines = []
     i = 0
     while i < len(self.routines):
@@ -47,8 +67,10 @@ def reorderRoutines(self):
         newroutines.append(r)
         i = i + 1
     self.routines = newroutines
+
 # I am stealing the fontTools.feaLib.builder stuff here
 def buildGDEF(self, font):
+    """Build a GDEF table and add it to the ``ttFont`` object."""
     gdef = otTables.GDEF()
     gdef.GlyphClassDef = _buildGDEFGlyphClassDef(self)
 
@@ -60,7 +82,6 @@ def buildGDEF(self, font):
     # gdef.MarkGlyphSetsDef = self.buildGDEFMarkGlyphSetsDef_()
     # gdef.Version = 0x00010002 if gdef.MarkGlyphSetsDef else 0x00010000
     gdef.Version = 0x00010000
-    # XXX Variations!
     if any(
         (
             gdef.GlyphClassDef,
@@ -88,6 +109,7 @@ def _buildGDEFGlyphClassDef(self):
         return None
 
 def buildGPOSGSUB(self, font):
+    """Builds GSUB and GPOS tables and adds them to the ``ttFont`` object."""
     for tag in ["GSUB", "GPOS"]:
         table = makeTable(self, tag, font)
         fontTable = font[tag] = newTable(tag)
@@ -95,6 +117,12 @@ def buildGPOSGSUB(self, font):
 
 
 def arrangeByScripts(self):
+    """Hoists script/language data from rules into routines, and builds a
+    map of which routines apply to each script/language pair.
+
+    Returns an ordered dictionary; the keys are tuples of
+    ``(feature_tag, script_tag, language_tag))``, and the values are a list of
+    routines."""
     for r in self.routines:
         if any(rule.languages for rule in r.rules):
             self.partitionRoutine(r, lambda rule: tuple(rule.languages or []))
@@ -143,6 +171,7 @@ def arrangeByScripts(self):
     return the_big_map
 
 def separate_by_stage(the_big_map, stage):
+    """Splits up the routine map into GSUB/GPOS routines."""
     stage_map = OrderedDict()
     for k,v in the_big_map.items():
         v = [r for r in v if r.stage == stage]
@@ -151,6 +180,7 @@ def separate_by_stage(the_big_map, stage):
     return stage_map
 
 def makeTable(self, tag, font):
+    """Compiles a binary GSUB/GPOS table."""
     table = getattr(otTables, tag, None)()
     table.Version = 0x00010000
     table.ScriptList = otTables.ScriptList()

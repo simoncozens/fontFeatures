@@ -1,8 +1,11 @@
+"""GPOSUnparser: Convert binary GPOS lookups to fontFeatures objects."""
 from .GTableUnparser import GTableUnparser
 import fontFeatures
 
 
 class GPOSUnparser(GTableUnparser):
+    """Unparse a GPOS table into a fontFeatures object. See :py:class:`fontFeatures.ttLib.GTableUnparser`."""
+
     _table = "GPOS"
     lookupTypes = {
         1: "SinglePositioning",
@@ -28,22 +31,26 @@ class GPOSUnparser(GTableUnparser):
         "chain_format2_rule": "ChainPosClassRule",
     }
 
-    def makeValueRecord(self, valueRecord, valueFormat):
+    def makeValueRecord(self, valueRecord):
+        """Helper routine to create ValueRecord instances.
+
+        Args:
+            valueRecord: An ``otTables.ValueRecord`` object.
+
+        Returns a ``fontFeatures.ValueRecord`` object."""
         valueFormatFlags = (
             ("XPlacement", 0x0001),  # Includes horizontal adjustment for placement
             ("YPlacement", 0x0002),  # Includes vertical adjustment for placement
             ("XAdvance", 0x0004),  # Includes horizontal adjustment for advance
             ("YAdvance", 0x0008),  # Includes vertical adjustment for advance
-
             # Currently we don't have a way to express or represent value records
             # with Device tables, whether old-style (ppem adjustment) or new-style
             # (VariationIndex). Even if we could represent them, then what? See
             # issue #31.
-
-            #("XPlaDevice", 0x0010),  # Includes horizontal Device table for placement
-            #("YPlaDevice", 0x0020),  # Includes vertical Device table for placement
-            #("XAdvDevice", 0x0040),  # Includes horizontal Device table for advance
-            #("YAdvDevice", 0x0080)  # Includes vertical Device table for advance
+            # ("XPlaDevice", 0x0010),  # Includes horizontal Device table for placement
+            # ("YPlaDevice", 0x0020),  # Includes vertical Device table for placement
+            # ("XAdvDevice", 0x0040),  # Includes horizontal Device table for advance
+            # ("YAdvDevice", 0x0080)  # Includes vertical Device table for advance
             # , 'Reserved': 0xF000 For future use (set to zero)
         )
 
@@ -52,9 +59,11 @@ class GPOSUnparser(GTableUnparser):
         return fontFeatures.ValueRecord(*values)
 
     def isChaining(self, lookupType):
+        """Returns true if the given lookup type is a chaining lookup."""
         return lookupType >= 7
 
     def unparseSinglePositioning(self, lookup):
+        """Turn a GPOS1 (single positioning) subtable into a fontFeatures Routine."""
         b = fontFeatures.Routine(name=self.getname("SinglePositioning" + self.gensym()))
         self._fix_flags(b, lookup)
 
@@ -62,17 +71,17 @@ class GPOSUnparser(GTableUnparser):
             if subtable.Format == 1:
                 spos = fontFeatures.Positioning(
                     [subtable.Coverage.glyphs],
-                    [self.makeValueRecord(subtable.Value, subtable.ValueFormat)],
+                    [self.makeValueRecord(subtable.Value)],
                     address=self.currentLookup,
                     flags=lookup.LookupFlag,
-
                 )
                 b.addRule(spos)
             else:
                 # Optimize it later
                 for g, v in zip(subtable.Coverage.glyphs, subtable.Value):
                     spos = fontFeatures.Positioning(
-                        [[g]], [self.makeValueRecord(v, subtable.ValueFormat)],
+                        [[g]],
+                        [self.makeValueRecord(v)],
                         address=self.currentLookup,
                         flags=lookup.LookupFlag,
                     )
@@ -80,6 +89,7 @@ class GPOSUnparser(GTableUnparser):
         return b, []
 
     def unparsePairPositioning(self, lookup):
+        """Turn a GPOS2 (pair adjustment) subtable into a fontFeatures Routine."""
         b = fontFeatures.Routine(name=self.getname("PairPositioning" + self.gensym()))
         self._fix_flags(b, lookup)
         for subtable in lookup.SubTable:
@@ -89,8 +99,8 @@ class GPOSUnparser(GTableUnparser):
                         spos = fontFeatures.Positioning(
                             [[g], [vr.SecondGlyph]],
                             [
-                                self.makeValueRecord(vr.Value1, subtable.ValueFormat1),
-                                self.makeValueRecord(vr.Value2, subtable.ValueFormat2),
+                                self.makeValueRecord(vr.Value1),
+                                self.makeValueRecord(vr.Value2),
                             ],
                             address=self.currentLookup,
                             flags=lookup.LookupFlag,
@@ -105,15 +115,16 @@ class GPOSUnparser(GTableUnparser):
                     for ix2, c2 in enumerate(c1.Class2Record):
                         if ix2 not in class2:
                             continue  # XXX
-                        vr1 = self.makeValueRecord(c2.Value1, subtable.ValueFormat1)
-                        vr2 = self.makeValueRecord(c2.Value2, subtable.ValueFormat2)
+                        vr1 = self.makeValueRecord(c2.Value1)
+                        vr2 = self.makeValueRecord(c2.Value2)
                         if not vr1 and not vr2:
                             continue
                         firstClass = list(
                             set(class1[ix1]) & set(subtable.Coverage.glyphs)
                         )
                         spos = fontFeatures.Positioning(
-                            [firstClass, class2[ix2]], [vr1, vr2],
+                            [firstClass, class2[ix2]],
+                            [vr1, vr2],
                             address=self.currentLookup,
                             flags=lookup.LookupFlag,
                         )
@@ -121,6 +132,7 @@ class GPOSUnparser(GTableUnparser):
         return b, []
 
     def unparseCursiveAttachment(self, lookup):
+        """Turn a GPOS3 (cursive attachment) subtable into a fontFeatures Routine."""
         b = fontFeatures.Routine(name=self.getname("CursiveAttachment" + self.gensym()))
         self._fix_flags(b, lookup)
         entries = {}
@@ -140,36 +152,44 @@ class GPOSUnparser(GTableUnparser):
                     )
         b.addRule(
             fontFeatures.Attachment(
-                "cursive_entry", "cursive_exit", entries, exits, flags=lookup.LookupFlag,
-                address=self.currentLookup
+                "cursive_entry",
+                "cursive_exit",
+                entries,
+                exits,
+                flags=lookup.LookupFlag,
+                address=self.currentLookup,
             )
         )
         return b, []
 
     def unparseMarkToBase(self, lookup):
+        """Turn a GPOS4 (mark to base) subtable into a fontFeatures Routine."""
         b = fontFeatures.Routine(name=self.getname("MarkToBase" + self.gensym()))
         self._fix_flags(b, lookup)
         for subtable in lookup.SubTable:  # fontTools.ttLib.tables.otTables.MarkBasePos
             assert subtable.Format == 1
-            for classId in range(0,subtable.ClassCount):
+            for classId in range(0, subtable.ClassCount):
                 anchorClassPrefix = "Anchor" + self.gensym()
-                marks = self.formatMarkArray(
+                marks = self._formatMarkArray(
                     subtable.MarkArray, subtable.MarkCoverage, classId
                 )
-                bases = self.formatBaseArray(
+                bases = self._formatBaseArray(
                     subtable.BaseArray, subtable.BaseCoverage, classId
                 )
                 b.addRule(
                     fontFeatures.Attachment(
-                        anchorClassPrefix, anchorClassPrefix + "_", bases, marks,
-                        font = self.font,
+                        anchorClassPrefix,
+                        anchorClassPrefix + "_",
+                        bases,
+                        marks,
+                        font=self.font,
                         address=self.currentLookup,
                         flags=lookup.LookupFlag,
                     )
                 )
         return b, []
 
-    def formatMarkArray(self, markArray, markCoverage, classId):
+    def _formatMarkArray(self, markArray, markCoverage, classId):
         id2Name = markCoverage.glyphs
         marks = {}
         for i, markRecord in enumerate(markArray.MarkRecord):
@@ -181,7 +201,7 @@ class GPOSUnparser(GTableUnparser):
                 )
         return marks
 
-    def formatMark2Array(self, markArray, markCoverage, anchorClassPrefix):
+    def _formatMark2Array(self, markArray, markCoverage, anchorClassPrefix):
         id2Name = markCoverage.glyphs
         marks = {}
         for i, markRecord in enumerate(markArray.Mark2Record):
@@ -193,7 +213,7 @@ class GPOSUnparser(GTableUnparser):
             )
         return marks
 
-    def formatBaseArray(self, baseArray, baseCoverage, wantedClassId):
+    def _formatBaseArray(self, baseArray, baseCoverage, wantedClassId):
         id2Name = baseCoverage.glyphs
         bases = {}
         for i, baseRecord in enumerate(baseArray.BaseRecord):
@@ -206,31 +226,35 @@ class GPOSUnparser(GTableUnparser):
         return bases
 
     def unparseMarkToLigature(self, lookup):
+        """Turn a GPOS5 (mark to ligature) subtable into a fontFeatures Routine."""
         b = fontFeatures.Routine(name=self.getname("MarkToLigature" + self.gensym()))
         self._fix_flags(b, lookup)
         self.unparsable(b, "Mark to lig pos", lookup)
         return b, []
 
     def unparseMarkToMark(self, lookup):
+        """Turn a GPOS6 (mark to mark) subtable into a fontFeatures Routine."""
         b = fontFeatures.Routine(name=self.getname("MarkToMark" + self.gensym()))
         self._fix_flags(b, lookup)
         for subtable in lookup.SubTable:  # fontTools.ttLib.tables.otTables.MarkBasePos
             assert subtable.Format == 1
-            for classId in range(0,subtable.ClassCount):
+            for classId in range(0, subtable.ClassCount):
                 anchorClassPrefix = "Anchor" + self.gensym()
-                marks = self.formatMarkArray(
+                marks = self._formatMarkArray(
                     subtable.Mark1Array, subtable.Mark1Coverage, classId
                 )
-                bases = self.formatMark2Array(
+                bases = self._formatMark2Array(
                     subtable.Mark2Array, subtable.Mark2Coverage, classId
                 )
                 b.addRule(
                     fontFeatures.Attachment(
-                        anchorClassPrefix, anchorClassPrefix + "_", bases, marks,
-                        font = self.font,
+                        anchorClassPrefix,
+                        anchorClassPrefix + "_",
+                        bases,
+                        marks,
+                        font=self.font,
                         address=self.currentLookup,
                         flags=lookup.LookupFlag,
-
                     )
                 )
         return b, []

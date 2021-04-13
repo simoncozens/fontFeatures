@@ -15,9 +15,27 @@ concepts: Features and Routines. Routines are collections of rules; they play
 a similar function to the AFDKO concept of a lookup, but unlike lookups,
 Routines do not need to be comprised of rules of the same type. You can think
 of them as functions that are called on a glyph string.
+
+Here is an example of constructing a simple feature file using fontFeatures::
+
+    ff = FontFeatures()
+
+    liga_ffi = Substitution( [ ["f"], ["f"], ["i"] ], replacement=[["f_f_i"]] )
+    liga_ffl = Substitution( [ ["f"], ["f"], ["l"] ], replacement=[["f_f_l"]] )
+    liga_fi = Substitution( [ ["f"], ["i"] ], replacement=[["fi"]] )
+    liga_ff = Substitution( [ ["f"], ["f"] ], replacement=[["f_f"]] )
+    liga_routine = Routine(rules=[liga_ffi, liga_ffl, liga_fi, liga_ff])
+
+    ff.addFeature("liga", [liga_routine])
+
+    # Export Adobe syntax
+    print(ff.asFea())
+
+    font = TTFont("Test.ttf")
+    ff.buildBinaryFeatures(font)
+    font.save("Test-liga.ttf")
 """
 
-from fontTools.ttLib import TTFont
 from collections import OrderedDict, namedtuple
 from fontTools.feaLib.ast import ValueRecord as feaLibValueRecord
 from itertools import chain
@@ -26,16 +44,18 @@ from .variableScalar import VariableScalar
 
 
 class FontFeatures:
-    """An object representing the layout rules in a font."""
+    """An object representing the layout rules in a font.
+
+    The initializer has no parameters."""
 
     def __init__(self):
-        self.namedClasses = {}
-        self.routines = []
-        self.features = OrderedDict()
-        self.anchors = {}
+        self.namedClasses = {}  #: A mapping of named classes to a list of glyph names which make up the class.
+        self.routines = []  #: All of the layout routines used in this font.
+        self.features = OrderedDict()  #: An ordered dictionary mapping feature tags to a list of routine references.
+        self.anchors = {}  #: A dictionary mapping glyph names to a dictionary of anchor names / positions.
         self.symbols = {}
-        self.glyphclasses = {}  # Glyph name -> category
-        self.scratch = {}  # Space for items to communicate context to each other. :(
+        self.glyphclasses = {}  #: A dictionary mapping glyph names to their categories.
+        self.scratch = {}  #: Space for items to communicate context to each other.
         self.doneUsageMarking = False
 
     def __add__(self, other):
@@ -550,6 +570,20 @@ class Substitution(Rule):
             the inner list containing Routines to apply.
         reverse: Boolean representing if the substitutions should take place from
             the end of the string.
+
+    Examples::
+
+        lig = Substitution(
+            [ ["f"], ["i"] ],
+            ["f_i"]
+        ) # sub f i by f_i;
+
+        contextual = Substitution(
+            [ ["dotbelow"] ],
+            [ ["dotbelow.post"] ],
+            precontext = [["ra-myanmar", "ra-myanmar.bt1", "ra-myanmar.bt2"]]
+        ) # sub [ra-myanmar ra-myanmar.bt1 ra-myanmar.bt2] dotbelow-myanmar'
+          # by dotbelow-myanmar.post;
     """
 
     def __init__(
@@ -607,6 +641,18 @@ class Chaining(Rule):
         lookups: A list of list of lookups to be applied to the glyph sequence.
             The outer list represents the positions in the input sequence, with
             the inner list containing Routines to apply.
+
+    Example::
+
+        sub_Qu = Routine(rules=[
+            Substitute([["Q"]], [["Q.beforeu"]])
+        ])
+
+        chain = Chain(
+            [["Q"]],
+            postcontext = [ ["u", "v", "u.sc", "v.sc"] ],
+            lookups = [ [sub_Qu] ]
+        ) # sub Q' lookup sub_Qu [u v u.sc v.sc];
     """
 
     def __init__(
@@ -702,6 +748,21 @@ class Positioning(Rule):
             sequence.
         postcontext: A list of list of glyphs which must appear before the input
             sequence.
+
+    Example::
+
+        open_up_behs = Positioning(
+            [
+                ["BEi1", "BEi2"],
+                ["sda", "sdb", "dda", "ddb"]
+            ],
+            [
+                ValueRecord(xAdvance=200),
+                ValueRecord(xPlacement=50),
+            ]
+            postcontext = [ medis_finas ]
+        )
+        # pos [BEi1 BEi2]' <0 0 200 0> [sda sdb dda ddb]' <0 50 0 0> @medis_finas;
     """
 
     def __init__(
@@ -751,6 +812,30 @@ class Attachment(Rule):
         marks: Dictionary. They keys are names of glyphs to act as marks;
             the associated values are a two-element tuple with the coordinates
             of the anchor.
+
+    Whether this is a mark-to-base or mark-to-mark operation will be determined
+    by the glyph category of the glyphs involved in the `bases` dictionary.
+
+    Examples::
+
+        ff.anchors = {
+            "a": { "top": (250, 603) },
+            "acutecomb": { "_top": (56, 0) }
+        }
+
+        top_bases = {}
+        top_marks = {}
+        for glyphname, anchors in ff.anchors.items():
+            for anchorname, position in anchors.items():
+                if anchorname == "top":
+                    top_bases[glyphname] = position
+                if anchorname == "_top":
+                    top_marks[glyphname] = position
+
+        # top_bases = { "a": (260,603) }
+        # top_marks = { "acutecomb": (56,0) }
+
+        tops = Attachment("top", "_top", top_bases, top_marks)
     """
 
     def __init__(
