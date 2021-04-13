@@ -1,3 +1,10 @@
+"""
+voltLib: Load fontFeatures objects from Microsoft VOLT
+======================================================
+
+This module is experimental and incomplete.
+"""
+
 import logging
 import re
 from io import StringIO

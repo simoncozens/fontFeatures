@@ -1,3 +1,5 @@
+"""Routines for converting Positioning rules to and from XML."""
+
 from lxml import etree
 from fontFeatures import ValueRecord
 
@@ -28,6 +30,7 @@ def _toXML(self, root):
 
 @classmethod
 def fromXML(klass, el):
+    """Creates a rule from a lxml Element object."""
     position = el.find("positions")
     positions = [_valuerecord_fromXML(x) for x in position.findall("valuerecord")]
     rule = klass(

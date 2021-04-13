@@ -1,8 +1,14 @@
+"""ttLib.ValueRecord: Converting ValueRecord rules to TrueType."""
+
 from fontTools.ttLib.tables.otBase import ValueRecord as OTLValueRecord
 from fontFeatures.variableScalar import VariableScalar
 from fontTools.varLib.builder import buildVarDevTable
 
+
 def toOTValueRecord(self, ff, pairPosContext=False):
+    """Converts the ValueRecord to an ``OTLValueRecord`` object. If the
+    value record contains any variable scalars, they are saved to the
+    GDEF variation store."""
     otl_value = OTLValueRecord()
     if pairPosContext and not self:
         self.XAdvance = 0

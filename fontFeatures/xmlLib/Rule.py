@@ -1,8 +1,10 @@
+"""Routines for converting Rule objects to and from XML."""
 from lxml import etree
 
 
 @classmethod
 def fromXML(klass, el):
+    """Creates a Rule from a lxml Element object."""
     import fontFeatures
 
     subklass = getattr(fontFeatures, el.tag.title())
@@ -11,6 +13,7 @@ def fromXML(klass, el):
 
 
 def toXML(self):
+    """Serializes a Rule to a lxml Element object."""
     root = etree.Element(self.__class__.__name__.lower())
     if hasattr(self, "address") and self.address:
         root.attrib["address"] = str(self.address)

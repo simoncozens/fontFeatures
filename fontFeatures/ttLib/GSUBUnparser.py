@@ -1,4 +1,4 @@
-from fontTools.misc.py23 import *
+"""GSUBUnparser: Convert binary GSUB lookups to fontFeatures objects."""
 import fontTools
 from collections import OrderedDict
 from .GTableUnparser import GTableUnparser
@@ -6,18 +6,18 @@ from itertools import groupby
 import fontFeatures
 
 # These are silly little functions which help to document the intent
-
-
 def glyph(x):
+    """Wraps a glyph name in an array, to document the fact that it occupies a slot."""
     assert isinstance(x, str)
     return [x]
 
-
 def singleglyph(x):
+    """Wraps a glyph name in two arrays, to document the fact that it is the only occupant of a slot."""
     return [glyph(x)]
 
 
 class GSUBUnparser(GTableUnparser):
+    """Unparse a GSUB table into a fontFeatures object. See :py:class:`fontFeatures.ttLib.GTableUnparser`."""
     _table = "GSUB"
     lookupTypes = {
         1: "SingleSubstitution",
@@ -43,9 +43,11 @@ class GSUBUnparser(GTableUnparser):
     }
 
     def isChaining(self, lookupType):
+        """Returns true if the given lookup type is a chaining lookup."""
         return lookupType >= 5
 
     def unparseReverseContextualSubstitution(self, lookup):
+        """Turn a GPOS8 (reverse contextual substitution) subtable into a fontFeatures Routine."""
         b = fontFeatures.Routine(
             name=self.getname("ReverseContextualSubstitution" + self.gensym())
         )
@@ -75,6 +77,7 @@ class GSUBUnparser(GTableUnparser):
         return b,[]
 
     def unparseLigatureSubstitution(self, lookup):
+        """Turn a GPOS4 (ligature substitution) subtable into a fontFeatures Routine."""
         b = fontFeatures.Routine(
             name=self.getname("LigatureSubstitution" + self.gensym())
         )
@@ -96,6 +99,7 @@ class GSUBUnparser(GTableUnparser):
         return b, []
 
     def unparseMultipleSubstitution(self, lookup):
+        """Turn a GPOS2 (multiple substitution) subtable into a fontFeatures Routine."""
         b = fontFeatures.Routine(
             name=self.getname("MultipleSubstitution" + self.gensym())
         )
@@ -114,6 +118,7 @@ class GSUBUnparser(GTableUnparser):
         return b, []
 
     def unparseAlternateSubstitution(self, lookup):
+        """Turn a GPOS3 (alternate substitution) subtable into a fontFeatures Routine."""
         b = fontFeatures.Routine(
             name=self.getname("AlternateSubstitution" + self.gensym())
         )
@@ -131,27 +136,19 @@ class GSUBUnparser(GTableUnparser):
         return b, []
 
     def unparseSingleSubstitution(self, lookup):
+        """Turn a GPOS1 (single substitution) subtable into a fontFeatures Routine."""
         b = fontFeatures.Routine(
             name=self.getname("SingleSubstitution" + self.gensym())
         )
         self._fix_flags(b, lookup)
         for sub in lookup.SubTable:
-            if len(sub.mapping) > 5:
-                k = list(sub.mapping.keys())
-                v = list(sub.mapping.values())
+            for k, v in sub.mapping.items():
                 b.addRule(
                     fontFeatures.Substitution(
-                        [k], [v], address=self.currentLookup, flags=lookup.LookupFlag
+                        [[k]],
+                        [[v]],
+                        address=self.currentLookup,
+                        flags=lookup.LookupFlag,
                     )
                 )
-            else:
-                for k, v in sub.mapping.items():
-                    b.addRule(
-                        fontFeatures.Substitution(
-                            [[k]],
-                            [[v]],
-                            address=self.currentLookup,
-                            flags=lookup.LookupFlag,
-                        )
-                    )
         return b, []

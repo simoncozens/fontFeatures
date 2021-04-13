@@ -1,4 +1,4 @@
-# Code for converting a Routine object into feaLib statements
+"""Routines for converting RoutineReference objects to and from Adobe FEA."""
 import fontTools.feaLib.ast as feaast
 from fontFeatures.ttLib.Substitution import lookup_type as sub_lookup_type
 from fontFeatures.ttLib.Positioning import lookup_type as pos_lookup_type

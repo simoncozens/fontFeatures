@@ -1,7 +1,9 @@
+"""Routines for converting Routine objects to and from XML."""
 from lxml import etree
 
 
 def toXML(self):
+    """Serializes a Routine to a lxml Element object."""
     root = etree.Element("routine")
     if self.flags:
         root.attrib["flags"] = str(self.flags)
@@ -17,6 +19,7 @@ def toXML(self):
 
 @classmethod
 def fromXML(klass, el):
+    """Creates a Routine from a lxml Element object."""
     from fontFeatures import Rule
 
     rule = klass(

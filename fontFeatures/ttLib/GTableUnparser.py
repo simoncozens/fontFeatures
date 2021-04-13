@@ -1,21 +1,43 @@
+"""
+GTableUnparser: Base class for reading binary GSUB/GPOS tables
+==============================================================
+"""
 from collections import OrderedDict
 from fontTools.misc.xmlWriter import XMLWriter
 import fontFeatures
 from io import BytesIO
 
+
 def glyph(x):
+    """Helper routine to document that a glyph name goes in a slot."""
     assert isinstance(x, str)
     return [x]
 
 
 class GTableUnparser:
+    """Base class for reading binary GSUB/GPOS tables."""
+
     def __init__(self, table, ff, languageSystems, font=None, config={}):
+        """Create a new unparser
+
+        Args:
+            table: An object returned by ``font["GSUB"]`` or ``font["GPOS"]``.
+            ff: A fontFeatures object in which to return the output.
+            font: A ``TTFont`` object (optional).
+            config: A dictionary mapping generated names to friendly names.
+
+        The config dictionary is used to make the output more human readable.
+        For example, after dumping a binary TTF and reading the output, you might
+        discover that what we are calling ``SingleSubstitution1`` would be better
+        named ``fiLigature``. Passing ``{"SingleSubstitution1": "fiLigature"}``
+        to the call will cause the routine to be renamed appropriately."""
+
         self.table = table.table
         self.font = font
         self.fontFeatures = ff
         self.config = config
         self.index = 0
-        self.lookups = [] # We keep a separate list because this is per-table
+        self.lookups = []  # We keep a separate list because this is per-table
         self.sharedClasses = {}
         self.languageSystems = languageSystems
         self.sharedLookups = OrderedDict()
@@ -33,7 +55,7 @@ class GTableUnparser:
             lookups[sl.SequenceIndex].append(rr)
         if len(lookups) < len(inputs):
             lookups.extend([None] * (len(inputs) - len(lookups)))
-        assert(len(lookups) == len(inputs))
+        assert len(lookups) == len(inputs)
         return lookups
 
     def _invertClassDef(self, a, font):
@@ -47,35 +69,21 @@ class GTableUnparser:
         return classes
 
     def getname(self, n):
-        if n in self.config:
-            return self.config[n]
-        return n
+        """Renames its input using the configuration dictionary"""
+        return self.config.get(n, n)
 
     def gensym(self):
+        """Generates a new unique name"""
         self.index = self.index + 1
         return str(self.index)
 
     def unparse(self, doLookups=True):
+        """Unparse the table to the fontFeatures object."""
         if not self.table.ScriptList:
             return
         self.unparseLookups()
         self.collectFeatures()
-        self.resolve()
-
-    def resolve(self):
-        # Resolve chaining
-        for r in self.fontFeatures.routines:
-            self.resolve_routine(r)
-
-    def resolve_routine(self, r):
-        for rule in r.rules:
-            if isinstance(rule, fontFeatures.Chaining):
-                for lookuplist in rule.lookups:
-                    for lu in (lookuplist or []):
-                        lu.resolve(self.fontFeatures)
-                        if not lu.name:
-                            lu.name = lu.routine.name
-
+        self.fontFeatures.resolveAllRoutines()
 
     def _prepareFeatureLangSys(self, langTag, langSys, table, features, scriptTag):
         # This is a part of prepareFeatures
@@ -102,11 +110,22 @@ class GTableUnparser:
                 # Add reference if there isn't one
                 if not featureTag in self.fontFeatures.features:
                     self.fontFeatures.features[featureTag] = []
-                if not any(r.routine == self.lookups[lookupIdx] for r in self.fontFeatures.features[featureTag]):
-                    self.fontFeatures.addFeature(featureTag, [fontFeatures.RoutineReference(routine=self.lookups[lookupIdx])])
+                if not any(
+                    r.routine == self.lookups[lookupIdx]
+                    for r in self.fontFeatures.features[featureTag]
+                ):
+                    self.fontFeatures.addFeature(
+                        featureTag,
+                        [
+                            fontFeatures.RoutineReference(
+                                routine=self.lookups[lookupIdx]
+                            )
+                        ],
+                    )
                 lookups.append(lookupIdx)
 
     def collectFeatures(self):
+        """Traverse the script/language table looking for features."""
         features = OrderedDict()
         for scriptRecord in self.table.ScriptList.ScriptRecord:
             scriptTag = scriptRecord.ScriptTag
@@ -129,17 +148,25 @@ class GTableUnparser:
         self.features = features
 
     def addFeatures(self, doLookups=True):
+        """Add lookup references from the features list into the fontFeatures object."""
         for name, feature in self.features.items():
             f = []
             for scriptname, langs in feature.items():
                 for lang, lookups in langs.items():
                     if doLookups:
                         for lookupIdx in lookups:
-                            f.append(RoutineReference(routine=self.fontFeatures.routines[lookupIdx]))
-                            self.fontFeatures.routines[lookupIdx].languages.append((scriptname, lang))
+                            f.append(
+                                RoutineReference(
+                                    routine=self.fontFeatures.routines[lookupIdx]
+                                )
+                            )
+                            self.fontFeatures.routines[lookupIdx].languages.append(
+                                (scriptname, lang)
+                            )
             self.fontFeatures.addFeature(name, f)
 
     def unparseLookups(self):
+        """Unparses the lookups to fontFeatures routines."""
         if not self.table.LookupList:
             return
         # Create a dummy list first, to allow resolving chained lookups
@@ -149,15 +176,15 @@ class GTableUnparser:
             self.fontFeatures.routines.append(r)
 
         for lookupIdx, lookup in enumerate(self.table.LookupList.Lookup):
-            routine,deps = self.unparseLookup(lookup, lookupIdx)
+            routine, deps = self.unparseLookup(lookup, lookupIdx)
             debug = self.getDebugInfo(self._table, lookupIdx)
             if debug:
                 routine.address = (self._table, lookupIdx, *debug)
                 if debug[1]:
                     routine.name = debug[1]
-            self.copyRoutineToRoutine(routine, self.lookups[lookupIdx])
+            self._copyRoutineToRoutine(routine, self.lookups[lookupIdx])
 
-    def copyRoutineToRoutine(self, src, dst):
+    def _copyRoutineToRoutine(self, src, dst):
         dst.name = src.name
         dst.rules = src.rules
         dst.flags = src.flags
@@ -171,11 +198,13 @@ class GTableUnparser:
         dst.markAttachmentSet = src.markAttachmentSet
 
     def unparseLookup(self, lookup, lookupIdx):
+        """Dispatches to the appropriate lookup unparser."""
         self.currentLookup = lookupIdx
         unparser = getattr(self, "unparse" + self.lookupTypes[lookup.LookupType])
         return unparser(lookup)
 
     def unparseExtension(self, lookup):
+        """Handles extension lookups by recursing into them."""
         routines = []
         dependencies = []
         for xt in lookup.SubTable:
@@ -185,26 +214,28 @@ class GTableUnparser:
             routine, deps = self.unparseLookup(xt, self.currentLookup)
             routines.append(routine)
             dependencies.extend(deps)
-        extension = fontFeatures.ExtensionRoutine(routines = routines)
+        extension = fontFeatures.ExtensionRoutine(routines=routines)
         return extension, dependencies
 
-
     def getDebugInfo(self, table, ix):
-        if not self.font or 'Debg' not in self.font:
+        """If information is present in the font's Debg table, use that to
+        retrieve the original address and routine names."""
+        if not self.font or "Debg" not in self.font:
             return None
         debug_data = self.font["Debg"].data
-        if 'com.github.fonttools.feaLib' not in debug_data:
+        if "com.github.fonttools.feaLib" not in debug_data:
             return None
-        debug_data = debug_data['com.github.fonttools.feaLib'][table][str(ix)]
+        debug_data = debug_data["com.github.fonttools.feaLib"][table][str(ix)]
         return debug_data[0], debug_data[1]
 
-    def asXML(self, sub):
+    def _asXML(self, sub):
         writer = XMLWriter(BytesIO())
         sub.toXML(writer, self.font)
         out = writer.file.getvalue().decode("utf-8")
         return out
 
     def unparsable(self, b, e, sub):
+        """Warn about an unparsable lookup."""
         import warnings
 
         warnings.warn(
@@ -226,9 +257,14 @@ class GTableUnparser:
             routine.markAttachmentSet = glyphs
         if lookup.LookupFlag & 0x10 and hasattr(lookup, "MarkFilteringSet"):
             # It might not have one if it's an Extension lookup
-            routine.markFilteringSet = self.font["GDEF"].table.MarkGlyphSetsDef.Coverage[lookup.MarkFilteringSet].glyphs
+            routine.markFilteringSet = (
+                self.font["GDEF"]
+                .table.MarkGlyphSetsDef.Coverage[lookup.MarkFilteringSet]
+                .glyphs
+            )
 
     def unparseContextual(self, lookup):
+        """Handles a generic contextual lookup, in various formats."""
         b = fontFeatures.Routine(
             name=self.getname("Contextual" + self._table + self.gensym())
         )
@@ -246,9 +282,11 @@ class GTableUnparser:
 
     def _unparse_contextual_format1(self, sub, b, lookup):
         lookups = []
-        rulesetattr, ruleattr, lookupattr = [self._attrs[x] for x in ["format1_ruleset", "format1_rule", "lookup"]]
+        rulesetattr, ruleattr, lookupattr = [
+            self._attrs[x] for x in ["format1_ruleset", "format1_rule", "lookup"]
+        ]
 
-        for subrulesets, input_ in zip(getattr(sub,rulesetattr), sub.Coverage.glyphs):
+        for subrulesets, input_ in zip(getattr(sub, rulesetattr), sub.Coverage.glyphs):
             for subrule in getattr(subrulesets, ruleattr):
                 lookups = []
                 allinput = [glyph(x) for x in ([input_] + subrule.Input)]
@@ -270,6 +308,7 @@ class GTableUnparser:
         return self._unparse_contextual_chain_format3(sub, b, lookup, chain=False)
 
     def unparseChainedContextual(self, lookup):
+        """Handles a generic chained contextual lookup, in various formats."""
         b = fontFeatures.Routine(
             name=self.getname("ChainedContextual" + self._table + self.gensym())
         )
@@ -286,14 +325,17 @@ class GTableUnparser:
         return b, []
 
     def _unparse_contextual_chain_format1(self, sub, b, lookup):
-        rulesetattr, ruleattr, lookupattr = [self._attrs[x] for x in ["chain_format1_ruleset", "chain_format1_rule", "lookup"]]
+        rulesetattr, ruleattr, lookupattr = [
+            self._attrs[x]
+            for x in ["chain_format1_ruleset", "chain_format1_rule", "lookup"]
+        ]
 
-        for subrulesets, input_ in zip(getattr(sub,rulesetattr), sub.Coverage.glyphs):
+        for subrulesets, input_ in zip(getattr(sub, rulesetattr), sub.Coverage.glyphs):
             for subrule in getattr(subrulesets, ruleattr):
                 lookups = []
                 inputs = [glyph(x) for x in ([input_] + subrule.Input)]
-                prefix = [ glyph(x) for x in reversed(subrule.Backtrack) ]
-                suffix = [ glyph(x) for x in subrule.LookAhead ]
+                prefix = [glyph(x) for x in reversed(subrule.Backtrack)]
+                suffix = [glyph(x) for x in subrule.LookAhead]
                 lookups = self._unparse_lookups(getattr(subrule, lookupattr), inputs)
                 b.addRule(
                     fontFeatures.Chaining(
@@ -308,17 +350,26 @@ class GTableUnparser:
 
     def _unparse_contextual_chain_format2(self, sub, b, lookup, chain=True):
         if chain:
-            rulesetattr, ruleattr, lookupattr = [self._attrs[x] for x in ["chain_format2_classset", "chain_format2_rule", "lookup"]]
+            rulesetattr, ruleattr, lookupattr = [
+                self._attrs[x]
+                for x in ["chain_format2_classset", "chain_format2_rule", "lookup"]
+            ]
         else:
-            rulesetattr, ruleattr, lookupattr = [self._attrs[x] for x in ["format2_classset", "format2_rule", "lookup"]]
+            rulesetattr, ruleattr, lookupattr = [
+                self._attrs[x] for x in ["format2_classset", "format2_rule", "lookup"]
+            ]
 
         if chain:
             backtrack = {}
             if sub.BacktrackClassDef:
-                backtrack = self._invertClassDef(sub.BacktrackClassDef.classDefs, self.font)
+                backtrack = self._invertClassDef(
+                    sub.BacktrackClassDef.classDefs, self.font
+                )
             lookahead = {}
             if sub.LookAheadClassDef:
-                lookahead = self._invertClassDef(sub.LookAheadClassDef.classDefs, self.font)
+                lookahead = self._invertClassDef(
+                    sub.LookAheadClassDef.classDefs, self.font
+                )
             inputs = {}
             inputs = self._invertClassDef(sub.InputClassDef.classDefs, self.font)
         else:
@@ -329,9 +380,9 @@ class GTableUnparser:
             if not ruleset:
                 continue
             rules = getattr(ruleset, ruleattr)
-            inputclass = inputs.get(classId,[])
+            inputclass = inputs.get(classId, [])
             # The coverage filters the input class...
-            inputclass = [ g for g in inputclass if g in sub.Coverage.glyphs]
+            inputclass = [g for g in inputclass if g in sub.Coverage.glyphs]
             for r in rules:
                 if chain:
                     prefix = list(reversed([backtrack[x] for x in r.Backtrack]))
@@ -378,4 +429,3 @@ class GTableUnparser:
                 flags=lookup.LookupFlag,
             )
         )
-

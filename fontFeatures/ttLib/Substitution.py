@@ -1,4 +1,9 @@
+"""ttLib.Substitution: Converting Substitution rules to TrueType."""
+
 def lookup_type(self, forFea=False):
+    """Mixin to determine the GSUB lookup type of a fontFeatures.Substitution object
+
+    Returns: integer GSUB lookup type."""
     if self.reverse:
         return 8
     if not self.replacement:

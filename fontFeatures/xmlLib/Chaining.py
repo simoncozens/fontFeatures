@@ -1,3 +1,5 @@
+"""Routines for converting Chaining rules to and from XML."""
+
 from lxml import etree
 
 
@@ -8,6 +10,7 @@ def _toXML(self, root):
 
 @classmethod
 def fromXML(klass, el):
+  """Creates a rule from a lxml Element object."""
   from fontFeatures import Routine, RoutineReference
   rule = klass(
       klass._slotArray(klass, el.find("input")),

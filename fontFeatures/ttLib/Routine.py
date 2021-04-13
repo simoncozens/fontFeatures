@@ -1,3 +1,4 @@
+"""Convert fontFeatures.Routine objects to binary GPOS/GSUB lookups."""
 import fontTools.otlLib.builder as otl
 from fontTools.varLib.builder import buildVarDevTable
 from fontFeatures.variableScalar import VariableScalar
@@ -5,6 +6,16 @@ import itertools
 
 
 def toOTLookup(self, font, ff):
+    """Converts a fontFeatures.Routine object to binary.
+
+    Args:
+        font: A ``TTFont`` object.
+        ff: The parent ``FontFeatures`` object containing this routine.
+
+    Returns a list of ``fontTools.otlLib.builder`` Builder objects allowing this
+    routine to be converted to binary layout format.
+    """
+
     lookuptypes = [x.lookup_type() for x in self.rules]
     if not all([lu == lookuptypes[0] for lu in lookuptypes]):
         raise ValueError("For now, a routine can only contain rules of the same type")
@@ -20,6 +31,16 @@ def toOTLookup(self, font, ff):
 
 
 def makeAnchor(anchor, ff):
+    """Creates an OpenType anchor object from. If the anchor position contains
+     a variable scalar, these variable scalars are saved in the ``GDEF`` variation
+     store.
+
+     Args:
+        anchor: a tuple of x,y position. These elements may be numbers or
+            :py:class:`VariableScalar` objects.
+
+    Returns: an ``otTables.Anchor`` object.
+    """
     x, y = anchor
     if isinstance(x, VariableScalar):
         x_def, x_index = x.add_to_variation_store(ff.varstorebuilder)
@@ -40,6 +61,7 @@ def makeAnchor(anchor, ff):
 
 
 def buildPos(self, font, lookuptype, ff):
+    """Build a GPOS subtable."""
     builders = []
     if lookuptype == 1:
         builder = otl.SinglePosBuilder(font, self.address)
@@ -140,6 +162,7 @@ def buildPos(self, font, lookuptype, ff):
 
 
 def buildSub(self, font, lookuptype, ff):
+    """Build a GSUB subtable."""
     builders = []
     if lookuptype == 1:
         builder = otl.SingleSubstBuilder(font, self.address)

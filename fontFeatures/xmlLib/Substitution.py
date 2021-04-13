@@ -1,3 +1,4 @@
+"""Routines for converting Substitution rules to and from XML."""
 from lxml import etree
 
 def _toXML(self, root):
@@ -7,6 +8,7 @@ def _toXML(self, root):
 
 @classmethod
 def fromXML(klass, el):
+  """Creates a rule from a lxml Element object."""
   rule = klass(
       klass._slotArray(klass, el.find("from")),
       klass._slotArray(klass, el.find("to")),

@@ -1,3 +1,5 @@
+"""Routines for converting Attachment rules to and from XML."""
+
 from lxml import etree
 
 
@@ -19,6 +21,7 @@ def _toXML(self, root):
 
 @classmethod
 def fromXML(klass, el):
+    """Creates a rule from a lxml Element object."""
     rule = klass(
         base_name = el.get("basename"),
         mark_name = el.get("markname"),
