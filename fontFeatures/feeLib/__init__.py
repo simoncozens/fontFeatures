@@ -136,7 +136,7 @@ GRAMMAR="""
     %ignore COMMENT
 """
 
-TESTVALUE_METRICS=["width", "lsb", "rsb", "xMin", "xMax", "yMin", "yMax", "rise", "fullwidth"]
+TESTVALUE_METRICS=["width", "lsb", "rsb", "xMin", "xMax", "yMin", "yMax", "rise", "run", "fullwidth"]
 
 HELPERS="""
     statement: verb args ";"
