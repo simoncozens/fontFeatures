@@ -296,6 +296,7 @@ class FeaParser:
         if self.currentRoutine:
             for rule in self.currentRoutine.rules:
                 rule.flags = self.currentRoutineFlag
+            self.currentRoutine = None
 
     def _discard_empty_routine(self):
         if not self.currentFeature:
