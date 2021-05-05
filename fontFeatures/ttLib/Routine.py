@@ -67,7 +67,7 @@ def buildPos(self, font, lookuptype, ff):
         builder = otl.SinglePosBuilder(font, self.address)
         for rule in self.rules:
             ot_valuerecs = [
-                x and x.toOTValueRecord(ff, pairPosContext=False) for x in rule.valuerecords
+                x.toOTValueRecord(ff, pairPosContext=False) for x in rule.valuerecords
             ]
             for glyph in rule.glyphs[0]:
                 builder.add_pos(rule.address, glyph, ot_valuerecs[0])
