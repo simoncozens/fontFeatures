@@ -136,7 +136,7 @@ def buildPos(self, font, lookuptype, ff):
                         valuerecords = [vr]
                     )]), font, 1, ff)
                     builders.extend(subbuilder)
-                    lookups.append(subbuilder)
+                    new_lookup_list.append(subbuilder)
                 glyphs = r.glyphs
             else:
                 for list_of_lookups in r.lookups:
