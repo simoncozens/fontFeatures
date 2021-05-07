@@ -178,8 +178,8 @@ HELPERS="""
     COMPARATOR: ">=" | "<=" | "==" | "<" | ">"
 
     languages: "<<" (LANG "/" SCRIPT)+ ">>"
-    SCRIPT: LETTER~3..4 // TODO: Validate
-    LANG: LETTER~3..4 // TODO: Validate
+    SCRIPT: LETTER~3..4 | "*" // TODO: Validate
+    LANG: LETTER~3..4 | "*" // TODO: Validate
 
     %import common(ESCAPED_STRING, SIGNED_NUMBER, NUMBER, LETTER, DIGIT, WS)
     %ignore WS
