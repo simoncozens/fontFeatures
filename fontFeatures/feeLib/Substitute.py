@@ -104,7 +104,6 @@ class Substitute(FEEVerb):
         		if "suffixes" in output:
 	        		r[ix].suffixes = output["suffixes"]
         outputs = [g.resolve(self.parser.fontfeatures, self.parser.font) for g in r]
-        languages = None # For now
         return [fontFeatures.Substitution(inputs, outputs,
             precontext = pre,
             postcontext = post,

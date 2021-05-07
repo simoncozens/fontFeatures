@@ -35,7 +35,7 @@ ROUTINENAME: (LETTER|DIGIT|"_")+
 
 Routine_GRAMMAR = """
 ?start: action
-action: ROUTINENAME? "{" statement+ "}" flags
+action: ROUTINENAME? "{" statement+ "}" flags languages?
 """
 
 Routine_beforebrace_GRAMMAR = """
@@ -45,7 +45,7 @@ beforebrace: ROUTINENAME?
 
 Routine_afterbrace_GRAMMAR = """
 ?start: afterbrace
-afterbrace: flags
+afterbrace: flags languages?
 """
 
 VERBS = ["Routine"]
@@ -66,9 +66,18 @@ class Routine(FEEVerb):
     def beforebrace(self, args):
         return args
 
+    def languages(self, args):
+        rv = []
+        while args:
+            rv.append(tuple(map(str,args[0:2])))
+            args = args[2:]
+        return rv
+
     def afterbrace(self, args):
-        return args[0]
-    
+        if len(args) < 2:
+            args.append([])
+        return [args[0], args[1]]
+
     flags = beforebrace
 
     def complexflag(self, args):
@@ -83,7 +92,8 @@ class Routine(FEEVerb):
             return flag
 
     def action(self, args):
-        (routinename, statements, flags) = args
+        (routinename, statements, flags_languages) = args
+        flags, languages = flags_languages
 
         if routinename is not None:
             routinename = routinename[0].value
@@ -112,6 +122,7 @@ class Routine(FEEVerb):
                     r.markAttachmentSet = f[1].resolve(self.parser.fontfeatures, self.parser.font)
             else:
                 r.flags |= f
+        r.languages = languages
         if not self.parser.current_feature:
             self.parser.fontfeatures.routines.append(r)
         return [r]
