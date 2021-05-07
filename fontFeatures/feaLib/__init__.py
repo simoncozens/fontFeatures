@@ -278,7 +278,7 @@ class FeaParser:
 
     def add_lookup_call(self, lookup_name):
 
-        routine = self.find_named_routine(lookup_name)
+        routine = self.ff.routineNamed(lookup_name)
         if self.currentFeature:
             self._discard_empty_routine()
             self.ff.addFeature(self.currentFeature, [routine])
