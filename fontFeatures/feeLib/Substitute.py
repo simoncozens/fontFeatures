@@ -80,7 +80,11 @@ class Substitute(FEEVerb):
     gs_suffixes = leftside
 
     def languages(self, args):
-        return [] # For now
+        rv = []
+        while args:
+            rv.append(tuple(map(str,args[0:2])))
+            args = args[2:]
+        return rv
 
     def contextual_action(self, args):
         args = extend_args_until(args, 5)
