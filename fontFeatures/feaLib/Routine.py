@@ -2,6 +2,7 @@
 import fontTools.feaLib.ast as feaast
 from fontFeatures.ttLib.Substitution import lookup_type as sub_lookup_type
 from fontFeatures.ttLib.Positioning import lookup_type as pos_lookup_type
+import copy
 
 
 def lookup_type(rule):
@@ -98,21 +99,22 @@ def arrange_by_flags(self):
 def arrange_by_language(self):
     from fontFeatures import Routine
 
-    if not self.languages:
-        return
     languages = {}
 
     def add_lang(p, r):
         nonlocal languages
         if not p in languages:
             languages[p] = []
-        languages[p].extend(r)
+        languages[p].append(r)
 
-    for s, l in self.languages:
-        if l == "*":
-            add_lang((s, "dflt"), self.rules)
+    for r in self.rules:
+        if not r.languages:
+            add_lang(("DFLT", "dflt"), r)
         else:
-            add_lang((s, l), self.rules)
+            for lang in r.languages:
+                newrule = copy.deepcopy(r)
+                newrule.languages = [lang]
+                add_lang(lang, newrule)
 
     if len(languages.keys()) < 2:
         return
@@ -168,6 +170,14 @@ def asFeaAST(self, inFeature=False):
         for a in arranged:
             f.statements.append(asFeaAST(a, inFeature))
         return f
+
+    if hasattr(self, "languages") and self.languages:
+        lastLang = None
+        for s,l in self.languages:
+            f.statements.append(feaast.ScriptStatement(s))
+            if l != lastLang:
+                f.statements.append(feaast.LanguageStatement("%4s" % l))
+                lastLang = l
 
     if hasattr(self, "flags"):
         flags = feaast.LookupFlagStatement(self.flags)

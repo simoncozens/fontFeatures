@@ -5,6 +5,7 @@ import itertools
 
 def add_language_system_statements(self, ff):
     self.hoist_languages()
+
     if len(self.scripts_and_languages.keys()) == 0:
         return
     if len(self.scripts_and_languages.keys()) == 1:
@@ -94,9 +95,6 @@ def asFeaAST(self, do_gdef=True):
             ff.statements.append(k.asFeaAST())
 
     expandedLanguages = []
-    for s, ls in self.scripts_and_languages.items():
-        for l in ls:
-            expandedLanguages.append((s, l))
     for k, v in self.features.items():
         f = feaast.FeatureBlock(k)
         for n in v:

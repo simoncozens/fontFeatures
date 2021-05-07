@@ -206,6 +206,10 @@ class FontFeatures:
             if k.languages:
                 for l in k.languages:
                     add_language(l)
+            else:
+                for r in k.rules:
+                    for l in (r.languages or []):
+                        add_language(l)
 
         # if count > 0 and not "DFLT" in scripts:
         #     scripts["DFLT"] = []
