@@ -342,6 +342,7 @@ class FontFeatures:
         return allroutines
 
     from .feaLib.FontFeatures import asFea, asFeaAST
+    from .xmlLib.FontFeatures import toXML, fromXML
     from .ttLib.FontFeatures import buildBinaryFeatures
 
 
