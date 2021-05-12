@@ -514,7 +514,11 @@ lookup chain2 { pos a' lookup single b; } chain2;
       <LookAheadCoverage index="0">
         <Glyph value="b"/>
       </LookAheadCoverage>
-      <!-- PosCount=0 -->
+      <!-- PosCount=1 -->
+      <PosLookupRecord index="0">
+        <SequenceIndex value="0"/>
+        <LookupListIndex value="5"/>
+      </PosLookupRecord>
     </ChainContextPos>
   </Lookup>
   <Lookup index="7">

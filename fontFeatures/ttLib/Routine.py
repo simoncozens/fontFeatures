@@ -75,7 +75,7 @@ def buildPos(self, font, lookuptype, ff):
         builder = otl.PairPosBuilder(font, self.address)
         for rule in self.rules:
             ot_valuerecs = [
-                x and x.toOTValueRecord(ff, pairPosContext=True) for x in rule.valuerecords
+                x.toOTValueRecord(ff, pairPosContext=True) for x in rule.valuerecords
             ]
             if len(rule.glyphs[0]) == 1 and len(rule.glyphs[1]) == 1:
                 builder.addGlyphPair(
