@@ -131,6 +131,7 @@ class GSUBUnparser(GTableUnparser):
                         [out_glyphs],
                         address=self.currentLookup,
                         flags=lookup.LookupFlag,
+                        force_alt=True,
                     )
                 )
         return b, []

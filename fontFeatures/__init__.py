@@ -575,6 +575,8 @@ class Substitution(Rule):
             the inner list containing Routines to apply.
         reverse: Boolean representing if the substitutions should take place from
             the end of the string.
+        force_alt: Force this substitution to be interpreted as an alternate
+            substitution.
 
     Examples::
 
@@ -602,6 +604,7 @@ class Substitution(Rule):
         lookups=None,
         reverse=False,
         flags=0,
+        force_alt=False
     ):
         self.precontext = precontext or []
         self.postcontext = postcontext or []
@@ -613,6 +616,7 @@ class Substitution(Rule):
         self.flags = flags
         self.reverse = reverse
         self.stage = "sub"
+        self.force_alt = force_alt
 
     @property
     def involved_glyphs(self):

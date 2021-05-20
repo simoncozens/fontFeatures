@@ -13,7 +13,7 @@ def lookup_type(self, forFea=False):
     # if self.input == self.replacement: # It's an ignore
     # return 6
     if len(self.input) == 1 and len(self.replacement) == 1:
-        if len(self.input[0]) == 1 and len(self.replacement[0]) > 1:
+        if self.force_alt or (len(self.input[0]) == 1 and len(self.replacement[0]) > 1):
             return 3  # Alternate
         else:
             return 1  # Single
