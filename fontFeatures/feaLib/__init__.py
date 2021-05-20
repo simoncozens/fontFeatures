@@ -293,6 +293,7 @@ class FeaParser:
     def end_feature(self):
         self._discard_empty_routine()
         self.currentFeature = None
+        self.currentLanguage = None
         if self.currentRoutine:
             for rule in self.currentRoutine.rules:
                 rule.flags = self.currentRoutineFlag
