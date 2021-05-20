@@ -817,9 +817,12 @@ class Attachment(Rule):
         marks: Dictionary. They keys are names of glyphs to act as marks;
             the associated values are a two-element tuple with the coordinates
             of the anchor.
+        force_markmark: boolean. If true, force this to be interpreted as a
+            mark-to-mark operation
 
     Whether this is a mark-to-base or mark-to-mark operation will be determined
-    by the glyph category of the glyphs involved in the `bases` dictionary.
+    by the glyph category of the glyphs involved in the `bases` dictionary and
+    the value of the `force_markmark` argument.
 
     Examples::
 
@@ -853,6 +856,7 @@ class Attachment(Rule):
         address=None,
         font=None,
         languages=None,
+        force_markmark=False
     ):
         self.base_name = base_name
         self.mark_name = mark_name
@@ -863,6 +867,7 @@ class Attachment(Rule):
         self.font = font
         self.stage = "pos"
         self.languages = languages or []
+        self.force_markmark = force_markmark
 
     @property
     def is_cursive(self):

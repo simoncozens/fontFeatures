@@ -255,6 +255,7 @@ class GPOSUnparser(GTableUnparser):
                         font=self.font,
                         address=self.currentLookup,
                         flags=lookup.LookupFlag,
+                        force_markmark=True
                     )
                 )
         return b, []

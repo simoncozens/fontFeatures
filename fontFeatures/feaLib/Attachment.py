@@ -72,6 +72,8 @@ def asFeaAST(self):
             if self.font:
                 if categorize_glyph(self.font, base[0][0])[0] == "mark":
                     statementtype = feaast.MarkMarkPosStatement
+            if self.force_markmark:
+                statementtype = feaast.MarkMarkPosStatement
             b.statements.append(
                 statementtype(
                     _glyphref(base[0]),
