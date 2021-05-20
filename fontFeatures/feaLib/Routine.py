@@ -171,14 +171,6 @@ def asFeaAST(self, inFeature=False):
             f.statements.append(asFeaAST(a, inFeature))
         return f
 
-    if hasattr(self, "languages") and self.languages:
-        lastLang = None
-        for s,l in self.languages:
-            f.statements.append(feaast.ScriptStatement(s))
-            if l != lastLang:
-                f.statements.append(feaast.LanguageStatement("%4s" % l))
-                lastLang = l
-
     if hasattr(self, "flags"):
         flags = feaast.LookupFlagStatement(self.flags)
         if self.flags & 0x10 and hasattr(self, "markFilteringSetAsClass"): # XXX

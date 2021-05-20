@@ -8,8 +8,8 @@ def feaPreamble(self, ff):
     return preamble
 
 
-def asFeaAST(self, allLanguages=[("DFLT", "dflt")]):
-    if set(allLanguages) == set(self.routine.languages):
+def asFeaAST(self, expand=False):
+    if expand:
         if self.routine.usecount == 1:
             return self.routine.asFeaAST(inFeature=True)
         return feaast.LookupReferenceStatement(self.routine.asFeaAST())

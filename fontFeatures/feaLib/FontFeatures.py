@@ -94,11 +94,10 @@ def asFeaAST(self, do_gdef=True):
         if k.rules and k.usecount != 1:
             ff.statements.append(k.asFeaAST())
 
-    expandedLanguages = []
     for k, v in self.features.items():
         f = feaast.FeatureBlock(k)
-        for n in v:
-            f.statements.append(n.asFeaAST(allLanguages=expandedLanguages))
+        for routine in v:
+            f.statements.append(routine.asFeaAST(expand = k=="aalt"))
         ff.statements.append(f)
     return ff
 
