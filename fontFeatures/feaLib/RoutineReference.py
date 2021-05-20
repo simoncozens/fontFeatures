@@ -9,7 +9,7 @@ def feaPreamble(self, ff):
 
 
 def asFeaAST(self, expand=False):
-    if expand:
+    if expand or not self.routine.languages:
         if self.routine.usecount == 1:
             return self.routine.asFeaAST(inFeature=True)
         return feaast.LookupReferenceStatement(self.routine.asFeaAST())
