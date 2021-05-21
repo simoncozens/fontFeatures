@@ -215,7 +215,7 @@ class GTableUnparser:
         """Handles extension lookups by recursing into them."""
         routines = []
         dependencies = []
-        ext_lookup_type = None
+        ext_lookup_type = ""
         for xt in lookup.SubTable:
             xt.SubTable = [xt.ExtSubTable]
             xt.LookupType = xt.ExtSubTable.LookupType
