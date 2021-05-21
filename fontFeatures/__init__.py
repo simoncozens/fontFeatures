@@ -364,6 +364,7 @@ class Routine:
         flags=0,
         markFilteringSet=None,
         markAttachmentSet=None,
+        lookupType="",
     ):
         self.name = name
         self.usecount = 0
@@ -380,6 +381,7 @@ class Routine:
         self.flags = flags
         self.markFilteringSet = markFilteringSet
         self.markAttachmentSet = markAttachmentSet
+        self.lookupType = lookupType
 
     def addRule(self, rule):
         """Adds a rule to a Routine.
