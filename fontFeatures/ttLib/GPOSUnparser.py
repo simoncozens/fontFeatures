@@ -64,7 +64,10 @@ class GPOSUnparser(GTableUnparser):
 
     def unparseSinglePositioning(self, lookup):
         """Turn a GPOS1 (single positioning) subtable into a fontFeatures Routine."""
-        b = fontFeatures.Routine(name=self.getname("SinglePositioning" + self.gensym()))
+        b = fontFeatures.Routine(
+            name=self.getname(self.get_lookuptype_str(lookup) + self.gensym()),
+            lookupType=self.get_lookuptype_str(lookup),
+        )
         self._fix_flags(b, lookup)
 
         for subtable in lookup.SubTable:
@@ -90,7 +93,10 @@ class GPOSUnparser(GTableUnparser):
 
     def unparsePairPositioning(self, lookup):
         """Turn a GPOS2 (pair adjustment) subtable into a fontFeatures Routine."""
-        b = fontFeatures.Routine(name=self.getname("PairPositioning" + self.gensym()))
+        b = fontFeatures.Routine(
+            name=self.getname(self.get_lookuptype_str(lookup) + self.gensym()),
+            lookupType=self.get_lookuptype_str(lookup),
+        )
         self._fix_flags(b, lookup)
         for subtable in lookup.SubTable:
             if subtable.Format == 1:
@@ -133,7 +139,10 @@ class GPOSUnparser(GTableUnparser):
 
     def unparseCursiveAttachment(self, lookup):
         """Turn a GPOS3 (cursive attachment) subtable into a fontFeatures Routine."""
-        b = fontFeatures.Routine(name=self.getname("CursiveAttachment" + self.gensym()))
+        b = fontFeatures.Routine(
+            name=self.getname(self.get_lookuptype_str(lookup) + self.gensym()),
+            lookupType=self.get_lookuptype_str(lookup),
+        )
         self._fix_flags(b, lookup)
         entries = {}
         exits = {}
@@ -164,7 +173,10 @@ class GPOSUnparser(GTableUnparser):
 
     def unparseMarkToBase(self, lookup):
         """Turn a GPOS4 (mark to base) subtable into a fontFeatures Routine."""
-        b = fontFeatures.Routine(name=self.getname("MarkToBase" + self.gensym()))
+        b = fontFeatures.Routine(
+            name=self.getname(self.get_lookuptype_str(lookup) + self.gensym()),
+            lookupType=self.get_lookuptype_str(lookup),
+        )
         self._fix_flags(b, lookup)
         for subtable in lookup.SubTable:  # fontTools.ttLib.tables.otTables.MarkBasePos
             assert subtable.Format == 1
@@ -227,14 +239,20 @@ class GPOSUnparser(GTableUnparser):
 
     def unparseMarkToLigature(self, lookup):
         """Turn a GPOS5 (mark to ligature) subtable into a fontFeatures Routine."""
-        b = fontFeatures.Routine(name=self.getname("MarkToLigature" + self.gensym()))
+        b = fontFeatures.Routine(
+            name=self.getname(self.get_lookuptype_str(lookup) + self.gensym()),
+            lookupType=self.get_lookuptype_str(lookup),
+        )
         self._fix_flags(b, lookup)
         self.unparsable(b, "Mark to lig pos", lookup)
         return b, []
 
     def unparseMarkToMark(self, lookup):
         """Turn a GPOS6 (mark to mark) subtable into a fontFeatures Routine."""
-        b = fontFeatures.Routine(name=self.getname("MarkToMark" + self.gensym()))
+        b = fontFeatures.Routine(
+            name=self.getname(self.get_lookuptype_str(lookup) + self.gensym()),
+            lookupType=self.get_lookuptype_str(lookup),
+        )
         self._fix_flags(b, lookup)
         for subtable in lookup.SubTable:  # fontTools.ttLib.tables.otTables.MarkBasePos
             assert subtable.Format == 1
@@ -255,7 +273,7 @@ class GPOSUnparser(GTableUnparser):
                         font=self.font,
                         address=self.currentLookup,
                         flags=lookup.LookupFlag,
-                        force_markmark=True
+                        force_markmark=True,
                     )
                 )
         return b, []
