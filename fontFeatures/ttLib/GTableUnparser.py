@@ -77,6 +77,13 @@ class GTableUnparser:
         self.index = self.index + 1
         return str(self.index)
 
+    def get_lookuptype_str(self, lookup):
+        """Get the lookup type string for `lookup` obj"""
+        if hasattr(lookup, "LookupType"):
+            return self.lookupTypes[lookup.LookupType]
+        else:
+            return ""
+
     def unparse(self, doLookups=True):
         """Unparse the table to the fontFeatures object."""
         if not self.table.ScriptList:
@@ -196,6 +203,7 @@ class GTableUnparser:
         dst.flags = src.flags
         dst.markFilteringSet = src.markFilteringSet
         dst.markAttachmentSet = src.markAttachmentSet
+        dst.lookupType = src.lookupType
 
     def unparseLookup(self, lookup, lookupIdx):
         """Dispatches to the appropriate lookup unparser."""
@@ -207,14 +215,24 @@ class GTableUnparser:
         """Handles extension lookups by recursing into them."""
         routines = []
         dependencies = []
+        ext_lookup_type = None
         for xt in lookup.SubTable:
             xt.SubTable = [xt.ExtSubTable]
             xt.LookupType = xt.ExtSubTable.LookupType
+            # extension routines include the same lookup types by definition
+            # define once at first lookup type definition
+            if not ext_lookup_type:
+                ext_lookup_type = self.get_lookuptype_str(xt)
             xt.LookupFlag = lookup.LookupFlag
             routine, deps = self.unparseLookup(xt, self.currentLookup)
             routines.append(routine)
             dependencies.extend(deps)
-        extension = fontFeatures.ExtensionRoutine(routines=routines)
+
+        extension = fontFeatures.ExtensionRoutine(
+            routines=routines,
+            name=self.getname(self.get_lookuptype_str(lookup) + self.gensym()),
+            lookupType=ext_lookup_type,
+        )
         return extension, dependencies
 
     def getDebugInfo(self, table, ix):
@@ -266,7 +284,10 @@ class GTableUnparser:
     def unparseContextual(self, lookup):
         """Handles a generic contextual lookup, in various formats."""
         b = fontFeatures.Routine(
-            name=self.getname("Contextual" + self._table + self.gensym())
+            name=self.getname(
+                self.get_lookuptype_str(lookup) + self._table + self.gensym()
+            ),
+            lookupType=self.get_lookuptype_str(lookup),
         )
         self._fix_flags(b, lookup)
         for sub in lookup.SubTable:
@@ -310,7 +331,10 @@ class GTableUnparser:
     def unparseChainedContextual(self, lookup):
         """Handles a generic chained contextual lookup, in various formats."""
         b = fontFeatures.Routine(
-            name=self.getname("ChainedContextual" + self._table + self.gensym())
+            name=self.getname(
+                self.get_lookuptype_str(lookup) + self._table + self.gensym()
+            ),
+            lookupType=self.get_lookuptype_str(lookup),
         )
         self._fix_flags(b, lookup)
         for sub in lookup.SubTable:
