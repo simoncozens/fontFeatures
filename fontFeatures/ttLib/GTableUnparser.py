@@ -214,7 +214,10 @@ class GTableUnparser:
             routine, deps = self.unparseLookup(xt, self.currentLookup)
             routines.append(routine)
             dependencies.extend(deps)
-        extension = fontFeatures.ExtensionRoutine(routines=routines)
+        extension = fontFeatures.ExtensionRoutine(
+            routines=routines,
+            name=self.getname("Extension" + self.gensym()),
+        )
         return extension, dependencies
 
     def getDebugInfo(self, table, ix):
