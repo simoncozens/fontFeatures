@@ -194,11 +194,26 @@ def asFeaAST(self, inFeature=False):
     lastaddress = self.address
     if lastaddress:
         f.statements.append(feaast.Comment("# Original source: %s " % (" ".join([str(x) for x in lastaddress]))))
-    for x in self.rules:
-        if x.address and x.address != lastaddress:
-            f.statements.append(feaast.Comment("# Original source: %s " % x.address))
-            lastaddress = x.address
-        f.statements.append(x.asFeaAST())
+
+    if self.languages and inFeature:
+        lastLang = 'dflt'
+        for s,l in self.languages:
+            f.statements.append(feaast.ScriptStatement(s))
+            if l != lastLang:
+                f.statements.append(feaast.LanguageStatement("%4s" % l))
+                lastLang = l
+
+        for x in self.rules:
+            if x.address and x.address != lastaddress:
+                f.statements.append(feaast.Comment("# Original source: %s " % x.address))
+                lastaddress = x.address
+            f.statements.append(x.asFeaAST())
+    else:
+        for x in self.rules:
+            if x.address and x.address != lastaddress:
+                f.statements.append(feaast.Comment("# Original source: %s " % x.address))
+                lastaddress = x.address
+            f.statements.append(x.asFeaAST())
     return f
 
 
