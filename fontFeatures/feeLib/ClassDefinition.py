@@ -204,7 +204,7 @@ class DefineClass(FEEVerb):
             return glyphs
 
     def _predicate_for_all_glyphs(self, predicate):
-        all_glyphs = list(self.parser.font.glyphOrder)
+        all_glyphs = list(self.parser.font.exportedGlyphs())
         return [g for g in all_glyphs if predicate(self._get_metrics(g), g)]
 
     def conjunction(self, args):

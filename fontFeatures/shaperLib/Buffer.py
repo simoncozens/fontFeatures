@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from fontFeatures import ValueRecord
-from glyphtools import get_glyph_metrics
+from glyphtools import get_glyph_metrics, categorize_glyph
 from youseedee import ucd_data
 import sys
 import warnings
@@ -63,8 +63,8 @@ class BufferItem:
         self.prep_glyph(font)
 
     def prep_glyph(self, font):
-        if self.glyph in font.exportedGlyphs:
-            self.gid = font.exportedGlyphs.index(self.glyph)
+        if self.glyph in font.exportedGlyphs():
+            self.gid = font.exportedGlyphs().index(self.glyph)
         else:
             self.gid = -1 # ?
         self.substituted = False
@@ -73,7 +73,7 @@ class BufferItem:
         self.recategorize(font)
         try:
             self.position = ValueRecord(xAdvance=0)
-            self.position.xAdvance=font.defaultMaster.getGlyphLayer(self.glyph).width
+            self.position.xAdvance=font.default_master.get_glyph_layer(self.glyph).width
         except Exception as e:
             if "pytest" in sys.modules:
                 # We tolerate broken fonts in pytest
@@ -83,7 +83,7 @@ class BufferItem:
 
     def recategorize(self, font):
         try:
-            self.category = (font[self.glyph].category, None)
+            self.category = categorize_glyph(font, self.glyph)
             if not self.category[0]:
                 self.category = ("unknown", None)
         except Exception as e:

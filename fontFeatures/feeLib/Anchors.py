@@ -125,7 +125,7 @@ class Attach(FEEVerb):
         catcache = {}
         def _category(k):
             if k not in catcache:
-                catcache[k] = self.parser.fontfeatures.glyphclasses.get(k, self.parser.font[k].category)
+                catcache[k] = self.parser.fontfeatures.glyphclasses.get(k, self.parser.font.glyphs[k].category)
             return catcache[k]
 
         for k, v in self.parser.fontfeatures.anchors.items():
