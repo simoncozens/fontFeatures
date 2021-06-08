@@ -4,7 +4,7 @@ from fontFeatures.ttLib import unparse
 from fontTools.ttLib import TTFont
 from fontFeatures.shaperLib.Shaper import Shaper
 import sys
-from babelfont import Babelfont
+from babelfont import load
 from fontTools.ttLib import TTFont
 import argparse
 import logging
@@ -35,7 +35,7 @@ if args.logging:
     if args.logging >= 2:
         logging.getLogger("fontFeatures.shaperLib").setLevel(logging.DEBUG)
 
-font = Babelfont.open(args.font)
+font = load(args.font)
 if args.font.endswith(".ttf") or args.font.endswith(".otf"):
     ff = unparse(TTFont(args.font))
 if args.u:

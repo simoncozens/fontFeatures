@@ -79,10 +79,10 @@ class BaseShaper:
         for item in self.buffer.items:
             if ucd_data(item.codepoint)[
                 "General_Category"
-            ] == "Zs" and self.font.glyphForCodepoint(0x20, False):
+            ] == "Zs" and self.font.unicode_map.get(0x20, None):
                 item.codepoint = 0x20
                 # Harfbuzz adjusts the width here, in _hb_ot_shape_fallback_spaces
-            if item.codepoint == 0x2011 and self.font.glyphForCodepoint(0x2010, False):
+            if item.codepoint == 0x2011 and self.font.unicode_map.get(0x2010, None):
                 item.codepoint = 0x2010
 
     def collect_features(self, shaper):

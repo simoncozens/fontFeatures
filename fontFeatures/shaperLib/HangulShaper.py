@@ -40,7 +40,7 @@ class HangulShaper(BaseShaper):
 
     def preprocess_text(self):
         def cp(i): return self.buffer.items[i].codepoint
-        def has_glyph(u): return self.font.glyphForCodepoint(u, False)
+        def has_glyph(u): return self.font.unicode_map.get(u, None)
 
         # Setup masks here too
         for i in self.buffer.items:

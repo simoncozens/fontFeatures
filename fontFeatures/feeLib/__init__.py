@@ -7,7 +7,6 @@ import warnings
 
 from importlib import import_module
 from fontFeatures import FontFeatures
-from babelfont.font import Font
 from more_itertools import collapse
 from fontFeatures.variableScalar import VariableScalar
 
@@ -67,7 +66,7 @@ class GlyphSelector:
             returned = [self.selector["barename"]]
         elif "unicodeglyph" in self.selector:
             cp = self.selector["unicodeglyph"]
-            glyph = font.glyphForCodepoint(cp, fallback=False)
+            glyph = font.unicode_map.get(cp, None)
             if not glyph:
                 raise ValueError(
                     "Font does not contain glyph for U+%04X (at %s)"

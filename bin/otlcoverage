@@ -4,7 +4,7 @@ from fontFeatures.shaperLib.Buffer import Buffer
 from fontFeatures.ttLib import unparse
 from fontTools.ttLib import TTFont
 from fontFeatures.shaperLib.Shaper import Shaper
-from babelfont import Babelfont
+from babelfont import load
 
 parser = argparse.ArgumentParser(description='Test coverage of OT features.')
 parser.add_argument(
@@ -50,7 +50,7 @@ if args.font.endswith("c") and args.index == -1:
 
 font = TTFont(args.font, fontNumber=args.index)
 ff = unparse(font)
-bbfont = Babelfont.open(args.font)
+bbfont = load(args.font)
 
 for r in ff.routines:
     r.applied = False

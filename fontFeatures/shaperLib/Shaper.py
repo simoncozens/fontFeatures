@@ -1,6 +1,5 @@
 """A Python Unicode Shaping Engine."""
 
-from babelfont.font import Font
 from fontFeatures import FontFeatures
 import unicodedata
 from fontFeatures.shaperLib import Buffer
@@ -25,7 +24,6 @@ class Shaper:
     """
     def __init__(self, ff, font, message_function=None):
         assert isinstance(ff, FontFeatures)
-        assert isinstance(font, Font)
         self.fontfeatures = ff
         self.babelfont = font
         if message_function:

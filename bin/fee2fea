@@ -3,7 +3,7 @@ from fontFeatures.feeLib import FeeParser
 from fontFeatures.optimizer import Optimizer
 from fontFeatures.ttLib import unparse
 from fontTools.ttLib import TTFont
-from babelfont import Babelfont
+from babelfont import load
 import sys
 import argparse
 import os
@@ -29,7 +29,7 @@ parser.add_argument("fee",
 
 args = parser.parse_args()
 
-font = Babelfont.open(args.font,master=args.master)
+font = load(args.font) # XXX master
 if args.font.endswith("tf") and args.load:
 	font = TTFont(args.font)
 	p.fontfeatures = unparse(font)

@@ -1,12 +1,12 @@
 from fontFeatures.feeLib import FeeParser
 from fontTools.ttLib import TTFont
-from babelfont import Babelfont
+from babelfont import load
 
 import unittest
 import re
 
 class TestFeeDefinitions(unittest.TestCase):
-    roboto = FeeParser(Babelfont.load("fonts/Roboto-Regular.ttf"))
+    roboto = FeeParser(load("fonts/Roboto-Regular.ttf"))
 
     def assertSufficientlyEqual(self, s1, s2):
         def alltrim(a):

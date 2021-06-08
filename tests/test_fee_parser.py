@@ -1,5 +1,5 @@
 from fontFeatures.feeLib import FeeParser, GlyphSelector, FEEVerb
-from babelfont import Babelfont
+from babelfont import load
 import lark
 from lark import Tree, Token
 import pytest
@@ -16,7 +16,7 @@ def alltrim(a):
 
 path, _ = os.path.split(__file__)
 fontpath = os.path.join(path, "data", "LibertinusSans-Regular.otf")
-font = Babelfont.load(fontpath)
+font = load(fontpath)
 
 @pytest.fixture
 def parser():

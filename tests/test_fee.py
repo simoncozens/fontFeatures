@@ -1,5 +1,5 @@
 from fontFeatures.feeLib import FeeParser
-from babelfont import Babelfont
+from babelfont import load
 from fontFeatures.shaperLib.Buffer import Buffer
 from fontFeatures.shaperLib.Shaper import Shaper
 
@@ -8,7 +8,7 @@ import os
 
 path, _ = os.path.split(__file__)
 fontpath = os.path.join(path, "data", "LibertinusSans-Regular.otf")
-font = Babelfont.load(fontpath)
+font = load(fontpath)
 
 @pytest.fixture
 def parser():

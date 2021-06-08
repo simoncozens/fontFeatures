@@ -1,6 +1,6 @@
 from fontFeatures.feeLib import FeeParser
 from fontTools.ttLib import TTFont
-from babelfont import Babelfont
+from babelfont import load
 
 import unittest
 import re
@@ -18,7 +18,7 @@ class TestFeeAnchors(unittest.TestCase):
         self.assertEqual(alltrim(s1), alltrim(s2))
 
     def test_parse_to_ff(self):
-        p = FeeParser(Babelfont.load("fonts/Roboto-Regular.ttf"))
+        p = FeeParser(load("fonts/Roboto-Regular.ttf"))
         p.parseString(
             """
       Anchors A

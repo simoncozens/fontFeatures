@@ -3,7 +3,7 @@ from fontFeatures.shaperLib.Buffer import Buffer
 from fontFeatures.shaperLib.Shaper import Shaper
 from fontFeatures.ttLib import unparse
 from fontTools.ttLib import TTFont
-from babelfont import Babelfont
+from babelfont import load
 import pytest
 import glob
 import os
@@ -49,7 +49,7 @@ for testfile in glob.glob("tests/harfbuzz/*/tests/*.tests"):
 def test_shaping(request, fontname, hb_args, input_string, expectation):
     font = TTFont(fontname)
     ff = unparse(font)
-    bbf = Babelfont.load(fontname)
+    bbf = load(fontname)
     if not bbf:
         return pytest.skip("Font too busted to use")
     buf = Buffer(bbf, unicodes=tounicode(input_string))
