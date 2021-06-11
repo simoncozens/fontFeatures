@@ -5,4 +5,4 @@ beziers>=0.1.0
 lxml
 youseedee>=0.3.0
 dataclasses; python_version < '3.7'
-babelfont>=2.0.1
+babelfont>=3
