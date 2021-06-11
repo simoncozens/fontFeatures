@@ -209,6 +209,7 @@ class FeeParser:
         "Position",
         "Chain",
         "Anchors",
+        "Kerning",
         "Routine",
         "Include",
         "Variables",
