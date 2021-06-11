@@ -5,7 +5,6 @@ fontFeatures: Python library for manipulating OpenType font features
    :maxdepth: 2
    :caption: Contents:
 
-   fee-format
    fontFeatures
    converting
    supportingmodules
@@ -48,9 +47,6 @@ abstract syntax tree of a computer programmer. This is so that:
    that is a set of lookups. ``fontFeatures`` allows you to manipulate
    meaning, not description.
 
-One of the most useful uses of ``fontFeatures`` is that it powers the FEE
-language. (See :ref:`fee`.)
-
 Components
 ----------
 
@@ -64,16 +60,11 @@ fontFeatures consists of the following components:
    fonts and fontFeatures representation. (Currently only OTF ->
    ``fontFeatures`` is partially implemented; there is no
    ``fontFeatures`` -> OTF compiler yet.)
--  :py:mod:`fontFeatures.feeLib` which parses a new, extensible format called
-   FEE for font engineering.
 -  :py:mod:`fontFeatures.fontDameLib` which translate FontDame text files into fontFeatures objects.
 
 And the following utilities:
 
--  ``fee2fea``: translates a FEE file into Adobe feature syntax.
 -  ``otf2fea``: translates an OTF file into Adobe features syntax.
--  ``mergeFee``: takes an existing font, adds FEE rules to it, and
-   writes it out again.
 -  ``txt2fea``: translates a FontDame txt file into Adobe features syntax.
 
 Indices and tables

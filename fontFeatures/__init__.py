@@ -7,8 +7,8 @@ either "compiled down" into AFDKO feature code or directly written to the
 GSUB/GPOS tables of a font.
 
 FontFeatures aims to marshal data between OTF binary representations,
-AFDKO feature code, FontDame, and a new language called the FEE (Font
-Engineering with Extensibility) language.
+AFDKO feature code, FontDame, and can power other representations such as the
+FEZ language (see the 'fez' library).
 
 A FontFeatures representation of a font will make use of two other top-level
 concepts: Features and Routines. Routines are collections of rules; they play

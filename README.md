@@ -1,83 +1,6 @@
-# FEE — Font Engineering with Extensibility
-
-The Font Engineering with Extensibility (FEE) language is implemented via a Python library, `fontFeatures`. This format improves over Adobe FEA (`.fea`) in several important ways, and compiles to FEA. In future, FEE also will compile to raw GPOS/GSUB binary tables.
-
-## FEE Quickstart
-
-Class definition is a time consuming element of writing FEA code. FEE allows regular expressions to be used to define classes; each glyph name in the font is tested against the regular expression, and the glyphs added:
-
-```
-DefineClass @sc = /\.sc$/;
-```
-
-Ran as:
-
-```sh
-fee2fea tests/LibertinusSans-Regular.otf test.fee
-```
-
-Results in:
-
-```fea
-@sc = [parenleft.sc parenright.sc bracketleft.sc bracketright.sc ...];
-```
-
-Simple replacement can be done as easily as:
-
-```
-DefineClass @sc = /\.sc$/;
-DefineClass @sc_able = @sc~sc;
-
-Feature smcp {
-	Substitute @sc_able -> @sc;
-};
-```
-
-Quite complex classes can be built. All the glyphs which have a smallcap and alternate form:
-
-```
-DefineClass @sc_and_alt_able = /.*/ and hasglyph(/$/ .alt) and hasglyph(/$/ .sc);
-```
-
-Returning:
-
-```fea
-@sc_and_alt_able = [h y germandbls];
-```
-
-FEE can even do substitutions impossible in FEA. For example:
-
-```
-DefineClass @digits =    U+0031=>U+0039; # this is range(U+0031, U+0039) inclusive
-DefineClass @encircled = U+2474=>U+247C;
-
-# Un-CJK parenthesize
-Feature ss01 {
-	Substitute @encircled -> parenleft @digits parenright;
-};
-```
-
-Gives us:
-
-```fea
-feature ss01 {
-    lookup Routine_1 {
-            sub uni2474 by parenleft one parenright;
-            sub uni2475 by parenleft two parenright;
-            sub uni2476 by parenleft three parenright;
-            sub uni2477 by parenleft four parenright;
-            sub uni2478 by parenleft five parenright;
-            sub uni2479 by parenleft six parenright;
-            sub uni247A by parenleft seven parenright;
-            sub uni247B by parenleft eight parenright;
-            sub uni247C by parenleft nine parenright;
-    } Routine_1;
-} ss01;
-```
-
-FEE can do much more; see the [plugins documentation](https://fontfeatures.readthedocs.io/en/latest/fee-format.html#standard-plugins). Writing your own plugins is as simple as [defining its grammar, verb, and adding a class with an `action()` method](https://fontfeatures.readthedocs.io/en/latest/fee-format.html#writing-your-own-plugins).
-
 ## `fontFeatures` library
+
+*If you're looking for the FEE language, it has been renamed to FEZ and moved to its own library (fez).*
 
 OpenType fonts are "programmed" using features, which are normally authored in Adobe's [feature file format](http://adobe-type-tools.github.io/afdko/OpenTypeFeatureFileSpecification.html). This like source code to a computer program: it's a user-friendly, but computer-unfriendly, way to represent the features.
 
@@ -98,12 +21,9 @@ fontFeatures consists of the following components:
 * `fontFeatures` itself, which is an abstract representation of the different layout operations inside a font.
 * `fontFeatures.feaLib` (included as a mixin) which translates between Adobe feature syntax and fontFeatures representation.
 * `fontFeatures.ttLib`, which translates between OpenType binary fonts and fontFeatures representation. (Currently only OTF -> `fontFeatures` is partially implemented; there is no `fontFeatures` -> OTF compiler yet.)
-* `fontFeatures.feeLib` which parses a new, extensible format called FEE for font engineering.
 * `fontFeatures.fontDameLib` which translate FontDame text files into fontFeatures objects.
 
 And the following utilities:
 
-* `fee2fea`: translates a FEE file into Adobe feature syntax.
 * `otf2fea`: translates an OTF file into Adobe features syntax.
 * `txt2fea`: translates a FontDame txt file into Adobe features syntax.
-* `mergeFee`: takes an existing font, adds FEE rules to it, and writes it out again.

@@ -1,9 +1,0 @@
-DefineClass @yehbarres = /^YehBarreeFin/;
-
-DefineClass @medis = /Med/;
-DefineClass @inits = /Ini/;
-
-LoadPlugin YehBarree;
-Feature kern {
-	YBFixOverhang @yehbarres @medis @inits;
-};

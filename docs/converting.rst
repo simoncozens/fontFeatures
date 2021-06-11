@@ -7,9 +7,6 @@ for different formats.
 .. automodule:: fontFeatures.feaLib
 	:members:
 
-.. automodule:: fontFeatures.feeLib
-	:members:
-
 .. automodule:: fontFeatures.ttLib
 	:members:
 
