@@ -1,7 +1,7 @@
 CHANGES
 =======
 
-1.0.5
+1.0.6
 
 * Make emitting the GDEF table optional
 * Beginnings of a binary GSUB/GPOS emitter. Proof-of-concept only.
