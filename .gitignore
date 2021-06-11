@@ -1,3 +1,5 @@
+coverage_html
+htmlcov
 *.pyc 
 build
 docs
