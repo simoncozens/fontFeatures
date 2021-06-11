@@ -110,11 +110,11 @@ class Anchors(FEEVerb):
 class LoadAnchors(FEEVerb):
     def action(self, _):
         for glyphname in self.parser.font.exportedGlyphs():
-            g = self.parser.font[glyphname]
+            g = self.parser.font.default_master.get_glyph_layer(glyphname)
             for a in g.anchors:
-                if not g.name in self.parser.fontfeatures.anchors:
-                    self.parser.fontfeatures.anchors[g.name] = {}
-                self.parser.fontfeatures.anchors[g.name][a.name] = (a.x, a.y)
+                if glyphname not in self.parser.fontfeatures.anchors:
+                    self.parser.fontfeatures.anchors[glyphname] = {}
+                self.parser.fontfeatures.anchors[glyphname][a.name] = (a.x, a.y)
 
 class Attach(FEEVerb):
     def action(self, args):
