@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+1.0.7
+
+* This was a maintenance release, fixing the requirements file.
+
 1.0.6
 
 * Make emitting the GDEF table optional

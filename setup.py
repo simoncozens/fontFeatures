@@ -22,8 +22,15 @@ config = {
     'long_description': open('README.md', 'r').read(),
     'long_description_content_type': 'text/markdown',
     'license': 'MIT',
-    'version': '1.0.6',
+    'version': '1.0.7',
     'install_requires': install_requires,
+    'extras_require': {
+        'shaper': [
+            "youseedee >=0.3.0",
+            "babelfont >=3.0.0a1",
+            "dataclasses ; python_version < '3.7'"
+        ]
+    },
     'classifiers': [
         "Programming Language :: Python",
         "Programming Language :: Python :: 2",
