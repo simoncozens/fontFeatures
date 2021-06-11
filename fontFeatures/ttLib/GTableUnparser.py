@@ -245,7 +245,7 @@ class GTableUnparser:
             "# XXX Unparsable rule: " + str(e) + " in " + str(self.currentLookup)
         )
         b.addComment("# ----")
-        out = self.asXML(sub).splitlines()
+        out = self._asXML(sub).splitlines()
         for ln in out:
             b.addComment("# " + ln)
         b.addComment("# ----\n")
