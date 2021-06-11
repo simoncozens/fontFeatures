@@ -3,6 +3,6 @@ fs
 fontTools
 beziers>=0.1.0
 lxml
-youseedee>=0.3.0
-dataclasses; python_version < '3.7'
-babelfont>=3
+youseedee[shaper]>=0.3.0
+babelfont[shaper]>=3
+dataclasses[shaper]; python_version < '3.7'

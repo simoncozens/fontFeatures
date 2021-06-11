@@ -1,1 +1,1 @@
-babelfont>=2.0.0
+babelfont>=3.0.0
