@@ -1,6 +1,6 @@
 """Routines for converting Rule objects to and from XML."""
 from lxml import etree
-
+from fontFeatures.xmlLib.utils import put_languages, put_address
 
 @classmethod
 def fromXML(klass, el):
@@ -15,10 +15,8 @@ def fromXML(klass, el):
 def toXML(self):
     """Serializes a Rule to a lxml Element object."""
     root = etree.Element(self.__class__.__name__.lower())
-    if hasattr(self, "address") and self.address:
-        root.attrib["address"] = str(self.address)
-    if hasattr(self, "languages") and self.languages:
-        root.attrib["languages"] = self.languages
+    put_address(self, root)
+    put_languages(self, root)
     if hasattr(self, "reverse") and self.reverse:
         root.attrib["reverse"] = "true"
     if hasattr(self, "flags") and self.flags:

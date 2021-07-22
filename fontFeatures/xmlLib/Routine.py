@@ -1,5 +1,6 @@
 """Routines for converting Routine objects to and from XML."""
 from lxml import etree
+from fontFeatures.xmlLib.utils import put_languages, put_address
 
 
 def toXML(self):
@@ -7,8 +8,8 @@ def toXML(self):
     root = etree.Element("routine")
     if self.flags:
         root.attrib["flags"] = str(self.flags)
-    if self.address:
-        root.attrib["address"] = str("|".join(self.address))
+    put_address(self, root)
+    put_languages(self, root)
     if self.name:
         root.attrib["name"] = self.name
     for r in self.rules:
