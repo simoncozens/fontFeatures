@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+1.0.8
+
+* Some fixes to pathUtils
+
 1.0.7
 
 * This was a maintenance release, fixing the requirements file.
