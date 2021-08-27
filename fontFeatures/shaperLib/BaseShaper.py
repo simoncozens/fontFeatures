@@ -103,8 +103,8 @@ class BaseShaper:
                 i.position.xAdvance = 0
         # zero width default ignorables
         self.zero_width_default_ignorables()
-        # for i in range(0,len(self.buffer.items)):
-            # self.propagate_attachment_offsets(i)
+        for i in range(0,len(self.buffer.items)):
+            self.propagate_attachment_offsets(i)
         self.plan.msg("Positioning done", self.buffer)
 
     def propagate_attachment_offsets(self, i):
@@ -119,13 +119,10 @@ class BaseShaper:
         j = i + attach_chain
         if j >= len(self.buffer.items):
             return
-        if not hasattr(self.buffer.items[j], "attach_type"):
-            return
-        if self.buffer.items[j].attach_type != attach_type:
-            return
         self.propagate_attachment_offsets(j)
         if attach_type == "cursive":
-            self.buffer.items[i].position.yPlacement = (self.buffer.items[i].position.yPlacement or 0) + (self.buffer.items[j].position.yPlacement or 0) # XXX Horizontal only
+            pass
+            # self.buffer.items[i].position.yPlacement = (self.buffer.items[i].position.yPlacement or 0) + (self.buffer.items[j].position.yPlacement or 0) # XXX Horizontal only
         else:
             self.buffer.items[i].position.xPlacement += self.buffer.items[j].position.xPlacement or 0
             self.buffer.items[i].position.yPlacement += self.buffer.items[j].position.yPlacement or 0
