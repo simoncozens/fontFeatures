@@ -39,10 +39,8 @@ def would_apply_at_position(self, buf, ix, namedclasses={}):
         if ix == 0:
             logging.getLogger("fontFeatures.shaperLib").debug(" * No, it has no adjacent glyph")
             return False
-        if buf[ix].glyph in marks and buf[ix-1].glyph in bases:
-            logging.getLogger("fontFeatures.shaperLib").debug(" * No, %s/%s is not a pair" % (buf[ix].glyph, buf[ix-1].glyph))
-            return False
-        logging.getLogger("fontFeatures.shaperLib").debug(" * Yes, %s/%s is a pair" % (buf[ix].glyph, buf[ix-1].glyph))
+        # We will sort it out later
+        # logging.getLogger("fontFeatures.shaperLib").debug(" * Yes, %s/%s is a pair" % (buf[ix].glyph, buf[ix-1].glyph))
         return True
 
 
