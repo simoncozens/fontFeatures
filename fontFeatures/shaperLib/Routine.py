@@ -15,7 +15,7 @@ def apply_to_buffer(self, buf, stage=None, feature=None, namedclasses={}):
             if r.flags:
                 buf.set_mask(r.flags, self.markFilteringSet, self.markAttachmentSet)
             if r.would_apply_at_position(buf, i,namedclasses=namedclasses):
-                logging.getLogger("fontFeatures.shaperLib").debug("Applying rule %s at position %i\n" % (r.asFea()[0:50], i))
+                logging.getLogger("fontFeatures.shaperLib").debug("Applying rule at position %i\n" % (i))
                 delta = r._do_apply(buf, i, namedclasses=namedclasses)
                 buf.update()
                 if delta:

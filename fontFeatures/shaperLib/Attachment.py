@@ -28,8 +28,12 @@ def would_apply_at_position(self, buf, ix, namedclasses={}):
     from fontFeatures.shaperLib.Rule import _expand_slot
 
     logging.getLogger("fontFeatures.shaperLib").debug("Testing if rule would apply at position %i" % (ix))
-    marks = _expand_slot(self.marks.keys(), namedclasses)
-    bases = _expand_slot(self.bases.keys(), namedclasses)
+    if namedclasses:
+        marks = _expand_slot(self.marks.keys(), namedclasses)
+        bases = _expand_slot(self.bases.keys(), namedclasses)
+    else:
+        marks = self.marks.keys()
+        bases = self.bases.keys()
 
     if self.is_cursive:
         if ix == 0:
