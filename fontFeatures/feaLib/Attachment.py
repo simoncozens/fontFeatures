@@ -39,7 +39,7 @@ def feaPreamble(self, ff):
             b.statements.append(
                 feaast.MarkClassDefinition(
                     feaast.MarkClass(self.base_name),
-                    feaast.Anchor(*mark[1]),
+                    feaast.Anchor(int(mark[1][0]), int(mark[1][1])),
                     _glyphref(mark[0]),
                 )
             )
@@ -60,8 +60,8 @@ def asFeaAST(self):
             b.statements.append(
                 feaast.CursivePosStatement(
                     _glyphref([g]),
-                    g in self.bases and feaast.Anchor(*self.bases[g]),
-                    g in self.marks and feaast.Anchor(*self.marks[g]),
+                    g in self.bases and feaast.Anchor(int(self.bases[g][0]),int(self.bases[g][1])),
+                    g in self.marks and feaast.Anchor(int(self.marks[g][0]),int(self.marks[g][1])),
                 )
             )
     else:
@@ -77,7 +77,7 @@ def asFeaAST(self):
             b.statements.append(
                 statementtype(
                     _glyphref(base[0]),
-                    [[feaast.Anchor(*base[1]), feaast.MarkClass(self.base_name)]],
+                    [[feaast.Anchor(int(base[1][0]), int(base[1][1])), feaast.MarkClass(self.base_name)]],
                 )
             )
 
