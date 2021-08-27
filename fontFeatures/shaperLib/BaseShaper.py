@@ -96,14 +96,16 @@ class BaseShaper:
     def position(self):
         """Run the positioning stage."""
         self._run_stage("pos")
+        self.buffer.clear_mask()
         # zero width marks
-        # for i in self.buffer.items:
-        #     if i.category[0] == "mark":
-        #         i.position.xAdvance = 0
+        for i in self.buffer.items:
+            if i.category[0] == "mark":
+                i.position.xAdvance = 0
         # zero width default ignorables
         self.zero_width_default_ignorables()
-        for i in range(0,len(self.buffer.items)):
-            self.propagate_attachment_offsets(i)
+        # for i in range(0,len(self.buffer.items)):
+            # self.propagate_attachment_offsets(i)
+        self.plan.msg("Positioning done", self.buffer)
 
     def propagate_attachment_offsets(self, i):
         """Resolve attachment offsets for item ``i``."""
@@ -116,6 +118,10 @@ class BaseShaper:
         self.buffer.items[i].attach_chain = None
         j = i + attach_chain
         if j >= len(self.buffer.items):
+            return
+        if not hasattr(self.buffer.items[j], "attach_type"):
+            return
+        if self.buffer.items[j].attach_type != attach_type:
             return
         self.propagate_attachment_offsets(j)
         if attach_type == "cursive":

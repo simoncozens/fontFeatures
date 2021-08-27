@@ -27,7 +27,7 @@ def would_apply_at_position(self, buf, ix, namedclasses={}):
     """Tests to see if this rule would apply at position ``ix`` of the buffer."""
     from fontFeatures.shaperLib.Rule import _expand_slot
 
-    logging.getLogger("fontFeatures.shaperLib").debug("Testing if %s would apply at position %i" % (self.asFea(), ix))
+    logging.getLogger("fontFeatures.shaperLib").debug("Testing if rule would apply at position %i" % (ix))
     marks = _expand_slot(self.marks.keys(), namedclasses)
     bases = _expand_slot(self.bases.keys(), namedclasses)
 
@@ -59,27 +59,44 @@ def would_apply_at_position(self, buf, ix, namedclasses={}):
     return True
 
 def _do_apply_cursive(self, buf, ix):
-    mark = buf[ix].glyph
-    base = buf[ix - 1].glyph
+    this_record = buf[ix]
+    prev_record = buf[ix-1]
+
+    mark = prev_record.glyph
+    base = this_record.glyph
+
     if mark not in self.marks or base not in self.bases:
         return
     exit_x, exit_y = self.marks.get(mark, (0,0))
     entry_x, entry_y = self.bases.get(base, (0,0))
-    d = exit_x + (buf[ix-1].position.xPlacement or 0)
-    buf[ix-1].position.xAdvance = (buf[ix-1].position.xAdvance or 0) - d
-    buf[ix-1].position.xPlacement = (buf[ix-1].position.xPlacement or 0) - d
-    buf[ix].position.xAdvance = entry_x + (buf[ix].position.xPlacement or 0)
-    child = ix -1
-    parent = ix
+
+    i = ix-1
+    j = ix
+
+    if buf.direction == "LTR":
+        buf[i].position.xAdvance = exit_x + (buf[i].position.xPlacement or 0)
+        d = entry_x + (buf[j].position.xPlacement or 0)
+        buf[j].position.xAdvance = (buf[j].position.xAdvance or 0) - d
+        buf[j].position.xPlacement = (buf[j].position.xPlacement or 0) - d
+    elif buf.direction == "RTL":
+        d = exit_x + (buf[i].position.xPlacement or 0)
+        logging.getLogger("fontFeatures.shaperLib").debug("Adjusting advance of %s by %i" % (buf[i].glyph, -d))
+        buf[i].position.xAdvance = (buf[i].position.xAdvance or 0) - d
+        buf[i].position.xPlacement = (buf[i].position.xPlacement or 0) - d
+
+        buf[j].position.xAdvance = entry_x + (buf[j].position.xPlacement or 0)
+
+    child = i
+    parent = j
     x_offset = entry_x - exit_x
     y_offset = entry_y - exit_y
-    if not (self.flags & 1):  # LeftToRight XXX
+    if not (self.flags & 1):
         parent, child = child, parent
         x_offset = -x_offset
         y_offset = -y_offset
-    buf[child].position.xPlacement = x_offset
-    buf[ix].attach_type = "cursive"
-    buf[ix].attach_chain = parent - child
+    buf[child].position.yPlacement = y_offset
+    this_record.attach_type = "cursive"
+    this_record.attach_chain = parent - child
 
 
 def _do_apply(self, buf, ix, namedclasses={}):

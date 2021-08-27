@@ -46,7 +46,7 @@ def pre_post_context_matches(self, buf, ix, namedclasses={}):
     return True
 
 def would_apply_at_position(self, buf, ix, namedclasses={}):
-    logging.getLogger("fontFeatures.shaperLib").debug("Testing if %s would apply at position %i" % (self.asFea(), ix))
+    logging.getLogger("fontFeatures.shaperLib").debug("Testing if rule would apply at position %i" % (ix))
     coverage = self.shaper_inputs()
     coverage_l = len(coverage)
     if coverage_l < 1: return False

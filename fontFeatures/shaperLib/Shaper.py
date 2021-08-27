@@ -48,6 +48,7 @@ class Shaper:
             self.user_features = features
         self.collect_features(buf)
         self.complexshaper.shape()
+        buf.clear_mask()
         return buf
 
     def default_message_function(self, msg, buffer=None, serialize_options=None):
