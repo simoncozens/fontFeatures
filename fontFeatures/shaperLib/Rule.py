@@ -1,6 +1,6 @@
 import logging
 
-__all__ = ["apply_to_buffer", "would_apply_at_position", "pre_post_context_matches", "_expand_slot"]
+__all__ = ["apply_to_buffer", "revert_buffer", "would_apply_at_position", "pre_post_context_matches", "_expand_slot"]
 
 
 def i2s(buffer_items):

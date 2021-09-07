@@ -194,6 +194,8 @@ class Buffer:
             for i in reversed(indexed[1:]):
                 del self.items[i]
             return
+        if len(value) > 1 and len(value) == len(indexed):
+            self.items[indexed[0] : indexed[1] + 1] = value
         else:
             raise ValueError("Too hard :-(")
 

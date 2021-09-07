@@ -22,6 +22,9 @@ class Shaper:
         font: A ``Babelfont`` font object.
         message_function: A function called with a message and buffer object.
     """
+
+    INDIC_SHAPER = IndicShaper
+
     def __init__(self, ff, font, message_function=None):
         assert isinstance(ff, FontFeatures)
         self.fontfeatures = ff
@@ -178,7 +181,7 @@ class Shaper:
             if buf.script in indic23map and self.fontfeatures.hasScriptSupport(indic23map[buf.script] + "3"):
                 return USEShaper
             else:
-                return IndicShaper
+                return self.INDIC_SHAPER
         if buf.script == "Khmer":
             return KhmerShaper
 
