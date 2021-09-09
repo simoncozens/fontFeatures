@@ -135,8 +135,6 @@ def is_ra(u):
     return u in [0x0930, 0x09B0, 0x09F0, 0x0A30, 0x0AB0, 0x0B30, 0x0BB0, 0x0C30, 0x0CB0, 0x0D30, 0x0DBB, 0x179A]
 
 def IndicPositionalCategory2IndicPosition(ipc):
-    import pdb
-    pdb.set_trace()
     if ipc == "Left":   return IndicPosition.PRE_C
     if ipc == "Top":    return IndicPosition.ABOVE_C
     if ipc == "Bottom": return IndicPosition.BELOW_C
