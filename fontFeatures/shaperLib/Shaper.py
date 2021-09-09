@@ -4,7 +4,7 @@ from fontFeatures import FontFeatures
 import unicodedata
 from fontFeatures.shaperLib import Buffer
 from .BaseShaper import BaseShaper
-from .ArabicShaper import ArabicShaper
+from .ArabicShaper import ArabicShaper, ArabicDeshaper
 from .IndicShaper import IndicShaper
 from .MyanmarShaper import MyanmarShaper
 from .HangulShaper import HangulShaper
@@ -286,3 +286,31 @@ def _script_direction(script):
     if script in ["Old_Hungarian", "Old_Italic", "Runic"]:
         return "invalid"
     return "LTR"
+
+
+class Deshaper(Shaper):
+
+    ARABIC_SHAPER = ArabicDeshaper
+
+    def collect_features(self, buf):
+        """Determine the features, and their order, to process the buffer."""
+        if hasattr(self.complexshaper, "override_features"):
+            self.complexshaper.override_features(self)
+        for uf in self.user_features:
+            if not uf["value"]:  # Turn it off if it's already on
+                self.disable_feature(uf["tag"])
+            else:
+                self.add_features(uf["tag"])
+        if buf.direction == "LTR" or buf.direction == "RTL":
+            self.add_features("rclt", "liga", "kern", "dist", "curs", "clig", "calt")
+        else:
+            self.add_features("vert")
+        self.add_features("rlig", "mkmk", "mark", "locl", "ccmp", "blwm", "abvm")
+        self.complexshaper.collect_features(self)
+        self.add_features("rand", "dnom", "numr", "frac")
+        if buf.direction == "LTR":
+            self.add_features("ltrm", "ltra")
+        elif buf.direction == "RTL":
+            self.add_features("rtlm", "rtla")
+        self.add_pause()
+        self.add_features("rvrn")

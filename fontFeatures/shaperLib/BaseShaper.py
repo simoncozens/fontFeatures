@@ -385,3 +385,33 @@ class BaseShaper:
         "Yezidi": "yezi",
     }
 
+
+class BaseDeshaper(BaseShaper):
+    def _run_stage(self, current_stage):
+        self.plan.msg("Running %s stage" % current_stage)
+        self.plan.fontfeatures.hoist_languages()
+        for stage in self.plan.stages:
+            lookups = []
+            if isinstance(stage, list):  # Features
+                for f in stage:
+                    if f not in self.plan.fontfeatures.features:
+                        continue
+
+                    routines = self.plan.fontfeatures.features[f]
+                    routines = [x.routine if isinstance(x, RoutineReference) else x for x in routines]
+                    lookups.extend(
+                        [(routine, f) for routine in self._filter_by_lang(routines)]
+                    )
+                self.plan.msg("Processing features: %s" % ",".join(stage))
+                for r, feature in lookups:
+                    self.plan.msg(
+                        "Before %s (%s)" % (r.name, feature), buffer=self.buffer
+                    )
+                    r.revert_buffer(self.buffer, stage=current_stage, feature=feature, namedclasses=self.plan.fontfeatures.namedClasses)
+                    self.plan.msg(
+                        "After %s (%s)" % (r.name, feature), buffer=self.buffer
+                    )
+            else:
+                # It's a pause. We only support GSUB pauses.
+                if current_stage == "sub":
+                    stage(current_stage)
