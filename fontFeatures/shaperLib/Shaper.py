@@ -24,6 +24,7 @@ class Shaper:
     """
 
     INDIC_SHAPER = IndicShaper
+    ARABIC_SHAPER = ArabicShaper
 
     def __init__(self, ff, font, message_function=None):
         assert isinstance(ff, FontFeatures)
@@ -128,7 +129,7 @@ class Shaper:
     def categorize(self, buf):
         """Returns the appropriate complex shaper class to shape this buffer."""
         if buf.script == "Arabic":
-            return ArabicShaper
+            return self.ARABIC_SHAPER
 
         connected_scripts = {
             "Mongolian": "mong",
@@ -144,7 +145,7 @@ class Shaper:
         }
         if buf.script in connected_scripts:
             if self.fontfeatures.hasScriptSupport(connected_scripts[buf.script]):
-                return ArabicShaper
+                return self.ARABIC_SHAPER
             else:
                 return BaseShaper
 

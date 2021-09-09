@@ -37,6 +37,8 @@ class SyllabicShaper(BaseShaper):
         item.syllabic_category = syllabic_category_map.get(ucd.get("Indic_Syllabic_Category", "Other"),"X")
         item.positional_category = ucd.get("Indic_Positional_Category", "x")
         item.syllabic_position = IndicPositionalCategory2IndicPosition(item.positional_category)
+        import pdb
+        pdb.set_trace()
         self.reassign_category(item)
 
     def assign_categories(self):

@@ -43,7 +43,7 @@ def _revert(self, buf, ix, namedclasses={}):
     newstuff = []
     # Handle single subst first
     if len(self.input) == 1 and len(self.replacement) == 1:
-        replacements = _expand_slot(self.inputs[0], namedclasses)
+        replacements = _expand_slot(self.input[0], namedclasses)
         if len(replacements) == 1:
             buf[ix].glyph = replacements[0]
         else:

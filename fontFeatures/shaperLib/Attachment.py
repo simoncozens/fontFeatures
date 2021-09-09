@@ -119,3 +119,7 @@ def _do_apply(self, buf, ix, namedclasses={}):
 
 def _revert(self, buf, ix, namedclasses={}):
     pass
+
+
+def would_revert_at_position(self, buf, ix, namedclasses={}):
+    pass

@@ -35,7 +35,7 @@ def revert_buffer(self, buf, stage=None, feature=None, namedclasses={}):
                 continue
             if r.flags:
                 buf.set_mask(r.flags, self.markFilteringSet, self.markAttachmentSet)
-            if r.would_apply_at_position(buf, i,namedclasses=namedclasses):
+            if r.would_revert_at_position(buf, i,namedclasses=namedclasses):
                 logging.getLogger("fontFeatures.shaperLib").debug("Applying rule at position %i\n" % (i))
                 delta = r._revert(buf, i, namedclasses=namedclasses)
                 buf.update()

@@ -4,6 +4,7 @@ from babelfont import load
 from fontFeatures.shaperLib.Buffer import Buffer
 from fontFeatures.shaperLib.Shaper import Shaper
 from fontFeatures.shaperLib.IndicShaper import IndicShaper
+from fontFeatures.shaperLib.ArabicShaper import ArabicShaper
 from fontFeatures.shaperLib.BaseShaper import BaseShaper
 from fontTools.ttLib import TTFont
 import unicodedata
@@ -13,7 +14,6 @@ from fontFeatures import RoutineReference
 
 class BaseDeshaper(BaseShaper):
     def _run_stage(self, current_stage):
-        print("kentucky")
         self.plan.msg("Running %s stage" % current_stage)
         self.plan.fontfeatures.hoist_languages()
         for stage in self.plan.stages:
@@ -42,8 +42,30 @@ class BaseDeshaper(BaseShaper):
                 if current_stage == "sub":
                     stage(current_stage)
 
+
+
+arabic_features = ['init', 'med2', 'medi', 'fin3', 'fin2', 'fina', 'isol']
+
+class ArabicDeshaper(BaseDeshaper, ArabicShaper):
+    def collect_features(self, shaper):
+        shaper.add_features("mset")
+        shaper.add_pause()
+        shaper.add_features("calt", "rclt", "rlig")
+        shaper.add_pause()
+        shaper.add_features(*arabic_features)
+        shaper.add_pause()
+        shaper.add_features("locl", "ccmp")
+        # shaper.add_features("stch")
+
+
+
+
+
+# On hold for now. Understand a lesser shaper before moving onto these
+
 class SyllabicDeshaper(BaseDeshaper, SyllabicShaper):
 
+    # Some features are not applied universally
     basic_features = ['cjct', 'vatu', 'pstf', 'half', 'abvf', 'blwf', 'pref', 'rkrf', 'rphf', 'akhn', 'nukt']
     after_syllable_features = ["locl", "ccmp"]
     other_features = ['clig', 'calt', 'haln', 'psts', 'blws', 'abvs', 'pres', 'init']
@@ -68,7 +90,9 @@ class IndicDeshaper(SyllabicDeshaper, IndicShaper):
 
 
 class Deshaper(Shaper):
+
     INDIC_SHAPER = IndicDeshaper
+    ARABIC_SHAPER = ArabicDeshaper
 
     def collect_features(self, buf):
         """Determine the features, and their order, to process the buffer."""
@@ -101,22 +125,26 @@ class Deshaper(Shaper):
 
 
 font_path = "/Users/marcfoley/Type/fonts/ofl/poppins/Poppins-Black.ttf"
+font_path = "/Users/marcfoley/Type/fonts/ofl/tajawal/Tajawal-Regular.ttf"
 font = load(font_path)
 ff = unparse(TTFont(font_path))
 
 # Shape
-buf = Buffer(font, unicodes="".join(["क़", " ", "क", "्", "क", "ि"]))
+buf = Buffer(font, unicodes="".join(["الله"]))
 shaper = Shaper(ff, font)
-shaper.execute(buf)
-import pdb
-pdb.set_trace()
+shaper.execute(buf) # -> uniFDF2
+print(buf.serialize())
 
-
-# Deshape 
-debuf = Buffer(font, unicodes="".join(["क़", " ", "क", "्", "क"]))
+## Deshape 
+debuf = Buffer(font, glyphs=["uniFDF2"], script="Arabic")
+debuf = Buffer(font, glyphs=["uniFEF5"], script="Arabic")
 deshaper = Deshaper(ff, font)
 deshaper.execute(debuf)
 
-import pdb
-pdb.set_trace()
-print(debuf.items)
+
+text_buf = Buffer(font, unicodes="أفغانستان: المقاومة تدعو المجتمع الدولي لعدم الاعتراف بحكومة طالبان")
+print(text_buf.items)
+shaper.execute(text_buf)
+print(text_buf.items)
+deshaper.execute(text_buf)
+print(text_buf.items)

@@ -1,6 +1,6 @@
 import logging
 
-__all__ = ["apply_to_buffer", "revert_buffer", "would_apply_at_position", "pre_post_context_matches", "_expand_slot"]
+__all__ = ["apply_to_buffer", "revert_buffer", "would_apply_at_position", "would_revert_at_position", "pre_post_context_matches", "_expand_slot"]
 
 
 def i2s(buffer_items):
@@ -49,6 +49,24 @@ def would_apply_at_position(self, buf, ix, namedclasses={}):
     logging.getLogger("fontFeatures.shaperLib").debug("Testing if rule would apply at position %i" % (ix))
     coverage = self.shaper_inputs()
     coverage_l = len(coverage)
+    if coverage_l < 1: return False
+    buffer_glyphs = buf[ix : ix + coverage_l]
+
+    if not glyphs_match(buffer_glyphs, coverage, namedclasses):
+        logging.getLogger("fontFeatures.shaperLib").debug(" - No! %s != %s" % (i2s(buffer_glyphs), coverage))
+        return False
+
+    if not pre_post_context_matches(self, buf, ix, namedclasses):
+        return False
+
+    logging.getLogger("fontFeatures.shaperLib").debug(" - Yes! %s == %s" % (i2s(buffer_glyphs), coverage))
+    return True
+
+
+def would_revert_at_position(self, buf, ix, namedclasses={}):
+    coverage = self.replacement
+    coverage_l = len(coverage)
+
     if coverage_l < 1: return False
     buffer_glyphs = buf[ix : ix + coverage_l]
 
