@@ -9,14 +9,20 @@ font_path = "/Users/marcfoley/Type/fonts/ofl/tajawal/Tajawal-Regular.ttf"
 font = load(font_path)
 ff = unparse(TTFont(font_path))
 
-# Shape
-buf = Buffer(font, unicodes="".join(["الله"]))
-shaper = Shaper(ff, font)
-shaper.execute(buf) # -> uniFDF2
-print(buf.serialize())
+## Shape
+#buf = Buffer(font, unicodes="".join(["الله"]))
+#shaper = Shaper(ff, font)
+#shaper.execute(buf) # -> uniFDF2
+#print(buf.serialize())
+#
+### Deshape 
+#debuf = Buffer(font, glyphs=["uniFDF2"], script="Arabic")
+#deshaper = Deshaper(ff, font)
+#deshaper.execute(debuf)
+#print(debuf.serialize())
 
-## Deshape 
-debuf = Buffer(font, glyphs=["uniFDF2"], script="Arabic")
+## Deshape 2
+debuf = Buffer(font, glyphs=["onehalf"])
 deshaper = Deshaper(ff, font)
 deshaper.execute(debuf)
 print(debuf.serialize())

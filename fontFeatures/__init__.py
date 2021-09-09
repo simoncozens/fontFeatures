@@ -459,7 +459,7 @@ class ExtensionRoutine(Routine):
     
     def revert_buffer(self, buf, stage=None, feature=None):
         for r in self.routines:
-            r.apply_to_buffer(buf, stage, feature)
+            r.revert_buffer(buf, stage, feature)
 
     def asFeaAST(self):
         """Returns this extension routine as ``fontTools.feaLib.ast`` objects."""
