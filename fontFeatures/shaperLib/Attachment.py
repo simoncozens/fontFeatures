@@ -115,3 +115,11 @@ def _do_apply(self, buf, ix, namedclasses={}):
     buf[ix].position.yPlacement = ypos
     buf[ix].attach_type = "mark"
     buf[ix].attach_chain = base_ix - ix
+
+
+def _revert(self, buf, ix, namedclasses={}):
+    pass
+
+
+def would_revert_at_position(self, buf, ix, namedclasses={}):
+    pass

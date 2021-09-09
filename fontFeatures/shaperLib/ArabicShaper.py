@@ -1,4 +1,4 @@
-from .BaseShaper import BaseShaper
+from .BaseShaper import BaseShaper, BaseDeshaper
 from youseedee import ucd_data
 
 
@@ -78,3 +78,15 @@ class ArabicShaper(BaseShaper):
         for ix,item in enumerate(self.buffer.items):
             if 0x180B <= item.codepoint <= 0x180D and ix > 0:
                 item.arabic_joining = self.buffer.items[ix-1].arabic_joining
+
+
+class ArabicDeshaper(BaseDeshaper, ArabicShaper):
+    def collect_features(self, shaper):
+        shaper.add_features("mset")
+        shaper.add_pause()
+        shaper.add_features("calt", "rclt", "rlig")
+        shaper.add_pause()
+        shaper.add_features(*arabic_features[::-1])
+        shaper.add_pause()
+        shaper.add_features("locl", "ccmp")
+        # shaper.add_features("stch")

@@ -3,8 +3,8 @@
 from fontFeatures import FontFeatures
 import unicodedata
 from fontFeatures.shaperLib import Buffer
-from .BaseShaper import BaseShaper
-from .ArabicShaper import ArabicShaper
+from .BaseShaper import BaseDeshaper, BaseShaper
+from .ArabicShaper import ArabicShaper, ArabicDeshaper
 from .IndicShaper import IndicShaper
 from .MyanmarShaper import MyanmarShaper
 from .HangulShaper import HangulShaper
@@ -22,6 +22,11 @@ class Shaper:
         font: A ``Babelfont`` font object.
         message_function: A function called with a message and buffer object.
     """
+
+    INDIC_SHAPER = IndicShaper
+    ARABIC_SHAPER = ArabicShaper
+    BASE_SHAPER = BaseShaper
+
     def __init__(self, ff, font, message_function=None):
         assert isinstance(ff, FontFeatures)
         self.fontfeatures = ff
@@ -125,7 +130,7 @@ class Shaper:
     def categorize(self, buf):
         """Returns the appropriate complex shaper class to shape this buffer."""
         if buf.script == "Arabic":
-            return ArabicShaper
+            return self.ARABIC_SHAPER
 
         connected_scripts = {
             "Mongolian": "mong",
@@ -141,9 +146,9 @@ class Shaper:
         }
         if buf.script in connected_scripts:
             if self.fontfeatures.hasScriptSupport(connected_scripts[buf.script]):
-                return ArabicShaper
+                return self.ARABIC_SHAPER
             else:
-                return BaseShaper
+                return self.BASE_SHAPER
 
         if buf.script in ["Thai", "Lao"]:
             return ThaiShaper
@@ -178,13 +183,13 @@ class Shaper:
             if buf.script in indic23map and self.fontfeatures.hasScriptSupport(indic23map[buf.script] + "3"):
                 return USEShaper
             else:
-                return IndicShaper
+                return self.INDIC_SHAPER
         if buf.script == "Khmer":
             return KhmerShaper
 
         if buf.script == "Myanmar":
             if self.fontfeatures.hasScriptSupport("mymr"):
-                return BaseShaper
+                return self.BASE_SHAPER
             else:
                 return MyanmarShaper
 
@@ -241,7 +246,7 @@ class Shaper:
             "Nandinagari",
         ]:
             return USEShaper
-        return BaseShaper
+        return self.BASE_SHAPER
 
 def _script_direction(script):
     if script in [
@@ -282,3 +287,32 @@ def _script_direction(script):
     if script in ["Old_Hungarian", "Old_Italic", "Runic"]:
         return "invalid"
     return "LTR"
+
+
+class Deshaper(Shaper):
+
+    ARABIC_SHAPER = ArabicDeshaper
+    BASE_SHAPER = BaseDeshaper
+
+    def collect_features(self, buf):
+        """Determine the features, and their order, to process the buffer."""
+        if hasattr(self.complexshaper, "override_features"):
+            self.complexshaper.override_features(self)
+        for uf in self.user_features:
+            if not uf["value"]:  # Turn it off if it's already on
+                self.disable_feature(uf["tag"])
+            else:
+                self.add_features(uf["tag"])
+        if buf.direction == "LTR" or buf.direction == "RTL":
+            self.add_features("rclt", "liga", "kern", "dist", "curs", "clig", "calt")
+        else:
+            self.add_features("vert")
+        self.add_features("rlig", "mkmk", "mark", "locl", "ccmp", "blwm", "abvm")
+        self.complexshaper.collect_features(self)
+        self.add_features("rand", "dnom", "numr", "frac")
+        if buf.direction == "LTR":
+            self.add_features("ltrm", "ltra")
+        elif buf.direction == "RTL":
+            self.add_features("rtlm", "rtla")
+        self.add_pause()
+        self.add_features("rvrn")

@@ -9,3 +9,7 @@ def _do_apply(self, buf, ix, namedclasses={}):
     if not self.valuerecords[-1]: # A special case!
         return
     return len(self.glyphs) - 1
+
+
+def _revert(self, buf, ix, nameclasses={}):
+    pass

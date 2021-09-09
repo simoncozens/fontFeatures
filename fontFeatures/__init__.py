@@ -431,7 +431,7 @@ class Routine:
         return deps
 
     from .feaLib.Routine import asFea, asFeaAST, feaPreamble
-    from .shaperLib.Routine import apply_to_buffer
+    from .shaperLib.Routine import apply_to_buffer, revert_buffer
     from .xmlLib.Routine import toXML, fromXML
     from .ttLib.Routine import toOTLookup
 
@@ -456,6 +456,10 @@ class ExtensionRoutine(Routine):
         """
         for r in self.routines:
             r.apply_to_buffer(buf, stage, feature)
+    
+    def revert_buffer(self, buf, stage=None, feature=None):
+        for r in self.routines:
+            r.revert_buffer(buf, stage, feature)
 
     def asFeaAST(self):
         """Returns this extension routine as ``fontTools.feaLib.ast`` objects."""
@@ -538,7 +542,7 @@ class Rule:
         """Computes any text that needs to go in the feature file header."""
         return []
 
-    from .shaperLib.Rule import would_apply_at_position, pre_post_context_matches
+    from .shaperLib.Rule import would_apply_at_position, would_revert_at_position, pre_post_context_matches
     from .xmlLib.Rule import fromXML, toXML, _makeglyphslots, _slotArray
 
     @property
@@ -628,7 +632,7 @@ class Substitution(Rule):
         return i | o | b | a
 
     from .feaLib.Substitution import asFeaAST
-    from .shaperLib.Substitution import shaper_inputs, _do_apply
+    from .shaperLib.Substitution import shaper_inputs, _do_apply, _revert
     from .xmlLib.Substitution import _toXML, fromXML
     from .ttLib.Substitution import lookup_type
 
@@ -879,7 +883,7 @@ class Attachment(Rule):
         return self.base_name == "cursive_entry" or self.base_name == "entry"  # XXX
 
     from .feaLib.Attachment import asFeaAST, feaPreamble
-    from .shaperLib.Attachment import shaper_inputs, _do_apply, would_apply_at_position
+    from .shaperLib.Attachment import shaper_inputs, _do_apply, _revert, would_apply_at_position, would_revert_at_position
     from .xmlLib.Attachment import _toXML, fromXML
     from .ttLib.Attachment import lookup_type
 

@@ -34,3 +34,6 @@ def _do_apply(self, buf, ix, namedclasses={}):
     buf.set_mask(flags, markFilteringSet)
     return len(self.input) - 1
 
+
+def _revert(self, buf, ix, namedclasses={}):
+    pass
