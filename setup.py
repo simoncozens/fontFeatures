@@ -22,7 +22,7 @@ config = {
     'long_description': open('README.md', 'r').read(),
     'long_description_content_type': 'text/markdown',
     'license': 'MIT',
-    'version': '1.0.8',
+    'version': '1.1.0',
     'install_requires': install_requires,
     'extras_require': {
         'shaper': [
