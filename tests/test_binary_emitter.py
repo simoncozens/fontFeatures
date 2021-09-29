@@ -370,6 +370,8 @@ lookup chain2 { pos a' lookup single b; } chain2;
       <!-- Class2Count=2 -->
       <Class1Record index="0">
         <Class2Record index="0">
+          <Value1 XAdvance="0"/>
+          <Value2 XAdvance="0"/>
         </Class2Record>
         <Class2Record index="1">
           <Value1 XAdvance="15"/>
