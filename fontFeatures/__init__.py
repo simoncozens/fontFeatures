@@ -181,6 +181,7 @@ class FontFeatures:
                 for routine in routinelist:
                     # Using a set here so it is safe to call more than once
                     if isinstance(routine, RoutineReference):
+                        routine.resolve(self)
                         routine.routine.usedin.add(chain)
                     else:
                         routine.usedin.add(chain)
