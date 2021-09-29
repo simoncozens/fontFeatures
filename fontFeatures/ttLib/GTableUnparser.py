@@ -51,6 +51,8 @@ class GTableUnparser:
                 lookups.extend([None] * (1 + sl.SequenceIndex - len(lookups)))
             if not lookups[sl.SequenceIndex]:
                 lookups[sl.SequenceIndex] = []
+            if sl.LookupListIndex >= len(self.lookups):
+                raise ValueError("Lookups unparsed out of order: unparse %i first!" % sl.LookupListIndex)
             rr = fontFeatures.RoutineReference(routine=self.lookups[sl.LookupListIndex])
             lookups[sl.SequenceIndex].append(rr)
         if len(lookups) < len(inputs):

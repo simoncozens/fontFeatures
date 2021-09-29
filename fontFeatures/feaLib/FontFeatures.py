@@ -1,14 +1,15 @@
 # Code for converting a FontFeatures object into feaLib statements
 import fontTools.feaLib.ast as feaast
 import itertools
+from fontFeatures.feaLib.Routine import lookup_type
 
 
 def add_language_system_statements(self, ff):
     self.hoist_languages()
 
-    if len(self.scripts_and_languages.keys()) == 0:
-        return
-    if len(self.scripts_and_languages.keys()) == 1:
+    total_languages = sum([len(x) for x in self.scripts_and_languages.values()])
+
+    if total_languages < 2:
         return
     for s, entry in self.scripts_and_languages.items():
         for l in entry:
@@ -73,12 +74,44 @@ def asFeaAST(self, do_gdef=True):
     if do_gdef:
         add_gdef(self, ff)
 
+    # In OpenType, we need to rearrange the routines such that all rules for
+    # a given languagesystem, lookup type, and lookup flags, appear in the
+    # same lookup. Also, lookups with the same languagesystem need to appear next
+    # to one another, because FEA syntax is stupid.
+
+    # Now arrange them by type/etc.
+    for k,v in self.features.items():
+        for reference in v:
+            routine = reference.routine
+            self.partitionRoutine(routine,
+                lambda rule:
+                    tuple([tuple(rule.languages or []),
+                    type(rule),
+                    lookup_type(rule)
+                    ])
+            )
+    for r in self.routines:
+        r.usecount = 0
+        # Bubble up flags
+        r.flags = r.rules[0].flags
+    for k, v in self.features.items():
+        for reference in v:
+            routine = reference.routine
+            routine.languages = routine.rules[0].languages
+            routine.usecount += 1
+        # Order the arranged routines by language
+        new_references = list(sorted(v, key=lambda x: tuple(x.routine.languages or [])))
+        # Bubble up flags
+        self.features[k] = new_references
+
+    # Next, we'll ensure that all chaining lookups are resolved and in the right order
     newRoutines = [self.routines[i] for i in reorderAndResolve(self)]
+
 
     # Preamble
     for k in newRoutines:
         assert isinstance(k, Routine)
-        if not k.name:
+        if not k.name and k.usecount != 1:
             k.name = self.gensym("Routine_")
         pre = k.feaPreamble(self)
         if k.rules:
@@ -96,7 +129,15 @@ def asFeaAST(self, do_gdef=True):
 
     for k, v in self.features.items():
         f = feaast.FeatureBlock(k)
+        last_langsys = ("DFLT", "dflt")
         for routine in v:
+            if routine.routine.languages and routine.routine.languages[0] != last_langsys:
+                new_langsys = routine.routine.languages[0]
+                if new_langsys[0] != last_langsys[0]:
+                    f.statements.append(feaast.ScriptStatement(new_langsys[0]))
+                if new_langsys[1] != last_langsys[1]:
+                    f.statements.append(feaast.LanguageStatement("%4s" % new_langsys[1]))
+                last_langsys = new_langsys
             f.statements.append(routine.asFeaAST(expand = k=="aalt"))
         ff.statements.append(f)
     return ff

@@ -94,7 +94,7 @@ class FontFeatures:
                 return r
         raise ValueError("Can't find routine '%s'" % name)
 
-    def referenceRoutine(self, r):
+    def referenceRoutine(self, r, do_usecount=True):
         """Store a routine and return a reference to it.
 
         Args:
@@ -105,7 +105,8 @@ class FontFeatures:
         if r not in self.routines:
             self.routines.append(r)
         r.parent = self
-        r.usecount = r.usecount + 1
+        if do_usecount:
+            r.usecount = r.usecount + 1
         return RoutineReference(routine=r)
 
     def getNamedClassFor(self, glyphs, name):
