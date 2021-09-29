@@ -314,3 +314,13 @@ class FeaParser:
     def add_feature_reference(self, location, featurename):
         # XXX
         pass
+
+    def add_glyphClassDef(self, location, base, ligature, mark, component):
+        for g in base:
+            self.ff.glyphclasses[g] = "base"
+        for g in ligature:
+            self.ff.glyphclasses[g] = "ligature"
+        for g in mark:
+            self.ff.glyphclasses[g] = "mark"
+        for g in component:
+            self.ff.glyphclasses[g] = "component"
