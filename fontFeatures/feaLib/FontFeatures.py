@@ -83,13 +83,20 @@ def asFeaAST(self, do_gdef=True):
     for k,v in self.features.items():
         for reference in v:
             routine = reference.routine
-            self.partitionRoutine(routine,
+            partitioned = self.partitionRoutine(routine,
                 lambda rule:
                     tuple([tuple(rule.languages or []),
                     type(rule),
                     lookup_type(rule)
                     ])
             )
+            if routine.name and len(partitioned) > 1:
+                for p in partitioned:
+                    rule = p.rules[0]
+                    language = (rule.languages or [("DFLT", "dflt")])[0]
+                    p.name = p.name + "%s_%s_%s_%i" % (
+                        language[0].strip(), language[1].strip(), type(rule).__name__, lookup_type(rule)
+                    )
     for r in self.routines:
         r.usecount = 0
         # Bubble up flags
