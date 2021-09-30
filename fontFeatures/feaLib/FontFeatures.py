@@ -66,7 +66,6 @@ def asFeaAST(self, do_gdef=True):
     """Returns this font's features as a feaLib AST object, for later
     translation to AFDKO code."""
     from fontFeatures import Routine, Chaining
-
     ff = feaast.FeatureFile()
 
     add_language_system_statements(self, ff)
@@ -99,16 +98,17 @@ def asFeaAST(self, do_gdef=True):
                     )
     for r in self.routines:
         r.usecount = 0
-        # Bubble up flags
+        # Bubble up flags and languages
         r.flags = r.rules[0].flags
+        if not r.languages:
+            r.languages = r.rules[0].languages
+
     for k, v in self.features.items():
         for reference in v:
             routine = reference.routine
-            routine.languages = routine.rules[0].languages
             routine.usecount += 1
         # Order the arranged routines by language
         new_references = list(sorted(v, key=lambda x: tuple(x.routine.languages or [])))
-        # Bubble up flags
         self.features[k] = new_references
 
     # Next, we'll ensure that all chaining lookups are resolved and in the right order
