@@ -99,7 +99,8 @@ def asFeaAST(self, do_gdef=True):
     for r in self.routines:
         r.usecount = 0
         # Bubble up flags and languages
-        r.flags = r.rules[0].flags
+        if not r.flags:
+            r.flags = r.rules[0].flags
         if not r.languages:
             r.languages = r.rules[0].languages
 
@@ -108,8 +109,8 @@ def asFeaAST(self, do_gdef=True):
             routine = reference.routine
             routine.usecount += 1
         # Order the arranged routines by language
-        new_references = list(sorted(v, key=lambda x: tuple(x.routine.languages or [])))
-        self.features[k] = new_references
+        # new_references = list(sorted(v, key=lambda x: tuple(x.routine.languages or [])))
+        # self.features[k] = new_references
 
     # Next, we'll ensure that all chaining lookups are resolved and in the right order
     newRoutines = [self.routines[i] for i in reorderAndResolve(self)]
@@ -135,18 +136,15 @@ def asFeaAST(self, do_gdef=True):
             ff.statements.append(k.asFeaAST())
 
     for k, v in self.features.items():
-        f = feaast.FeatureBlock(k)
-        last_langsys = ("DFLT", "dflt")
         for routine in v:
-            if routine.routine.languages and routine.routine.languages[0] != last_langsys:
-                new_langsys = routine.routine.languages[0]
-                if new_langsys[0] != last_langsys[0]:
-                    f.statements.append(feaast.ScriptStatement(new_langsys[0]))
-                if new_langsys[1] != last_langsys[1]:
-                    f.statements.append(feaast.LanguageStatement("%4s" % new_langsys[1]))
-                last_langsys = new_langsys
+            # Putting each routine in its own feature saves problems...
+            lang = routine.routine.languages
+            f = feaast.FeatureBlock(k)
+            if lang:
+                f.statements.append(feaast.ScriptStatement(lang[0][0]))
+                f.statements.append(feaast.LanguageStatement("%4s" % lang[0][1]))
             f.statements.append(routine.asFeaAST(expand = k=="aalt"))
-        ff.statements.append(f)
+            ff.statements.append(f)
     return ff
 
 
