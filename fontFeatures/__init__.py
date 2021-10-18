@@ -292,9 +292,6 @@ class FontFeatures:
             return
         self.doneUsageMarking = False
         self.markRoutineUseInChains()
-        usedin = routine.usedin
-
-        index = self.routines.index(routine)
 
         split_routines = {}
         split_rules = {}
@@ -315,6 +312,12 @@ class FontFeatures:
         routine_with_first_rule.rules = rulelist
 
         allroutines = [x[0] for x in split_routines.values()]
+        self.replaceRoutineWithSplitList(routine, allroutines)
+
+    def replaceRoutineWithSplitList(self, routine, allroutines):
+        self.markRoutineUseInChains()
+        index = self.routines.index(routine)
+        usedin = routine.usedin
         self.routines[index : index + 1] = allroutines
         for user in usedin:
             for lookuplist in user.lookups:

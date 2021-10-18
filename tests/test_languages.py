@@ -53,3 +53,63 @@ feature locl {
 
     f.addFeature("locl", [r1,r2,r3])
     assert f.asFea(do_gdef=False) == expected
+
+
+def test_multiple_languages():
+    f = FontFeatures()
+    s1 = Substitution([["a"]], ["b"], languages=[("arab", "URD "),("arab", "FAR ")])
+    expected = """languagesystem arab URD;
+languagesystem arab FAR;
+
+feature locl {
+    script arab;
+    language URD;
+            lookupflag 0;
+        ;
+        sub a by b;
+
+} locl;
+
+feature locl {
+    script arab;
+    language FAR;
+            lookupflag 0;
+        ;
+        sub a by b;
+
+} locl;
+"""
+    f = FontFeatures()
+    r1 = Routine(rules=[ s1 ])
+    f.addFeature("locl", [r1])
+    assert f.asFea(do_gdef=False) == expected
+
+def test_multiple_languages_routine():
+    f = FontFeatures()
+    s1 = Substitution([["a"]], ["b"])
+    expected = """languagesystem arab URD;
+languagesystem arab FAR;
+
+feature locl {
+    script arab;
+    language URD;
+            lookupflag 0;
+        ;
+        sub a by b;
+
+} locl;
+
+feature locl {
+    script arab;
+    language FAR;
+            lookupflag 0;
+        ;
+        sub a by b;
+
+} locl;
+"""
+    f = FontFeatures()
+    r1 = Routine(rules=[ s1 ], languages=[("arab", "URD "),("arab", "FAR ")])
+    f.addFeature("locl", [r1])
+    assert f.asFea(do_gdef=False) == expected
+

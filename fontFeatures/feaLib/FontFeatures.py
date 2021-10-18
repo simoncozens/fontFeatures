@@ -2,6 +2,7 @@
 import fontTools.feaLib.ast as feaast
 import itertools
 from fontFeatures.feaLib.Routine import lookup_type
+import copy
 
 
 def add_language_system_statements(self, ff):
@@ -82,6 +83,17 @@ def asFeaAST(self, do_gdef=True):
     for k,v in self.features.items():
         for reference in v:
             routine = reference.routine
+            # If a rule has >1 language it must first be split
+            newrules = []
+            for r in routine.rules:
+                if len(r.languages or []) > 1:
+                    for language in r.languages:
+                        newrule = copy.deepcopy(r)
+                        newrule.languages = [language]
+                        newrules.append(newrule)
+                else:
+                    newrules.append(r)
+            routine.rules = newrules
             partitioned = self.partitionRoutine(routine,
                 lambda rule:
                     tuple([tuple(rule.languages or []),
@@ -89,7 +101,7 @@ def asFeaAST(self, do_gdef=True):
                     lookup_type(rule)
                     ])
             )
-            if routine.name and len(partitioned) > 1:
+            if routine.name and partitioned and len(partitioned) > 1:
                 for p in partitioned:
                     rule = p.rules[0]
                     language = (rule.languages or [("DFLT", "dflt")])[0]
@@ -105,12 +117,19 @@ def asFeaAST(self, do_gdef=True):
             r.languages = r.rules[0].languages
 
     for k, v in self.features.items():
+        # Similarly split routines with multiple languages
         for reference in v:
-            routine = reference.routine
             routine.usecount += 1
+            routine = reference.routine
+            if len(routine.languages or []) > 1:
+                splitroutines = []
+                for language in routine.languages:
+                    newroutine = copy.deepcopy(routine)
+                    newroutine.languages = [language]
+                    splitroutines.append(newroutine)
+                self.replaceRoutineWithSplitList(routine, splitroutines)
         # Order the arranged routines by language
         # new_references = list(sorted(v, key=lambda x: tuple(x.routine.languages or [])))
-        # self.features[k] = new_references
 
     # Next, we'll ensure that all chaining lookups are resolved and in the right order
     newRoutines = [self.routines[i] for i in reorderAndResolve(self)]
