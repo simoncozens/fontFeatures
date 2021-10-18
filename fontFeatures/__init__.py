@@ -312,7 +312,7 @@ class FontFeatures:
         routine_with_first_rule.rules = rulelist
 
         allroutines = [x[0] for x in split_routines.values()]
-        self.replaceRoutineWithSplitList(routine, allroutines)
+        return self.replaceRoutineWithSplitList(routine, allroutines)
 
     def replaceRoutineWithSplitList(self, routine, allroutines):
         self.markRoutineUseInChains()
