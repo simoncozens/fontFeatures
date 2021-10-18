@@ -124,8 +124,12 @@ def asFeaAST(self, do_gdef=True):
             if len(routine.languages or []) > 1:
                 splitroutines = []
                 for language in routine.languages:
+                    # This is wrong. It should really be a new reference to the
+                    # same routine. But this will do for now.
                     newroutine = copy.copy(routine)
                     newroutine.languages = [language]
+                    if newroutine.name:
+                        newroutine.name = newroutine.name + ("%s_%s" % language)
                     splitroutines.append(newroutine)
                 self.replaceRoutineWithSplitList(routine, splitroutines)
         # Order the arranged routines by language
