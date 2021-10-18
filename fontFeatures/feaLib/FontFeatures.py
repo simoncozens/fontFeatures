@@ -88,7 +88,7 @@ def asFeaAST(self, do_gdef=True):
             for r in routine.rules:
                 if len(r.languages or []) > 1:
                     for language in r.languages:
-                        newrule = copy.deepcopy(r)
+                        newrule = copy.copy(r)
                         newrule.languages = [language]
                         newrules.append(newrule)
                 else:
@@ -124,7 +124,7 @@ def asFeaAST(self, do_gdef=True):
             if len(routine.languages or []) > 1:
                 splitroutines = []
                 for language in routine.languages:
-                    newroutine = copy.deepcopy(routine)
+                    newroutine = copy.copy(routine)
                     newroutine.languages = [language]
                     splitroutines.append(newroutine)
                 self.replaceRoutineWithSplitList(routine, splitroutines)
