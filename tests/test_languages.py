@@ -16,30 +16,42 @@ def test_language_ordering():
     expected = """languagesystem arab URD;
 languagesystem arab FAR;
 
+lookup Routine_1 {
+    lookupflag 0;
+    ;
+    sub a by b;
+} Routine_1;
+
+lookup Routine_2 {
+    lookupflag 0;
+    ;
+    sub a by c;
+} Routine_2;
+
+lookup Routine_3 {
+    lookupflag 0;
+    ;
+    sub x y by z;
+} Routine_3;
+
 feature locl {
     script arab;
     language URD;
-            lookupflag 0;
-        ;
-        sub a by b;
+            lookup Routine_1;
 
 } locl;
 
 feature locl {
     script arab;
     language FAR;
-            lookupflag 0;
-        ;
-        sub a by c;
+            lookup Routine_2;
 
 } locl;
 
 feature locl {
     script arab;
     language URD;
-            lookupflag 0;
-        ;
-        sub x y by z;
+            lookup Routine_3;
 
 } locl;
 """
@@ -61,21 +73,29 @@ def test_multiple_languages():
     expected = """languagesystem arab URD;
 languagesystem arab FAR;
 
+lookup Routine_1 {
+    lookupflag 0;
+    ;
+    sub a by b;
+} Routine_1;
+
+lookup Routine_2 {
+    lookupflag 0;
+    ;
+    sub a by b;
+} Routine_2;
+
 feature locl {
     script arab;
     language URD;
-            lookupflag 0;
-        ;
-        sub a by b;
+            lookup Routine_1;
 
 } locl;
 
 feature locl {
     script arab;
     language FAR;
-            lookupflag 0;
-        ;
-        sub a by b;
+            lookup Routine_2;
 
 } locl;
 """
@@ -90,21 +110,23 @@ def test_multiple_languages_routine():
     expected = """languagesystem arab URD;
 languagesystem arab FAR;
 
+lookup Routine_1 {
+    lookupflag 0;
+    ;
+    sub a by b;
+} Routine_1;
+
 feature locl {
     script arab;
     language URD;
-            lookupflag 0;
-        ;
-        sub a by b;
+            lookup Routine_1;
 
 } locl;
 
 feature locl {
     script arab;
     language FAR;
-            lookupflag 0;
-        ;
-        sub a by b;
+            lookup Routine_1;
 
 } locl;
 """

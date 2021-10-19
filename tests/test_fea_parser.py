@@ -37,7 +37,7 @@ def assertSufficientlyEqual(s1, s2):
     pytest.param("lookup dummy { sub a by b; } dummy; lookup chain { sub x [one two] a' lookup dummy b' lookup dummy; } chain; ",id="chain2"),
     pytest.param("lookup dummy { rsub a b' c by d; } dummy; ",id="rsub"),
     pytest.param("lookup dummy { ignore sub a d' d; } dummy; ",id="ignore"),
-    pytest.param("feature calt { lookup a { sub a by b; sub c by d; } a; } calt;",id="feature"),
+    pytest.param("lookup a { sub a by b; sub c by d; } a; feature calt { lookup a; } calt;",id="feature"),
     pytest.param("lookup dummy { pos one <-80 0 -160 0>; } dummy;",id="pos_one"),
     pytest.param("lookup dummy { pos [one two] <-80 0 -160 0>; } dummy;",id="pos_one_group"),
     pytest.param("lookup dummy { pos a [one two]' <-80 0 -160 0>; } dummy;",id="pos_one_contexual"),

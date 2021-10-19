@@ -41,7 +41,7 @@ def feaPreamble(self, ff):
 
 
 def asFeaAST(self):
-    if self.usecount != 1 or self.name:
+    if self.name:
         f = feaast.LookupBlock(name=self.name)
     else:
         f = feaast.Block()

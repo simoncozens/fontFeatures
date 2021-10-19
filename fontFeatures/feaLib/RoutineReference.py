@@ -8,8 +8,8 @@ def feaPreamble(self, ff):
 
 
 def asFeaAST(self, expand=False):
-    if self.routine.usecount == 1:
-        return self.routine.asFeaAST()
+    # if self.routine.usecount == 1:
+    #     return self.routine.asFeaAST()
     f = feaast.Block()
     f.statements.append(feaast.LookupReferenceStatement(self.routine.asFeaAST()))
     return f

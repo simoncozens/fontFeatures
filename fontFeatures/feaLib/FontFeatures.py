@@ -118,20 +118,21 @@ def asFeaAST(self, do_gdef=True):
 
     for k, v in self.features.items():
         # Similarly split routines with multiple languages
+        references = []
         for reference in v:
-            routine.usecount += 1
             routine = reference.routine
             if len(routine.languages or []) > 1:
                 splitroutines = []
                 for language in routine.languages:
                     # This is wrong. It should really be a new reference to the
                     # same routine. But this will do for now.
-                    newroutine = copy.copy(routine)
-                    newroutine.languages = [language]
-                    if newroutine.name:
-                        newroutine.name = newroutine.name + ("%s_%s" % language)
-                    splitroutines.append(newroutine)
-                self.replaceRoutineWithSplitList(routine, splitroutines)
+                    newreference = copy.copy(reference)
+                    newreference.languages = [language]
+                    references.append(newreference)
+            else:
+                references.append(reference)
+                reference.languages = routine.languages
+        self.features[k] = references
         # Order the arranged routines by language
         # new_references = list(sorted(v, key=lambda x: tuple(x.routine.languages or [])))
 
@@ -155,13 +156,13 @@ def asFeaAST(self, do_gdef=True):
     ff.statements.append(feaast.Comment(""))
 
     for k in newRoutines:
-        if k.rules and k.usecount != 1:
+        if k.rules:
             ff.statements.append(k.asFeaAST())
 
     for k, v in self.features.items():
         for routine in v:
             # Putting each routine in its own feature saves problems...
-            lang = routine.routine.languages
+            lang = routine.languages
             f = feaast.FeatureBlock(k)
             if lang:
                 f.statements.append(feaast.ScriptStatement(lang[0][0]))
