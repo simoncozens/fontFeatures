@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+1.2.0
+
+* Many fixes to language handling.
+
 1.0.8
 
 * Some fixes to pathUtils
