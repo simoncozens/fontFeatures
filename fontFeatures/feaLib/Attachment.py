@@ -5,6 +5,16 @@ import warnings
 from fontFeatures.variableScalar import VariableScalar
 
 
+def fix_scalar(scalar):
+    if isinstance(scalar, int):
+        return scalar
+    if isinstance(scalar, float):
+        return int(scalar)
+    if hasattr(scalar, "model"):
+        # assume it's a variable scalar of some kind
+        return scalar
+    raise ValueError("Illegal anchor position %s" % scalar)
+
 def _glyphref(g):
     if len(g) == 1:
         return feaast.GlyphName(g[0])
@@ -39,7 +49,7 @@ def feaPreamble(self, ff):
             b.statements.append(
                 feaast.MarkClassDefinition(
                     feaast.MarkClass(self.base_name),
-                    feaast.Anchor(int(mark[1][0]), int(mark[1][1])),
+                    feaast.Anchor(fix_scalar(mark[1][0]), fix_scalar(mark[1][1])),
                     _glyphref(mark[0]),
                 )
             )
@@ -60,8 +70,8 @@ def asFeaAST(self):
             b.statements.append(
                 feaast.CursivePosStatement(
                     _glyphref([g]),
-                    g in self.bases and feaast.Anchor(int(self.bases[g][0]),int(self.bases[g][1])),
-                    g in self.marks and feaast.Anchor(int(self.marks[g][0]),int(self.marks[g][1])),
+                    g in self.bases and feaast.Anchor(fix_scalar(self.bases[g][0]),fix_scalar(self.bases[g][1])),
+                    g in self.marks and feaast.Anchor(fix_scalar(self.marks[g][0]),fix_scalar(self.marks[g][1])),
                 )
             )
     else:
@@ -77,7 +87,7 @@ def asFeaAST(self):
             b.statements.append(
                 statementtype(
                     _glyphref(base[0]),
-                    [[feaast.Anchor(int(base[1][0]), int(base[1][1])), feaast.MarkClass(self.base_name)]],
+                    [[feaast.Anchor(fix_scalar(base[1][0]), fix_scalar(base[1][1])), feaast.MarkClass(self.base_name)]],
                 )
             )
 
