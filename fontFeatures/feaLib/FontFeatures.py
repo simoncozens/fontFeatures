@@ -108,12 +108,13 @@ def asFeaAST(self, do_gdef=True):
                     p.name = p.name + "%s_%s_%s_%i" % (
                         language[0].strip(), language[1].strip(), type(rule).__name__, lookup_type(rule)
                     )
+
     for r in self.routines:
         r.usecount = 0
         # Bubble up flags and languages
-        if not r.flags:
+        if r.rules and not r.flags:
             r.flags = r.rules[0].flags
-        if not r.languages:
+        if r.rules and not r.languages:
             r.languages = r.rules[0].languages
 
     for k, v in self.features.items():
