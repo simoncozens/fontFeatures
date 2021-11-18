@@ -38,9 +38,9 @@ Here is an example of constructing a simple feature file using fontFeatures::
 
 from collections import OrderedDict, namedtuple
 from fontTools.feaLib.ast import ValueRecord as feaLibValueRecord
+from fontTools.feaLib.variableScalar import VariableScalar
 from itertools import chain
 from copy import copy
-from .variableScalar import VariableScalar
 
 
 class FontFeatures:
@@ -737,7 +737,7 @@ class ValueRecord(feaLibValueRecord):
     @property
     def is_variable(self):
         """Returns true if any of the elements of the value record are a
-        :py:class:`fontFeatures.variableScalar.VariableScalar`."""
+        :py:class:`fontTools.feaLib.VariableScalar`."""
         return any(
             isinstance(x, VariableScalar)
             for x in [

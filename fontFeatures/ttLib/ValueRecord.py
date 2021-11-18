@@ -1,7 +1,7 @@
 """ttLib.ValueRecord: Converting ValueRecord rules to TrueType."""
 
 from fontTools.ttLib.tables.otBase import ValueRecord as OTLValueRecord
-from fontFeatures.variableScalar import VariableScalar
+from fontTools.feaLib.variableScalar import VariableScalar
 from fontTools.varLib.builder import buildVarDevTable
 
 
