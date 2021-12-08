@@ -321,6 +321,8 @@ class FontFeatures:
         self.routines[index : index + 1] = allroutines
         for user in usedin:
             for lookuplist in user.lookups:
+                if lookuplist is None:
+                    continue
                 i = 0
                 while i < len(lookuplist):
                     lookup = lookuplist[i]
@@ -334,6 +336,8 @@ class FontFeatures:
                     i = i + 1
         # Same trick for features
         for lookuplist in self.features.values():
+            if lookuplist is None:
+                continue
             i = 0
             while i < len(lookuplist):
                 lookup = lookuplist[i]
