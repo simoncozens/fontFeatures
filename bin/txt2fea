@@ -30,8 +30,8 @@ if args.classfile:
   	parsed.scratch["glyphclasses"][tuple(sorted(v.glyphs.glyphs))] = k
   parsed.scratch["index"] = 999
 
-if args.optimize:
-	optlevel = 2
-Optimizer(parsed).optimize(level=optlevel)
+# if args.optimize:
+# 	optlevel = 2
+# Optimizer(parsed).optimize(level=optlevel)
 
 print(parsed.asFea())
