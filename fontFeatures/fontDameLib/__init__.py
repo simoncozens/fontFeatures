@@ -253,6 +253,13 @@ class FontDameParser:
 
     def add_single_pos_x(self, glyph, xa):
         self.current_lookup.addRule(Positioning([[glyph]], [ValueRecord(xAdvance=xa)]))
+    def add_single_pos_x_placement(self, glyph, xp):
+        self.current_lookup.addRule(Positioning([[glyph]], [ValueRecord(xPlacement=xp)]))
+    def add_single_pos_y_placement(self, glyph, yp):
+        self.current_lookup.addRule(Positioning([[glyph]], [ValueRecord(xPlacement=yp)]))
+
+    def add_pair(self, glyph1, glyph2, xa):
+        self.current_lookup.addRule(Positioning([[glyph1], [glyph2]], [ValueRecord(xPlacement=xa),ValueRecord()]))
 
     def add_attach(self, entryexit, glyph, pos):
         if len(self.current_lookup.rules) == 0:
@@ -283,12 +290,28 @@ class FontDameParser:
             if m:
                 self.add_single_pos_x(m[1], int(m[2]))
                 return
+            m = re.match(r"y placement\s+([\w\.-]+)\s+(-?\d+)\n", line)
+            if m:
+                self.add_single_pos_y_placement(m[1], int(m[2]))
+                return
+            m = re.match(r"x placement\s+([\w\.-]+)\s+(-?\d+)\n", line)
+            if m:
+                self.add_single_pos_x_placement(m[1], int(m[2]))
+                return
             m = re.match("([\\w\\.-]+)\s+([\\w\\.-]+)\n", line)
             if not m:
-                import code
+                warnings.warn("Odd single lookup: %s" % line)
+            #     import code
 
-                code.interact(local=locals())
-            self.add_subst([[m[1]]], [[m[2]]])
+            #     code.interact(local=locals())
+            else:
+                self.add_subst([[m[1]]], [[m[2]]])
+        elif self.current_lookup_type == "pair":
+            m = re.match(r"left x advance\s+([\w\.-]+)\s+([\w\.-]+)\s+(-?\d+)\n", line)
+            if not m:
+                warnings.warn("Odd pair lookup: %s" % line)
+            else:
+                self.add_pair(m[1], m[2], int(m[3]))
 
         elif self.current_lookup_type == "multiple":
             m = re.match("([\\w\\.-]+)\s+(.*)\n", line)
@@ -356,7 +379,6 @@ class FontDameParser:
             elif line.startswith("glyph"):
                 raise ValueError("GSUB6.1 not supported yet")
         else:
-            print(line)
             raise ValueError("Unsupported lookup type |%s|" % self.current_lookup_type)
 
     def make_context(self, classlist, which):
