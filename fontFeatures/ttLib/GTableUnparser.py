@@ -6,6 +6,7 @@ from collections import OrderedDict
 from fontTools.misc.xmlWriter import XMLWriter
 import fontFeatures
 from io import BytesIO
+import warnings
 
 
 def glyph(x):
@@ -46,6 +47,15 @@ class GTableUnparser:
         lookups = []
         if in_lookups:
             lookups = in_lookups
+        indices = [sl.SequenceIndex for sl in slr]
+        if indices != list(sorted(indices)):
+            # https://github.com/adobe-type-tools/afdko/issues/1167
+            warnings.warn(
+                f"Out-of-order lookup application in lookup {self.currentLookup}\n"
+                f" A chaining rule calls lookups in the order {indices}\n"
+                " This cannot be directly expressed in Adobe FEA syntax;\n"
+                "  asFea() output will be incorrect"
+            )
         for sl in slr:
             if len(lookups) <= sl.SequenceIndex:
                 lookups.extend([None] * (1 + sl.SequenceIndex - len(lookups)))
