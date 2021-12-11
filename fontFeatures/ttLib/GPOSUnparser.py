@@ -179,7 +179,7 @@ class GPOSUnparser(GTableUnparser):
                 b.addRule(
                     fontFeatures.Attachment(
                         anchorClassPrefix,
-                        anchorClassPrefix + "_",
+                        "_"+anchorClassPrefix,
                         bases,
                         marks,
                         font=self.font,
