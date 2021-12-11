@@ -1,15 +1,19 @@
 #!/usr/bin/env python
-import sys
-from fontTools.ttLib import TTFont
-from fontFeatures.ttLib import unparse
-from fontFeatures.ttLib.GDEFUnparser import GDEFUnparser
-import fontFeatures
-from argparse import ArgumentParser
-from glyphsLib.classes import GSAnchor, Point, GSClass, GSFeature, GSFeaturePrefix
-import glyphsLib
-
 import logging
 import os
+import sys
+from argparse import ArgumentParser
+from collections import OrderedDict
+
+import fontTools.feaLib.ast as feaast
+import glyphsLib
+from fontTools.ttLib import TTFont
+from glyphsLib.classes import GSAnchor, GSClass, GSFeature, GSFeaturePrefix, Point
+
+import fontFeatures
+from fontFeatures.feaLib.FontFeatures import add_language_system_statements
+from fontFeatures.ttLib import unparse
+from fontFeatures.ttLib.GDEFUnparser import GDEFUnparser
 
 LOGLEVEL = os.environ.get("LOGLEVEL", "WARNING").upper()
 logging.basicConfig(level=LOGLEVEL)
