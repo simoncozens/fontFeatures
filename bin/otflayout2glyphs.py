@@ -181,12 +181,27 @@ while queue:
 
 
 # All the routine references go into a feature
-for featuretag, routines in ff.features.items():
-    glyphs.features.append(
-        GSFeature(
-            name=featuretag, code="\n".join([routine.asFea() for routine in routines])
-        )
-    )
 
+# Work around https://github.com/googlefonts/ufo2ft/issues/506
+if "mark" not in ff.features and "mkmk" in ff.features:
+    newfeatures = OrderedDict()
+    for k, v in ff.features.items():
+        if k == "mkmk":
+            newfeatures["mark"] = []
+        newfeatures[k] = v
+    ff.features = newfeatures
+
+for featuretag, routines in ff.features.items():
+    code = "\n".join([routine.asFea() for routine in routines])
+    if featuretag in ["mark", "mkmk"]:
+        code = "# Automatic Code Start\n" + code
+    glyphs.features.append(GSFeature(name=featuretag, code=code))
+
+# Add the language systems prefix
+code = ""
+for script, langs in ff.scripts_and_languages.items():
+    for lang in langs:
+        code += f"languagesystem {script} {lang};\n"
+glyphs.featurePrefixes.append(GSFeaturePrefix(name="Languagesystems", code=code))
 
 glyphs.save(args.output)
