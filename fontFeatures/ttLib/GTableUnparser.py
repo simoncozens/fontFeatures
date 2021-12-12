@@ -221,6 +221,8 @@ class GTableUnparser:
             xt.SubTable = [xt.ExtSubTable]
             xt.LookupType = xt.ExtSubTable.LookupType
             xt.LookupFlag = lookup.LookupFlag
+            if hasattr(lookup, "MarkFilteringSet"):
+                xt.MarkFilteringSet = lookup.MarkFilteringSet
             routine, deps = self.unparseLookup(xt, self.currentLookup)
             routines.append(routine)
             dependencies.extend(deps)
@@ -228,6 +230,7 @@ class GTableUnparser:
             routines=routines,
             name=self.getname("Extension" + self.gensym()),
         )
+        self._fix_flags(extension, lookup)
         return extension, dependencies
 
     def getDebugInfo(self, table, ix):
@@ -269,12 +272,15 @@ class GTableUnparser:
             glyphs = [g for g in classDefs.keys() if classDefs[g] == mat]
             routine.markAttachmentSet = glyphs
         if lookup.LookupFlag & 0x10 and hasattr(lookup, "MarkFilteringSet"):
-            # It might not have one if it's an Extension lookup
             routine.markFilteringSet = (
                 self.font["GDEF"]
                 .table.MarkGlyphSetsDef.Coverage[lookup.MarkFilteringSet]
                 .glyphs
             )
+
+        if routine.flags & 0x10:
+            assert routine.markFilteringSet is not None
+
 
     def unparseContextual(self, lookup):
         """Handles a generic contextual lookup, in various formats."""
