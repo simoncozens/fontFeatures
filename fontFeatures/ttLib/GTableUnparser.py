@@ -129,9 +129,7 @@ class GTableUnparser:
                     self.fontFeatures.addFeature(
                         featureTag,
                         [
-                            fontFeatures.RoutineReference(
-                                routine=self.lookups[lookupIdx]
-                            )
+                            self.lookups[lookupIdx]
                         ],
                     )
                 lookups.append(lookupIdx)
