@@ -347,7 +347,8 @@ class IndicShaper(SyllabicShaper):
         for i in range(start,end):
             self.buffer.items[i].feature_masks["init"] = True
         if pos(start) == IndicPosition.PRE_M:
-            if start == 0 or ucd_data(self.buffer.font.codepointForGlyph(self.buffer.items[start-1].glyph))["General_Category"] not in ["Cf", "Cn", "Co", "Cs", "Ll", "Lm", "Lo", "Lt", "Lu", "Mc", "Me", "Mn"]:
+            reverse_map = {k:v for k,v in self.buffer.font.unicode_map.items()}
+            if start == 0 or ucd_data(reverse_map.get(self.buffer.items[start-1].glyph, 0))["General_Category"] not in ["Cf", "Cn", "Co", "Cs", "Ll", "Lm", "Lo", "Lt", "Lu", "Mc", "Me", "Mn"]:
                 self.buffer.items[start].feature_masks["init"] = False
 
 
