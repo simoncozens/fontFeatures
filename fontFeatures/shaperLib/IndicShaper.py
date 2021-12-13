@@ -387,11 +387,11 @@ class IndicShaper(SyllabicShaper):
                 newstring = newstring + chr(0x9df)
                 ix = ix + 2
                 continue
-            elif composed != unicodedata.normalize("NFD", s):
-                assert(len(s) == 1)
-                newunicodes[ix] = ord(x)
-                del newunicodes[ix+1]
-                continue
+            # elif composed != unicodedata.normalize("NFD", s):
+            #     assert(len(s) == 1)
+            #     newunicodes[ix] = ord(x)
+            #     del newunicodes[ix+1]
+            #     continue
             else:
                 newstring = newstring + chr(a)
                 ix =ix + 1
