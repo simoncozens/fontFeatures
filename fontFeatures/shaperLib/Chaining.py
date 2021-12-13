@@ -12,6 +12,7 @@ def _do_apply(self, buf, ix, namedclasses={}):
     # Save buffer mask
     flags = buf.flags
     markFilteringSet = buf.markFilteringSet
+    markAttachmentSet = buf.markAttachmentSet
 
     if ix + len(self.lookups) -1 > len(buf.mask):
         return
@@ -26,11 +27,11 @@ def _do_apply(self, buf, ix, namedclasses={}):
             # Adjust mask and recompute index?
             unmasked_ix = old_unmasked_indexes[i]
             for rule in routine.rules:
-                buf.set_mask(rule.flags, routine.markFilteringSet)
+                buf.set_mask(rule.flags, routine.markFilteringSet, routine.markAttachmentSet)
                 newix = __find_masked_ix(buf, unmasked_ix)
                 if rule.would_apply_at_position(buf,newix, namedclasses) and rule._do_apply(buf, newix):
                     break
 
-    buf.set_mask(flags, markFilteringSet)
+    buf.set_mask(flags, markFilteringSet, markAttachmentSet)
     return len(self.input) - 1
 

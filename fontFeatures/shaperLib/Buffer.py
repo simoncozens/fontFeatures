@@ -216,13 +216,18 @@ class Buffer:
         """Clear the buffer mask."""
         self.flags = 0
         self.markFilteringSet = None
+        self.markAttachmentSet = None
         self.current_feature_mask = None
         self.recompute_mask()
 
     def set_mask(self, flags, markFilteringSet=None, markAttachmentSet=None):
         """Apply a routine's flags and mark filtering set to the buffer."""
         self.flags = flags
+        if self.flags & 0x10:
+            assert(markFilteringSet)
         self.markFilteringSet = markFilteringSet
+        if self.flags & 0xFF00:
+            assert(markAttachmentSet)
         self.markAttachmentSet = markAttachmentSet
         self.recompute_mask()
 
