@@ -137,6 +137,7 @@ def run_a_test(string, tests=None, output=True):
 
 
 tests = []
+suite = {"tests": []}
 if args.suite and os.path.exists(args.suite):
     suite = json.load(open(args.suite))
     if "tests" not in suite:
@@ -163,6 +164,9 @@ vh = Vharfbuzz(args.font)
 for test in new_tests:
     buf = vh.shape(test["input"])
     test["expectation"] = vh.serialize_buf(buf)
+    if args.only:
+        test["only"] = os.path.basename(args.font)
+    test["note"] = "Added by SIESTA"
 
 suite["tests"].extend(new_tests)
 json.dump(suite, fh, sort_keys=True, indent=4, ensure_ascii=False)
