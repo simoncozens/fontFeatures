@@ -193,7 +193,7 @@ if "mark" not in ff.features and "mkmk" in ff.features:
 
 for featuretag, routines in ff.features.items():
     code = "\n".join([routine.asFea() for routine in routines])
-    if featuretag in ["mark", "mkmk"]:
+    if featuretag in ["mark", "mkmk", "dist", "kern"]:
         code = "# Automatic Code Start\n" + code
     glyphs.features.append(GSFeature(name=featuretag, code=code))
 
