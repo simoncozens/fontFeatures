@@ -1,0 +1,164 @@
+"""Stupid Inefficient Exhaustive Shaping Test Architecture."""
+import argparse
+import json
+import os
+import random
+import sys
+
+import tqdm
+from babelfont import load
+from fontFeatures.shaperLib.Buffer import Buffer
+from fontFeatures.shaperLib.Shaper import Shaper
+from fontFeatures.ttLib import unparse
+from fontTools.ttLib import TTFont
+from vharfbuzz import Vharfbuzz
+
+parser = argparse.ArgumentParser(description="Test coverage of OT features.")
+subparsers = parser.add_subparsers(required=True, dest="cmd")
+report = subparsers.add_parser("report")
+report.add_argument("--suite", help="Test suite to read", metavar="JSON", required=True)
+report.add_argument("font", metavar="TTF", help="font file")
+
+generate = subparsers.add_parser("generate")
+generate.add_argument(
+    "--suite",
+    help="Test suite to update/create (defaults to test.json)",
+    metavar="JSON",
+    default="test.json",
+)
+generate.add_argument(
+    "--only", action="store_true", help="Add \"'only': FONT\" to JSON test cases"
+)
+generate.add_argument("font", metavar="TTF", help="font file")
+args = parser.parse_args()
+
+
+font = TTFont(args.font)
+ff = unparse(font)
+bbfont = load(args.font)
+num_routines = 0
+num_rules = 0
+
+
+# Monkeypatch shaperLib functions
+def wrap_do_apply(fn):
+    def result(*args, **kwargs):
+        fn.__self__.applied = True
+        fn.__self__.parent.applied = True
+        return fn(*args, **kwargs)
+
+    return result
+
+
+for r in ff.routines:
+    r.applied = False
+    num_routines += 1
+    for rule in r.rules:
+        rule.applied = False
+        rule.parent = r
+        rule._do_apply = wrap_do_apply(rule._do_apply)
+        num_rules += 1
+
+
+def count_triggered(ff):
+    num_triggered_routines = 0
+    num_triggered_rules = 0
+    for r in ff.routines:
+        if r.applied:
+            num_triggered_routines += 1
+        for rule in r.rules:
+            if rule.applied:
+                num_triggered_rules += 1
+    return num_triggered_routines, num_triggered_rules
+
+
+num_triggered_routines = 0
+num_triggered_rules = 0
+
+shaper = Shaper(ff, bbfont)
+
+unicodes = list(font.getBestCmap().keys())
+
+rule = tqdm.tqdm(
+    total=num_rules,
+    position=1,
+    colour="green",
+    desc="Rules  ",
+    bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt}",
+)
+routine = tqdm.tqdm(
+    total=num_routines,
+    position=2,
+    colour="yellow",
+    desc="Lookups",
+    bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt}",
+)
+
+if args.cmd == "generate":
+    # Remove those not involved in rules?
+    # Complex shapers may mess this up?
+    involved = set()
+    for r in ff.routines:
+        involved = involved | r.involved_glyphs
+    unicodes = [c for c in unicodes if font.getBestCmap()[c] in involved]
+    unicodes = [chr(c) for c in unicodes]
+    string_length = 20
+
+
+def run_a_test(string, tests=None, output=True):
+    global num_triggered_routines
+    global num_triggered_rules
+    buf = Buffer(bbfont, unicodes=string)
+    try:
+        shaper.execute(buf)
+    except Exception:
+        return False
+    new_triggered_routines, new_triggered_rules = count_triggered(ff)
+    if (
+        new_triggered_routines > num_triggered_routines
+        or new_triggered_rules > num_triggered_rules
+    ):
+        if output:
+            routine.write(string)
+        if tests is not None:
+            tests.append({"input": string})
+        rule.n = 0
+        rule.update(new_triggered_rules)
+        routine.n = 0
+        routine.update(new_triggered_routines)
+    num_triggered_rules = new_triggered_rules
+    num_triggered_routines = new_triggered_routines
+    return new_triggered_rules == num_rules  # Done?
+
+
+tests = []
+if args.suite and os.path.exists(args.suite):
+    suite = json.load(open(args.suite))
+    if "tests" not in suite:
+        suite["tests"] = []
+    for t in suite["tests"]:
+        run_a_test(t["input"], tests=None, output=False)
+
+if args.cmd == "report":
+    sys.exit(0)
+
+new_tests = []
+
+try:
+    while True:
+        string = "".join(random.choices(unicodes, k=random.randint(2, string_length)))
+        if run_a_test(string, tests=new_tests, output=True):
+            break
+except KeyboardInterrupt as e:
+    pass
+
+fh = open(args.suite, "w")
+# Use HB for gold-standard output
+vh = Vharfbuzz(args.font)
+for test in new_tests:
+    buf = vh.shape(test["input"])
+    test["expectation"] = vh.serialize_buf(buf)
+
+suite["tests"].extend(new_tests)
+json.dump(suite, fh, sort_keys=True, indent=4, ensure_ascii=False)
+sys.exit(0)
