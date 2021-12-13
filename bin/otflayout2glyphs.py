@@ -102,10 +102,7 @@ for feature in ["mark", "mkmk"]:
             new_mark.append(rr)
         else:
             del ff.routines[ff.routines.index(routine)]
-    if new_mark:
-        ff.features[feature] = new_mark
-    else:
-        del ff.features[feature]
+    ff.features[feature] = new_mark
 
 # kern
 
@@ -143,10 +140,8 @@ for feature in ["kern", "dist"]:
             new_kern.append(rr)
         else:
             del ff.routines[ff.routines.index(routine)]
-    if new_kern:
-        ff.features[feature] = new_kern
-    else:
-        del ff.features[feature]
+    ff.features[feature] = new_kern
+
 
 # Fix GDEF classes
 for glyph, cat in ff.glyphclasses.items():
@@ -203,5 +198,37 @@ for script, langs in ff.scripts_and_languages.items():
     for lang in langs:
         code += f"languagesystem {script} {lang};\n"
 glyphs.featurePrefixes.append(GSFeaturePrefix(name="Languagesystems", code=code))
+
+# Resolve duplicate anchors
+#  Get names of all anchors
+glyphs_with_anchor = {}
+for g in glyphs.glyphs:
+    for l in g.layers:
+        for a in l.anchors:
+            glyphs_with_anchor.setdefault(a.name, set()).add(g.name)
+
+our_anchors = [a for a in glyphs_with_anchor.keys() if "Anchor" in a]
+their_anchors = [a for a in glyphs_with_anchor.keys() if "Anchor" not in a]
+drop_anchors = set()
+if their_anchors:
+    for theirs in their_anchors:
+        for ours in our_anchors:
+            if glyphs_with_anchor[theirs] != glyphs_with_anchor[ours]:
+                continue
+            same = True
+            for g in glyphs_with_anchor[theirs]:
+                for l in glyphs.glyphs[g].layers:
+                    if l.anchors[theirs].position != l.anchors[ours].position:
+                        same = False
+            if not same:
+                continue
+            print("Our anchor '%s' was duplicate of original source '%s'" % (ours, theirs))
+            drop_anchors.add(ours)
+            break
+
+for to_drop in drop_anchors:
+    for glyph in glyphs_with_anchor[to_drop]:
+        for l in glyphs.glyphs[glyph].layers:
+            del l.anchors[to_drop]
 
 glyphs.save(args.output)
