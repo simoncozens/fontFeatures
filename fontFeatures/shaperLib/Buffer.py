@@ -60,6 +60,9 @@ class BufferItem:
     def map_to_glyph(self, font):
         if not self.glyph:
             self.glyph = font.unicode_map.get(self.codepoint)
+        if not self.glyph:
+            # Notdef
+            self.glyph = list(font.glyphs.keys())[0]
         self.prep_glyph(font)
 
     def prep_glyph(self, font):
