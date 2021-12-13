@@ -1,3 +1,4 @@
+#!/bin/env python3
 """Stupid Inefficient Exhaustive Shaping Test Architecture."""
 import argparse
 import json
@@ -28,6 +29,9 @@ generate.add_argument(
 )
 generate.add_argument(
     "--only", action="store_true", help="Add \"'only': FONT\" to JSON test cases"
+)
+generate.add_argument(
+    "--no-dotted-circle", action="store_true", help="Don't add tests with dotted circles"
 )
 generate.add_argument("font", metavar="TTF", help="font file")
 args = parser.parse_args()
@@ -79,6 +83,8 @@ shaper = Shaper(ff, bbfont)
 
 unicodes = list(font.getBestCmap().keys())
 
+dotted_circle = font.getBestCmap().get(0x25CC)
+
 rule = tqdm.tqdm(
     total=num_rules,
     position=1,
@@ -109,10 +115,9 @@ def run_a_test(string, tests=None, output=True):
     global num_triggered_routines
     global num_triggered_rules
     buf = Buffer(bbfont, unicodes=string)
-    try:
-        shaper.execute(buf)
-    except Exception:
-        return False
+    shaper.execute(buf)
+    if dotted_circle and args.no_dotted_circle and dotted_circle in buf.serialize():
+        return
     new_triggered_routines, new_triggered_rules = count_triggered(ff)
     if (
         new_triggered_routines > num_triggered_routines
