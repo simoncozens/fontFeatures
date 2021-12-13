@@ -83,7 +83,7 @@ class BufferItem:
                 # We tolerate broken fonts in pytest
                 pass
             else:
-                raise e
+                raise ValueError("Could not get xAdvance for glyph %s (%i)" % (self.glyph, self.codepoint))
 
     def recategorize(self, font):
         try:
