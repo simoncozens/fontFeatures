@@ -66,10 +66,11 @@ class BufferItem:
         self.prep_glyph(font)
 
     def prep_glyph(self, font):
-        if self.glyph in font.exportedGlyphs():
-            self.gid = font.exportedGlyphs().index(self.glyph)
-        else:
-            self.gid = -1 # ?
+        if "pytest" in sys.modules:
+            if self.glyph in font.exportedGlyphs():
+                self.gid = font.exportedGlyphs().index(self.glyph)
+            else:
+                self.gid = -1 # ?
         self.substituted = False
         self.ligated = False
         self.multiplied = False
