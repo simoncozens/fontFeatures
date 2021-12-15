@@ -5,7 +5,9 @@ import json
 import os
 import random
 import sys
+import itertools
 
+import fontFeatures
 import tqdm
 from babelfont import load
 from fontFeatures.shaperLib.Buffer import Buffer
@@ -31,7 +33,20 @@ generate.add_argument(
     "--only", action="store_true", help="Add \"'only': FONT\" to JSON test cases"
 )
 generate.add_argument(
-    "--no-dotted-circle", action="store_true", help="Don't add tests with dotted circles"
+    "--just-blobs",
+    action="store_true",
+    help="Only use glyph sequences known to trigger rules",
+)
+generate.add_argument(
+    "--no-dotted-circle",
+    action="store_true",
+    help="Don't add tests with dotted circles",
+)
+generate.add_argument(
+    "--string-length",
+    type=int,
+    default=5,
+    help="Maximum string length",
 )
 generate.add_argument("font", metavar="TTF", help="font file")
 args = parser.parse_args()
@@ -85,6 +100,42 @@ unicodes = list(font.getBestCmap().keys())
 
 dotted_circle = font.getBestCmap().get(0x25CC)
 
+if args.cmd == "generate":
+    # Remove those not involved in rules?
+    # Complex shapers may mess this up?
+    involved = set()
+    reversecmap = font["cmap"].buildReversed()
+
+    blobs = []
+    for r in ff.routines:
+        involved = involved | r.involved_glyphs
+        for rule in r.rules:
+            if isinstance(rule, fontFeatures.Attachment):
+                fullinput = [list(rule.bases.keys())] + [list(rule.marks.keys())]
+            else:
+                fullinput = (
+                    rule.precontext
+                    + getattr(rule, "input", [])
+                    + getattr(rule, "glyphs", [])
+                    + rule.postcontext
+                )
+            allowable = []
+            for slot in fullinput:
+                this_slot = []
+                for x in slot:
+                    if x in reversecmap:
+                        this_slot.extend([chr(c) for c in reversecmap[x]])
+                allowable.append(this_slot)
+            if all(allowable):
+                blobs.extend(["".join(blob) for blob in itertools.product(*allowable)])
+
+    unicodes = [c for c in unicodes if font.getBestCmap()[c] in involved]
+    unicodes = [chr(c) for c in unicodes]
+    if args.just_blobs:
+        unicodes = []
+    unicodes.extend(blobs)
+
+
 rule = tqdm.tqdm(
     total=num_rules,
     position=1,
@@ -100,24 +151,18 @@ routine = tqdm.tqdm(
     bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt}",
 )
 
-if args.cmd == "generate":
-    # Remove those not involved in rules?
-    # Complex shapers may mess this up?
-    involved = set()
-    for r in ff.routines:
-        involved = involved | r.involved_glyphs
-    unicodes = [c for c in unicodes if font.getBestCmap()[c] in involved]
-    unicodes = [chr(c) for c in unicodes]
-    string_length = 20
-
 
 def run_a_test(string, tests=None, output=True):
     global num_triggered_routines
     global num_triggered_rules
     buf = Buffer(bbfont, unicodes=string)
-    shaper.execute(buf)
+    try:
+        shaper.execute(buf)
+    except Exception:
+        return False
     if dotted_circle and args.no_dotted_circle and dotted_circle in buf.serialize():
-        return
+        return False
+
     new_triggered_routines, new_triggered_rules = count_triggered(ff)
     if (
         new_triggered_routines > num_triggered_routines
@@ -152,7 +197,9 @@ new_tests = []
 
 try:
     while True:
-        string = "".join(random.choices(unicodes, k=random.randint(2, string_length)))
+        string = "".join(
+            random.choices(unicodes, k=random.randint(2, args.string_length))
+        )
         if run_a_test(string, tests=new_tests, output=True):
             break
 except KeyboardInterrupt as e:
@@ -170,4 +217,9 @@ for test in new_tests:
 
 suite["tests"].extend(new_tests)
 json.dump(suite, fh, sort_keys=True, indent=4, ensure_ascii=False)
+
+print("The following lookups were not triggered:")
+for r in ff.routines:
+    if not r.applied:
+        print(r.asFea())
 sys.exit(0)
