@@ -70,7 +70,7 @@ class Layout2Glyphs:
         self.ff = ff
 
     def process(self):
-        for feature in ["mark", "mkmk"]:
+        for feature in ["mark", "mkmk", "curs"]:
             if feature in self.ff.features:
                 self.add_anchors(feature)
         for feature in ["kern", "dist"]:
@@ -100,10 +100,16 @@ class Layout2Glyphs:
             for rule in routine.rules:
                 if isinstance(rule, fontFeatures.Attachment):
                     delete_me = True
-                    anchor_name = rule.base_name
+                    if feature == "curs":
+                        anchor_name = "entry"
+                    else:
+                        anchor_name = rule.base_name
                     for base, pos in rule.bases.items():
                         self.add_anchor_to_glyph(base, anchor_name, pos)
-                    anchor_name = "_" + rule.base_name
+                    if feature == "curs":
+                        anchor_name = "exit"
+                    else:
+                        anchor_name = "_"+rule.base_name
                     for mark, pos in rule.marks.items():
                         self.add_anchor_to_glyph(mark, anchor_name, pos)
             if not delete_me:
@@ -111,6 +117,7 @@ class Layout2Glyphs:
             else:
                 del self.ff.routines[self.ff.routines.index(routine)]
         self.ff.features[feature] = new_mark
+
 
     def add_kerning(self, feature):
         kern = self.ff.features[feature]
