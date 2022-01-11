@@ -150,6 +150,7 @@ routine = tqdm.tqdm(
     desc="Lookups",
     bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt}",
 )
+vh = Vharfbuzz(args.font)
 
 
 def run_a_test(string, tests=None, output=True):
@@ -160,8 +161,12 @@ def run_a_test(string, tests=None, output=True):
         shaper.execute(buf)
     except Exception:
         return False
-    if dotted_circle and args.no_dotted_circle and dotted_circle in buf.serialize():
-        return False
+
+    if dotted_circle and args.no_dotted_circle:
+        # Check HB, FF shaper doesn't always add dotted circles
+        buf2 = vh.shape(string)
+        if dotted_circle in vh.serialize_buf(buf2):
+            return False
 
     new_triggered_routines, new_triggered_rules = count_triggered(ff)
     if (
@@ -207,7 +212,6 @@ except KeyboardInterrupt as e:
 
 fh = open(args.suite, "w")
 # Use HB for gold-standard output
-vh = Vharfbuzz(args.font)
 for test in new_tests:
     buf = vh.shape(test["input"])
     test["expectation"] = vh.serialize_buf(buf)
