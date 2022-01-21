@@ -28,8 +28,8 @@ def warning_on_one_line(message, category, filename, lineno, file=None, line=Non
 warnings.formatwarning = warning_on_one_line
 
 parser = ArgumentParser()
-parser.add_argument("binary", help="binary font file to process", metavar="TTF")
 parser.add_argument("source", help="source file to process", metavar="SOURCE")
+parser.add_argument("firstmaster", help="binary font file to process", metavar="TTF")
 parser.add_argument(
     "-o",
     "--output",
@@ -37,17 +37,10 @@ parser.add_argument(
     help="Output source file (defaults to overwriting original)",
 )
 parser.add_argument(
-    "-i",
-    "--index",
-    dest="index",
-    type=int,
-    default=-1,
-    help="Font index number (required for collections)",
-)
-
-parser.add_argument(
     "--config", default=None, help="config file to process", metavar="CONFIG"
 )
+parser.add_argument("othermasters", help="additional binary masters", metavar="TTF", nargs="*")
+
 args = parser.parse_args()
 
 config = {}
@@ -57,25 +50,14 @@ if args.config:
     with open(args.config) as f:
         config = json.load(f)
 
-if args.binary.endswith("c") and args.index == -1:
-    print(
-        "Must provide -i argument with TrueType/OpenType collection file",
-        file=sys.stderr,
-    )
-    sys.exit(1)
-
 class Layout2Glyphs:
-    def __init__(self, gsfont, ff):
+    def __init__(self, gsfont, ff, master=0):
         self.gsfont = gsfont
         self.ff = ff
+        self.master = master
 
     def process(self):
-        for feature in ["mark", "mkmk", "curs"]:
-            if feature in self.ff.features:
-                self.add_anchors(feature)
-        for feature in ["kern", "dist"]:
-            if feature in ff.features:
-                self.add_kerning(feature)
+        self.process_gpos()
         self.fix_gdef_classes()
         self.add_named_classes()
         self.add_routines_to_feature_prefix()
@@ -84,12 +66,19 @@ class Layout2Glyphs:
         self.add_language_systems()
         self.fix_duplicate_anchors()
 
+    def process_gpos(self):
+        for feature in ["mark", "mkmk", "curs", "abvm", "blwm", "dist"]:
+            if feature in self.ff.features:
+                self.add_anchors(feature)
+        for feature in ["kern", "dist"]:
+            if feature in ff.features:
+                self.add_kerning(feature)
+
+
     def add_anchor_to_glyph(self, glyphname, anchor_name, pos):
         anchor = GSAnchor(name=anchor_name, position=Point(*pos))
         glyph = self.gsfont.glyphs[glyphname]
-        if len(glyph.layers) > 1:
-            raise NotImplementedError("Can't deal with variable fonts yet")
-        glyph.layers[0].anchors.append(anchor)
+        glyph.layers[self.master].anchors.append(anchor)
 
     def add_anchors(self, feature):
         mark = self.ff.features[feature]
@@ -100,13 +89,13 @@ class Layout2Glyphs:
             for rule in routine.rules:
                 if isinstance(rule, fontFeatures.Attachment):
                     delete_me = True
-                    if feature == "curs":
+                    if "Cursive" in routine.name:
                         anchor_name = "entry"
                     else:
                         anchor_name = rule.base_name
                     for base, pos in rule.bases.items():
                         self.add_anchor_to_glyph(base, anchor_name, pos)
-                    if feature == "curs":
+                    if "Cursive" in routine.name:
                         anchor_name = "exit"
                     else:
                         anchor_name = "_"+rule.base_name
@@ -118,6 +107,25 @@ class Layout2Glyphs:
                 del self.ff.routines[self.ff.routines.index(routine)]
         self.ff.features[feature] = new_mark
 
+    def add_kern(self, left, right, val):
+        old_val = self.gsfont.kerningForPair(
+            self.gsfont.masters[self.master].id,
+            left,
+            right,
+        )
+        if old_val == self.gsfont.EMPTY_KERNING_VALUE:
+            old_val = 0
+        else:
+            # return
+            print("Adding %i to existing kern %s/%s=%i" % (val, left, right, old_val))
+        if not val:
+            return
+        self.gsfont.setKerningForPair(
+            self.gsfont.masters[self.master].id,
+            left,
+            right,
+            old_val + val
+        )
 
     def add_kerning(self, feature):
         kern = self.ff.features[feature]
@@ -125,6 +133,7 @@ class Layout2Glyphs:
         for rr in kern:
             routine = rr.routine
             delete_me = False
+            pairs = set()
             for rule in routine.rules:
                 if isinstance(rule, fontFeatures.Positioning):
                     # Is it pair positioning
@@ -132,15 +141,15 @@ class Layout2Glyphs:
                         break
                     # Is it a simple kern?
                     if not (rule.valuerecords[0] and not rule.valuerecords[1]):
-                        break
+                        continue
+                    if not rule.valuerecords[0].xAdvance:
+                        continue
                     for left in rule.glyphs[0]:
                         for right in rule.glyphs[1]:
-                            self.gsfont.setKerningForPair(
-                                self.gsfont.masters[0].id,
-                                left,
-                                right,
-                                rule.valuerecords[0].xAdvance,
-                            )
+                            if (left, right) in pairs:
+                                continue
+                            pairs.add((left,right))
+                            self.add_kern(left, right, rule.valuerecords[0].xAdvance)
                             print(
                                 "# Kerning %s %s = %i"
                                 % (left, right, rule.valuerecords[0].xAdvance)
@@ -149,7 +158,7 @@ class Layout2Glyphs:
 
             if not delete_me:
                 new_kern.append(rr)
-            else:
+            elif routine in ff.routines:
                 del ff.routines[ff.routines.index(routine)]
         ff.features[feature] = new_kern
 
@@ -194,7 +203,10 @@ class Layout2Glyphs:
 
     def add_features_to_glyphs(self):
         for featuretag, routines in self.ff.features.items():
-            code = "\n".join([routine.asFea() for routine in routines])
+            code = "\n".join([
+                f"# {routine.languages}\n"+
+                routine.asFea() for routine in routines
+            ])
             if featuretag in ["mark", "mkmk", "dist", "kern"]:
                 code = "# Automatic Code Start\n" + code
             self.gsfont.features.append(GSFeature(name=featuretag, code=code))
@@ -238,12 +250,19 @@ class Layout2Glyphs:
                 for l in self.gsfont.glyphs[glyph].layers:
                     del l.anchors[to_drop]
 
-font = TTFont(args.binary, fontNumber=args.index)
-ff = unparse(font, do_gdef=True, doLookups=True, config=config)
-
 gsfont = glyphsLib.load(open(args.source))
 
+font = TTFont(args.firstmaster)
+
+ff = unparse(font, do_gdef=True, doLookups=True, config=config)
+
 Layout2Glyphs(gsfont, ff).process()
+
+for ix, master in enumerate(args.othermasters):
+    print("%s -> %i" % (master, ix+1))
+    font = TTFont(master)
+    ff = unparse(font, do_gdef=True, doLookups=True, config=config)
+    Layout2Glyphs(gsfont, ff, master=ix+1).process_gpos()
 
 if not args.output:
     args.output = args.source
