@@ -73,6 +73,8 @@ def asFeaAST(self):
         if x.address and x.address != lastaddress:
             f.statements.append(feaast.Comment("# Original source: %s " % x.address))
             lastaddress = x.address
+        if hasattr(x, "note"):
+            f.statements.append(feaast.Comment("\n".join([ f"# {n}" for n in x.note.split("\n")])))
         f.statements.append(x.asFeaAST())
     return f
 
