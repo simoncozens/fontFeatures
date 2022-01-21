@@ -6,6 +6,7 @@ import os
 import random
 import sys
 import itertools
+import re
 
 import fontFeatures
 import tqdm
@@ -33,6 +34,11 @@ generate.add_argument(
     "--only", action="store_true", help="Add \"'only': FONT\" to JSON test cases"
 )
 generate.add_argument(
+    "--restrict-unicodes",
+    help="Restrict unicodes to the given range(s, comma separated)",
+    metavar="RANGE",
+)
+generate.add_argument(
     "--just-blobs",
     action="store_true",
     help="Only use glyph sequences known to trigger rules",
@@ -50,6 +56,18 @@ generate.add_argument(
 )
 generate.add_argument("font", metavar="TTF", help="font file")
 args = parser.parse_args()
+
+
+def restrict(unicodes, range_arg):
+    allowable = set()
+    ranges = range_arg.split(",")
+    for r in ranges:
+        m = re.match(r"\s*([0-9A-Fa-f]+)-([0-9A-Fa-f]+)", r)
+        if not m:
+            raise ValueError(f"Could not understand range {r}")
+        for cp in range(int(m[1], 16), int(m[2], 16) + 1):
+            allowable.add(chr(cp))
+    return set(allowable) & set(unicodes)
 
 
 font = TTFont(args.font)
@@ -108,7 +126,10 @@ if args.cmd == "generate":
 
     blobs = []
     for r in ff.routines:
-        involved = involved | r.involved_glyphs
+        try:
+            involved = involved | r.involved_glyphs
+        except Exception:
+            pass
         for rule in r.rules:
             if isinstance(rule, fontFeatures.Attachment):
                 fullinput = [list(rule.bases.keys())] + [list(rule.marks.keys())]
@@ -131,6 +152,8 @@ if args.cmd == "generate":
 
     unicodes = [c for c in unicodes if font.getBestCmap()[c] in involved]
     unicodes = [chr(c) for c in unicodes]
+    if args.restrict_unicodes:
+        unicodes = list(restrict(unicodes, args.restrict_unicodes))
     if args.just_blobs:
         unicodes = []
     unicodes.extend(blobs)
