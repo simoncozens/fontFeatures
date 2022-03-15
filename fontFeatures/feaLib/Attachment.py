@@ -45,15 +45,15 @@ def feaPreamble(self, ff):
         ff.scratch["mark_classes_done"] = {}
     b = feaast.Block()
     for mark in self.markslist:
-        if not (self.base_name, tuple(mark[0])) in ff.scratch["mark_classes_done"]:
+        if not (self.mark_name, tuple(mark[0])) in ff.scratch["mark_classes_done"]:
             b.statements.append(
                 feaast.MarkClassDefinition(
-                    feaast.MarkClass(self.base_name),
+                    feaast.MarkClass(self.mark_name),
                     feaast.Anchor(fix_scalar(mark[1][0]), fix_scalar(mark[1][1])),
                     _glyphref(mark[0]),
                 )
             )
-            ff.scratch["mark_classes_done"][(self.base_name, tuple(mark[0]))] = True
+            ff.scratch["mark_classes_done"][(self.mark_name, tuple(mark[0]))] = True
     return [b]
 
 
@@ -82,7 +82,7 @@ def asFeaAST(self):
             b.statements.append(
                 statementtype(
                     _glyphref(base[0]),
-                    [[feaast.Anchor(fix_scalar(base[1][0]), fix_scalar(base[1][1])), feaast.MarkClass(self.base_name)]],
+                    [[feaast.Anchor(fix_scalar(base[1][0]), fix_scalar(base[1][1])), feaast.MarkClass(self.mark_name)]],
                 )
             )
 
