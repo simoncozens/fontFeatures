@@ -11,7 +11,7 @@ class FeaParser:
         featurefile: File object or string.
         font: Optionally, a TTFont object.
     """
-    def __init__(self, featurefile, font=None):
+    def __init__(self, featurefile, font=None, includeDir=None):
 
         self.ff = fontFeatures.FontFeatures()
         self.markclasses = {}
@@ -25,7 +25,7 @@ class FeaParser:
         if isinstance(featurefile, str):
             featurefile = io.StringIO(featurefile)
         self.featurefile = featurefile
-        self.parser = Parser(self.featurefile, self.glyphmap)
+        self.parser = Parser(self.featurefile, self.glyphmap, includeDir=includeDir)
         self.parser.ast.ValueRecord = fontFeatures.ValueRecord
 
     def parse(self):
