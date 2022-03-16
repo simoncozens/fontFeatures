@@ -275,6 +275,15 @@ class FeaParser:
     def add_language_system(self, location, script, language):
         pass
 
+    def setElidedFallbackName(self, location, *args):
+        pass
+    def addDesignAxis(self, location, *args):
+        pass
+    def addAxisValueRecord(self, location, *args):
+        pass
+    def add_ligatureCaretByPos_(self, location, *args): # Urgh
+        pass
+
     def add_lookup_call(self, lookup_name):
 
         routine = self.ff.routineNamed(lookup_name)
