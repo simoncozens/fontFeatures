@@ -63,7 +63,6 @@ class FeaParser:
 
     def _start_routine(self, location, name):
         location = "%s:%i:%i" % (location)
-        # print("Starting routine at "+location)
         self._discard_empty_routine()
         self.currentRoutine = fontFeatures.Routine(name=name, address=location)
         if not name:
@@ -302,13 +301,16 @@ class FeaParser:
     def _discard_empty_routine(self):
         if not self.currentFeature:
             return
-        if self.currentRoutine and not self.currentRoutine.rules:
-            if self.currentRoutine not in  self.ff.routines:
-                # print("%s escaped!" % self.currentRoutine.name)
-                return
-            del(self.ff.routines[self.ff.routines.index(self.currentRoutine)])
-            if self.currentFeature in self.ff.features:
-                del(self.ff.features[self.currentFeature][-1])
+
+        # If there genuinely is an empty routine, we should keep it, no?
+        # The only problem is that for some reason, we're generating empty
+        # routines when they should have rules in them, and this is causing
+        # some feature files to fail to parse. :-/
+
+        # if self.currentRoutine and not self.currentRoutine.rules:
+        #     del(self.ff.routines[self.ff.routines.index(self.currentRoutine)])
+        #     if self.currentFeature in self.ff.features:
+        #         del(self.ff.features[self.currentFeature][-1])
         pass
 
     def add_feature_reference(self, location, featurename):
