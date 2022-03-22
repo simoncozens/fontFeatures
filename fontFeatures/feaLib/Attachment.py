@@ -54,7 +54,7 @@ def feaPreamble(self, ff):
                     _glyphref(mark[0]),
                 )
             )
-            ff.scratch["mark_classes_done"][(self.mark_name, tuple(mark[0]))] = True
+            ff.scratch["mark_classes_done"][(fullname, tuple(mark[0]))] = True
     return [b]
 
 
