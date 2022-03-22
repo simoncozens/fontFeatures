@@ -44,11 +44,12 @@ def feaPreamble(self, ff):
     if not "mark_classes_done" in ff.scratch:
         ff.scratch["mark_classes_done"] = {}
     b = feaast.Block()
+    fullname = self.base_name + "_" + self.mark_name
     for mark in self.markslist:
-        if not (self.mark_name, tuple(mark[0])) in ff.scratch["mark_classes_done"]:
+        if not (fullname, tuple(mark[0])) in ff.scratch["mark_classes_done"]:
             b.statements.append(
                 feaast.MarkClassDefinition(
-                    feaast.MarkClass(self.mark_name),
+                    feaast.MarkClass(fullname),
                     feaast.Anchor(fix_scalar(mark[1][0]), fix_scalar(mark[1][1])),
                     _glyphref(mark[0]),
                 )
@@ -74,6 +75,7 @@ def asFeaAST(self):
             sortByAnchor(self)  # e.g. when testing
         for base in self.baseslist:
             statementtype = feaast.MarkBasePosStatement
+            fullname = self.base_name + "_" + self.mark_name
             if self.font:
                 if categorize_glyph(self.font, base[0][0])[0] == "mark":
                     statementtype = feaast.MarkMarkPosStatement
@@ -82,7 +84,7 @@ def asFeaAST(self):
             b.statements.append(
                 statementtype(
                     _glyphref(base[0]),
-                    [[feaast.Anchor(fix_scalar(base[1][0]), fix_scalar(base[1][1])), feaast.MarkClass(self.mark_name)]],
+                    [[feaast.Anchor(fix_scalar(base[1][0]), fix_scalar(base[1][1])), feaast.MarkClass(fullname)]],
                 )
             )
 
