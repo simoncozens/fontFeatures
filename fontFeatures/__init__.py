@@ -413,7 +413,7 @@ class Routine:
     @property
     def involved_glyphs(self):
         """Returns the names of all of the glyphs involved in this Routine."""
-        return set.union(*[r.involved_glyphs for r in self.rules])
+        return set().union(*(r.involved_glyphs for r in self.rules))
 
     @property
     def stage(self):
