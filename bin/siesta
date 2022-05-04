@@ -31,6 +31,10 @@ generate.add_argument(
     default="test.json",
 )
 generate.add_argument(
+    "--language",
+    help="Language to pass to shaper",
+)
+generate.add_argument(
     "--only", action="store_true", help="Add \"'only': FONT\" to JSON test cases"
 )
 generate.add_argument(
@@ -179,7 +183,7 @@ vh = Vharfbuzz(args.font)
 def run_a_test(string, tests=None, output=True):
     global num_triggered_routines
     global num_triggered_rules
-    buf = Buffer(bbfont, unicodes=string)
+    buf = Buffer(bbfont, unicodes=string)#,language=args.language)
     try:
         shaper.execute(buf)
     except Exception:
@@ -216,6 +220,8 @@ if args.suite and os.path.exists(args.suite):
     if "tests" not in suite:
         suite["tests"] = []
     for t in suite["tests"]:
+        if "only" in t and os.path.basename(args.font) != t["only"]:
+            continue
         run_a_test(t["input"], tests=None, output=False)
 
 if args.cmd == "report":
@@ -234,13 +240,18 @@ except KeyboardInterrupt as e:
     pass
 
 fh = open(args.suite, "w")
+params = {}
+if args.language:
+    params["language"] = args.language
 # Use HB for gold-standard output
 for test in new_tests:
-    buf = vh.shape(test["input"])
+    buf = vh.shape(test["input"],parameters=params)
     test["expectation"] = vh.serialize_buf(buf)
     if args.only:
         test["only"] = os.path.basename(args.font)
     test["note"] = "Added by SIESTA"
+    for k,v in params.items():
+        test[k] = v
 
 suite["tests"].extend(new_tests)
 json.dump(suite, fh, sort_keys=True, indent=4, ensure_ascii=False)
