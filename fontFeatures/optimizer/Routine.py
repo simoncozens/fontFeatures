@@ -153,5 +153,5 @@ class EnsureFormat2Chaining:
 optimizations = [
     MergeMultipleSingleSubstitutions,
     EnsureFormat2Chaining,
-    MoveLongCoverageToClassDefinition,  # Runs last
+    # MoveLongCoverageToClassDefinition,  # Runs last
 ]
