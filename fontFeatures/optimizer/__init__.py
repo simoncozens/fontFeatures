@@ -17,11 +17,8 @@ class Optimizer:
 
         for routinelist in self.ff.features.values():
             for r in routinelist:
-                self.optimize_routine(r, level)
-                for k, v in self.ff.features.items():
-                    for n in v:
-                        if isinstance(n, fontFeatures.Routine):
-                            self.optimize_routine(n, level)
+                if isinstance(r, fontFeatures.Routine):
+                    self.optimize_routine(r, level)
 
         for optimization in overall_optimizations:
             if level >= optimization.level:
