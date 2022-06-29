@@ -26,7 +26,10 @@ class FeaParser:
         if isinstance(featurefile, str):
             featurefile = io.StringIO(featurefile)
         self.featurefile = featurefile
-        self.parser = Parser(self.featurefile, glyphNames=glyphNames, includeDir=includeDir)
+        if glyphNames:
+            self.parser = Parser(self.featurefile, glyphNames=glyphNames, includeDir=includeDir)
+        else:
+            self.parser = Parser(self.featurefile, includeDir=includeDir)
         self.parser.ast.ValueRecord = fontFeatures.ValueRecord
 
     def parse(self):
