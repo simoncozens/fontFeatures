@@ -10,8 +10,9 @@ class FeaParser:
     Args:
         featurefile: File object or string.
         font: Optionally, a TTFont object.
+        glyphNames: Optionally, a list of glyph names in the font
     """
-    def __init__(self, featurefile, font=None, includeDir=None):
+    def __init__(self, featurefile, font=None, glyphNames=None, includeDir=None):
 
         self.ff = fontFeatures.FontFeatures()
         self.markclasses = {}
@@ -20,12 +21,12 @@ class FeaParser:
         self.gensym = 1
         self.glyphmap = ()
         self.currentLanguage = None
-        if font:
-            self.glyphmap = font.getReverseGlyphMap()
+        if font and not glyphNames:
+            glyphNames = font.getGlyphOrder()
         if isinstance(featurefile, str):
             featurefile = io.StringIO(featurefile)
         self.featurefile = featurefile
-        self.parser = Parser(self.featurefile, self.glyphmap, includeDir=includeDir)
+        self.parser = Parser(self.featurefile, glyphNames=glyphNames, includeDir=includeDir)
         self.parser.ast.ValueRecord = fontFeatures.ValueRecord
 
     def parse(self):
