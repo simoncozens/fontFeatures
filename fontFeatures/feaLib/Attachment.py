@@ -10,7 +10,7 @@ def fix_scalar(scalar):
         return scalar
     if isinstance(scalar, float):
         return int(scalar)
-    if hasattr(scalar, "model"):
+    if hasattr(scalar, "axes"):
         # assume it's a variable scalar of some kind
         return scalar
     raise ValueError("Illegal anchor position %s" % scalar)
