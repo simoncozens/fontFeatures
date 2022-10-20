@@ -1,8 +1,19 @@
 import io
+import re
 import fontFeatures
 from fontTools.feaLib.parser import Parser
 import fontTools.feaLib.ast as ast
 from warnings import warn
+
+
+def bad_statement_to_comment(s):
+    # We could check through the attributes but that's hard...
+    fea = s.asFea()
+    if re.search(r"\[\s*\]", fea):  # Empty classes
+        warn("Empty class found in: '"+ fea+ "'")
+        return ast.Comment("# " + fea)
+    return s
+
 
 class FeaParser:
     """Turns a AFDKO feature file or string into a FontFeatures object.

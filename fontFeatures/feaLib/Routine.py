@@ -2,6 +2,7 @@
 import fontTools.feaLib.ast as feaast
 from fontFeatures.ttLib.Substitution import lookup_type as sub_lookup_type
 from fontFeatures.ttLib.Positioning import lookup_type as pos_lookup_type
+from fontFeatures.feaLib import bad_statement_to_comment
 import copy
 
 
@@ -75,7 +76,7 @@ def asFeaAST(self):
             lastaddress = x.address
         if hasattr(x, "note"):
             f.statements.append(feaast.Comment("\n".join([ f"# {n}" for n in x.note.split("\n")])))
-        f.statements.append(x.asFeaAST())
+        f.statements.append(bad_statement_to_comment(x.asFeaAST()))
     return f
 
 
