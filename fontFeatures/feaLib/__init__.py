@@ -260,20 +260,20 @@ class FeaParser:
         self._start_routine_if_necessary(location)
         location = "%s:%i:%i" % (location)
         for baseanchor, markclass in marks:
-            assert len(markclass.definitions) == 1
-            markanchor = markclass.definitions[0].anchor
-            s = fontFeatures.Attachment(
-                base_name=markclass.name,
-                mark_name=markclass.name,
-                bases={g: (baseanchor.x, baseanchor.y) for g in bases},
-                marks={
-                    g: (markanchor.x, markanchor.y) for g in markclass.glyphs.keys()
-                },
-                address=location,
-            languages=self.currentLanguage
-            )
-            s.fontfeatures = self.ff
-        self.currentRoutine.addRule(s)
+            for definition in markclass.definitions:
+                markanchor = definition.anchor
+                s = fontFeatures.Attachment(
+                    base_name=markclass.name,
+                    mark_name=markclass.name,
+                    bases={g: (baseanchor.x, baseanchor.y) for g in bases},
+                    marks={
+                        g: (markanchor.x, markanchor.y) for g in markclass.glyphs.keys()
+                    },
+                    address=location,
+                    languages=self.currentLanguage
+                )
+                s.fontfeatures = self.ff
+                self.currentRoutine.addRule(s)
 
     add_mark_mark_pos = add_mark_base_pos
 
