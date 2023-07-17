@@ -502,6 +502,7 @@ class RoutineReference:
     textual representation), in which case they will be resolved at a later time,
     or by providing a pointer to the :py:class:`Routine` object."""
     def __init__(self, name=None, routine=None):
+        self.languages = []
         self.routine = routine
         if self.routine:
             self.name = routine.name
