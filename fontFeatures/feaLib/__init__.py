@@ -10,7 +10,7 @@ def bad_statement_to_comment(s):
     # We could check through the attributes but that's hard...
     fea = s.asFea()
     if re.search(r"\[\s*\]", fea):  # Empty classes
-        warn("Empty class found in: '"+ fea+ "'")
+        warn("Empty class found in: '" + fea + "'")
         return ast.Comment("# " + fea)
     return s
 
@@ -23,8 +23,8 @@ class FeaParser:
         font: Optionally, a TTFont object.
         glyphNames: Optionally, a list of glyph names in the font
     """
-    def __init__(self, featurefile, font=None, glyphNames=None, includeDir=None):
 
+    def __init__(self, featurefile, font=None, glyphNames=None, includeDir=None):
         self.ff = fontFeatures.FontFeatures()
         self.markclasses = {}
         self.currentFeature = None
@@ -38,7 +38,9 @@ class FeaParser:
             featurefile = io.StringIO(featurefile)
         self.featurefile = featurefile
         if glyphNames:
-            self.parser = Parser(self.featurefile, glyphNames=glyphNames, includeDir=includeDir)
+            self.parser = Parser(
+                self.featurefile, glyphNames=glyphNames, includeDir=includeDir
+            )
         else:
             self.parser = Parser(self.featurefile, includeDir=includeDir)
         self.parser.ast.ValueRecord = fontFeatures.ValueRecord
@@ -118,13 +120,12 @@ class FeaParser:
         s = fontFeatures.Substitution(
             input_=[list(mapping.keys())],
             replacement=[list(mapping.values())],
-            precontext= [[str(g) for g in group] for group in prefix],
-            postcontext= [[str(g) for g in group] for group in suffix],
+            precontext=[[str(g) for g in group] for group in prefix],
+            postcontext=[[str(g) for g in group] for group in suffix],
             address=location,
-            languages=self.currentLanguage
+            languages=self.currentLanguage,
         )
         self.currentRoutine.addRule(s)
-
 
     def add_reverse_chain_single_subst(self, location, prefix, suffix, mapping):
         self._start_routine_if_necessary(location)
@@ -132,11 +133,11 @@ class FeaParser:
         s = fontFeatures.Substitution(
             input_=[list(mapping.keys())],
             replacement=[list(mapping.values())],
-            precontext= [[str(g) for g in group] for group in prefix],
-            postcontext= [[str(g) for g in group] for group in suffix],
+            precontext=[[str(g) for g in group] for group in prefix],
+            postcontext=[[str(g) for g in group] for group in suffix],
             address=location,
             languages=self.currentLanguage,
-            reverse=True
+            reverse=True,
         )
         self.currentRoutine.addRule(s)
 
@@ -148,10 +149,10 @@ class FeaParser:
         s = fontFeatures.Substitution(
             input_=[[glyph]],
             replacement=[[g] for g in replacements],
-            precontext= [[str(g) for g in group] for group in prefix],
-            postcontext= [[str(g) for g in group] for group in suffix],
+            precontext=[[str(g) for g in group] for group in prefix],
+            postcontext=[[str(g) for g in group] for group in suffix],
             address=location,
-            languages=self.currentLanguage
+            languages=self.currentLanguage,
         )
         self.currentRoutine.addRule(s)
 
@@ -161,10 +162,10 @@ class FeaParser:
         s = fontFeatures.Substitution(
             input_=[[glyph]],
             replacement=[replacement],
-            precontext= [[str(g) for g in group] for group in prefix],
-            postcontext= [[str(g) for g in group] for group in suffix],
+            precontext=[[str(g) for g in group] for group in prefix],
+            postcontext=[[str(g) for g in group] for group in suffix],
             address=location,
-            languages=self.currentLanguage
+            languages=self.currentLanguage,
         )
         self.currentRoutine.addRule(s)
 
@@ -176,10 +177,10 @@ class FeaParser:
         s = fontFeatures.Substitution(
             input_=[list(x) for x in glyphs],
             replacement=[[replacement]],
-            precontext= [[str(g) for g in group] for group in prefix],
-            postcontext= [[str(g) for g in group] for group in suffix],
+            precontext=[[str(g) for g in group] for group in prefix],
+            postcontext=[[str(g) for g in group] for group in suffix],
             address=location,
-            languages=self.currentLanguage
+            languages=self.currentLanguage,
         )
         self.currentRoutine.addRule(s)
 
@@ -195,11 +196,11 @@ class FeaParser:
                 mylookups.append(None)
         s = fontFeatures.Chaining(
             input_=[list(x) for x in glyphs],
-            precontext= [[str(g) for g in group] for group in prefix],
-            postcontext= [[str(g) for g in group] for group in suffix],
+            precontext=[[str(g) for g in group] for group in prefix],
+            postcontext=[[str(g) for g in group] for group in suffix],
             lookups=mylookups,
             address=location,
-            languages=self.currentLanguage
+            languages=self.currentLanguage,
         )
         self.currentRoutine.addRule(s)
 
@@ -211,10 +212,10 @@ class FeaParser:
         s = fontFeatures.Positioning(
             glyphs=[p[0] for p in pos],
             valuerecords=[p[1] for p in pos],
-            precontext= [[str(g) for g in group] for group in prefix],
-            postcontext= [[str(g) for g in group] for group in suffix],
+            precontext=[[str(g) for g in group] for group in prefix],
+            postcontext=[[str(g) for g in group] for group in suffix],
             address=location,
-            languages=self.currentLanguage
+            languages=self.currentLanguage,
         )
         self.currentRoutine.addRule(s)
 
@@ -222,8 +223,10 @@ class FeaParser:
         self._start_routine_if_necessary(location)
         location = "%s:%i:%i" % (location)
         s = fontFeatures.Positioning(
-            glyphs=[[glyph1], [glyph2]], valuerecords=[value1, value2], address=location,
-            languages=self.currentLanguage
+            glyphs=[[glyph1], [glyph2]],
+            valuerecords=[value1, value2],
+            address=location,
+            languages=self.currentLanguage,
         )
         self.currentRoutine.addRule(s)
 
@@ -234,7 +237,7 @@ class FeaParser:
             glyphs=[glyphclass1, glyphclass2],
             valuerecords=[value1, value2],
             address=location,
-            languages=self.currentLanguage
+            languages=self.currentLanguage,
         )
         self.currentRoutine.addRule(s)
 
@@ -252,7 +255,7 @@ class FeaParser:
             bases=basedict,
             marks=markdict,
             address=location,
-            languages=self.currentLanguage
+            languages=self.currentLanguage,
         )
         self.currentRoutine.addRule(s)
 
@@ -270,7 +273,7 @@ class FeaParser:
                         g: (markanchor.x, markanchor.y) for g in markclass.glyphs.keys()
                     },
                     address=location,
-                    languages=self.currentLanguage
+                    languages=self.currentLanguage,
                 )
                 s.fontfeatures = self.ff
                 self.currentRoutine.addRule(s)
@@ -292,19 +295,23 @@ class FeaParser:
 
     def setElidedFallbackName(self, location, *args):
         pass
+
     def addDesignAxis(self, location, *args):
         pass
+
     def addAxisValueRecord(self, location, *args):
         pass
-    def add_ligatureCaretByPos_(self, location, *args): # Urgh
+
+    def add_ligatureCaretByPos_(self, location, *args):  # Urgh
         pass
 
     def add_lookup_call(self, lookup_name):
-
         routine = self.ff.routineNamed(lookup_name)
+        rr = fontFeatures.RoutineReference(name=lookup_name, routine=routine)
+        rr.languages = self.currentLanguage
         if self.currentFeature:
             self._discard_empty_routine()
-            self.ff.addFeature(self.currentFeature, [routine])
+            self.ff.addFeature(self.currentFeature, [rr])
         else:
             raise ValueError("Huh?")
 
