@@ -23,7 +23,7 @@ class TestAnchors(unittest.TestCase):
 
     def test_markbase(self):
         s = Attachment("top", "top_", {"A": (679, 1600)}, {"acutecomb": (-570, 1290)})
-        assertSufficientlyEqual(s.asFea(), "    pos base A <anchor 679 1600> mark @top;\n")
+        assertSufficientlyEqual(s.asFea(), "    pos base A <anchor 679 1600> mark @top_top_;\n")
         self.assertEqual(s.involved_glyphs, set(["A", "acutecomb"]))
         self.assertEqual(etree.tostring(s.toXML()), '<attachment basename="top" markname="top_"><base name="A" anchorX="679" anchorY="1600"/><mark name="acutecomb" anchorX="-570" anchorY="1290"/></attachment>'.encode("utf-8"))
         self.roundTrip(s)

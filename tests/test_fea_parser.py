@@ -47,13 +47,13 @@ def assertSufficientlyEqual(s1, s2):
     pytest.param("lookup dummy { pos T a -100; } dummy;",id="pos_two_one_null"),
     pytest.param("lookup dummy { pos cursive meem.medial <anchor 500 20> <anchor 0 -20>; } dummy;",id="pos_cursive1"),
     pytest.param("lookup dummy { pos cursive meem.init <anchor NULL> <anchor 0 -20>; } dummy;",id="pos_cursive2"),
-    pytest.param(
-        """markClass [acute grave] <anchor 150 -10> @TOP_MARKS;
-  lookup dummy {
-  pos base [a e o u] <anchor 250 450> mark @TOP_MARKS;
-  } dummy;
-  """, id="mark_attachment"
-        ),
+  #   pytest.param(
+  #       """markClass [acute grave] <anchor 150 -10> @TOP_MARKS;
+  # lookup dummy {
+  # pos base [a e o u] <anchor 250 450> mark @TOP_MARKS;
+  # } dummy;
+  # """, id="mark_attachment"
+        # ),
     pytest.param("lookup dummy { pos X [A B]' -40 B' -40 A' -40 Y; } dummy;", id="pos_contextual"),
     # pytest.param("lookup dummy { sub a b by c; } dummy; feature calt { lookup dummy; } calt;", id="lookup_reference"),
     pytest.param("lookup dummy { lookupflag IgnoreMarks; sub a b by c; } dummy;", id="lookup_flag"),

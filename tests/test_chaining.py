@@ -36,7 +36,7 @@ class TestChaining(unittest.TestCase):
 
     def test_ignore(self):
         c = Chaining([["a"], ["b"]], lookups=[])
-        self.assertEqual(c.asFea(), "ignore sub a b;")
+        self.assertEqual(c.asFea(), "ignore sub a' b';")
 
     def test_complex(self):
         pos1 = Substitution(["a"], ["b"])

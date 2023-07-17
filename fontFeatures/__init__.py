@@ -864,9 +864,9 @@ class Attachment(Rule):
         self,
         base_name,
         mark_name,
-        fullname=None,
         bases=None,
         marks=None,
+        fullname=None,
         flags=0,
         address=None,
         font=None,
@@ -875,7 +875,7 @@ class Attachment(Rule):
     ):
         self.base_name = base_name
         self.mark_name = mark_name
-        self.fullname = fullname or self.base_name + "_" + self.mark_name
+        self.fullname = fullname or (self.base_name + "_" + self.mark_name)
         self.bases = bases or {}
         self.marks = marks or {}
         self.flags = flags
