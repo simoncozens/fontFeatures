@@ -1,5 +1,4 @@
 glyphtools>=0.7.0
 fs
 fontTools>=4.28.0
-beziers>=0.1.0
 lxml

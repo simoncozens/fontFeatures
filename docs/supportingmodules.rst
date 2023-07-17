@@ -6,6 +6,3 @@ fontFeatures plugins.
 
 .. automodule:: fontFeatures.shaperLib
 	:members:
-
-.. automodule:: fontFeatures.pathUtils
-	:members:
