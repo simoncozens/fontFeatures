@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from fontFeatures import ValueRecord
-from glyphtools import get_glyph_metrics, categorize_glyph
+from fontFeatures.utils import categorize_glyph
 from youseedee import ucd_data
 import sys
 import warnings

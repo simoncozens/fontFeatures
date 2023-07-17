@@ -1,8 +1,6 @@
 # Code for converting a Attachment object into feaLib statements
 import fontTools.feaLib.ast as feaast
-from glyphtools import categorize_glyph
-import warnings
-from fontTools.feaLib.variableScalar import VariableScalar
+from fontFeatures.utils import categorize_glyph
 
 
 def fix_scalar(scalar):

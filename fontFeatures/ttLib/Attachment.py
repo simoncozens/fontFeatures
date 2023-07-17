@@ -1,6 +1,6 @@
 """ttLib.Attachment: Converting Attachment rules to TrueType."""
 
-from glyphtools import categorize_glyph
+from fontFeatures.utils import categorize_glyph
 
 
 def lookup_type(self):
