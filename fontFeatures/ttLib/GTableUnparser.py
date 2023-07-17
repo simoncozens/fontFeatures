@@ -244,7 +244,7 @@ class GTableUnparser:
         if "com.github.fonttools.feaLib" not in debug_data:
             return None
         debug_data = debug_data["com.github.fonttools.feaLib"][table][str(ix)]
-        return debug_data[0], debug_data[1]
+        return debug_data[0], debug_data[1].replace("-", "_")
 
     def _asXML(self, sub):
         writer = XMLWriter(BytesIO())
