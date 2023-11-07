@@ -1,5 +1,4 @@
 """GDEF Unparser: Extract fontFeatures information from GDEF table."""
-from fontTools.misc.py23 import *
 import fontTools
 from fontTools.feaLib.ast import *
 from collections import OrderedDict
