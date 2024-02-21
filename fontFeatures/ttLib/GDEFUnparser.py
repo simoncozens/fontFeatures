@@ -1,5 +1,4 @@
 """GDEF Unparser: Extract fontFeatures information from GDEF table."""
-from fontTools.feaLib.ast import *
 
 
 class GDEFUnparser:

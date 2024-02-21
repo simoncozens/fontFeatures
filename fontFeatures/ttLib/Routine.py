@@ -129,7 +129,6 @@ def buildPos(self, font, lookuptype, ff):
             import fontFeatures
 
             if isinstance(r, fontFeatures.Positioning):
-                lookups = []
                 for glyphs, vr in zip(r.glyphs, r.valuerecords):
                     # Make a fake pos routine
                     subbuilder = buildPos(

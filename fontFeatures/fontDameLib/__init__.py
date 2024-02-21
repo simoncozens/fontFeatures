@@ -1,5 +1,12 @@
 import re
-from fontFeatures import *
+from fontFeatures import (
+    FontFeatures,
+    Chaining,
+    Routine,
+    Substitution,
+    Positioning,
+    Attachment,
+)
 from fontTools.ttLib import TTFont
 from collections import OrderedDict
 from fontTools.feaLib.ast import ValueRecord
@@ -99,8 +106,8 @@ class FontDameParser:
                 self.toplevel_lookups.add(lu)
 
         # Delete toplevel lookups from lookup table
-        for l in self.toplevel_lookups:
-            del self.lookups[l]
+        for lookup in self.toplevel_lookups:
+            del self.lookups[lookup]
 
         # Rearrange lookups into dependency order
         done = {}
@@ -447,7 +454,4 @@ def unparse(filename, config={}, font=None):
     with open(filename) as file_in:
         parser = FontDameParser(file_in, config, glyphset)
         parser.parse()
-    output = ""
-    done = {}
-
     return parser.ff

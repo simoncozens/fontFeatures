@@ -174,7 +174,6 @@ class Buffer:
 
     def map_to_glyphs(self):
         """Convert a buffer of codepoints to its initial glyph mapping."""
-        glyphs = []
         for u in self.items:
             u.map_to_glyph(self.font)
         self.clear_mask()

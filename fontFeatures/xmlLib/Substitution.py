@@ -1,4 +1,5 @@
 """Routines for converting Substitution rules to and from XML."""
+from fontFeatures import Routine
 
 
 def _toXML(self, root):

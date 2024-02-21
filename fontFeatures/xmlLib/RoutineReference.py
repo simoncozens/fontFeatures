@@ -14,5 +14,4 @@ def toXML(self):
 def fromXML(klass, el):
     """Creates a RoutineReference from a lxml Element object."""
     rule = klass(name=el.get("name"))
-    id = el.get("id")
     return rule

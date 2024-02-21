@@ -210,7 +210,6 @@ def makeTable(self, tag, font):
     # Build a table for mapping (tag, lookup_indices) to feature_index.
     # For example, ('liga', (2,3,7)) --> 23.
     feature_indices = {}
-    required_feature_indices = {}  # ('latn', 'DEU') --> 23
     scripts = {}  # 'latn' --> {'DEU': [23, 24]} for feature #23,24
     # Sort the feature table by feature tag:
     # https://github.com/fonttools/fonttools/issues/568

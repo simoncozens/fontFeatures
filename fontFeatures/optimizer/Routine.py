@@ -38,11 +38,12 @@ class MergeMultipleSingleSubstitutions:
     level = 1
 
     def apply(self, routine, ff):
-        _is_single_sub = (
-            lambda rule: isinstance(rule, Substitution)
-            and len(rule.input) == 1
-            and len(rule.replacement) == 1
-        )
+        def _is_single_sub(rule):
+            (
+                isinstance(rule, Substitution)
+                and len(rule.input) == 1
+                and len(rule.replacement) == 1
+            )
 
         if len(routine.rules) < 2:
             return
@@ -104,7 +105,6 @@ class EnsureFormat2Chaining:
                 break
 
     def _apply(self, rules):
-        any_failing = False
         logger = logging.getLogger("fontFeatures")
         logger.warn("Applying format 2 optimization round")
 

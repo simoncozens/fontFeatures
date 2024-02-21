@@ -186,17 +186,17 @@ class FontFeatures:
             return
         for r in self.routines:
             r.usedin = set()
-        for chain in self.allRules(Chaining):
-            for routinelist in chain.lookups:
+        for chain_rule in self.allRules(Chaining):
+            for routinelist in chain_rule.lookups:
                 if not routinelist:
                     continue
                 for routine in routinelist:
                     # Using a set here so it is safe to call more than once
                     if isinstance(routine, RoutineReference):
                         routine.resolve(self)
-                        routine.routine.usedin.add(chain)
+                        routine.routine.usedin.add(chain_rule)
                     else:
-                        routine.usedin.add(chain)
+                        routine.usedin.add(chain_rule)
         self.doneUsageMarking = True
 
     def hoist_languages(self):
@@ -207,23 +207,23 @@ class FontFeatures:
         def add_language(p):
             nonlocal scripts
             nonlocal count
-            s, l = p
-            if s not in scripts:
-                scripts[s] = []
-            if l == "*":
+            script, lang = p
+            if script not in scripts:
+                scripts[script] = []
+            if lang == "*":
                 return
-            if l not in scripts[s]:
+            if lang not in scripts[script]:
                 count = count + 1
-                scripts[s].append(l)
+                scripts[script].append(lang)
 
         for k in self.routines:
             if k.languages:
-                for l in k.languages:
-                    add_language(l)
+                for lang in k.languages:
+                    add_language(lang)
             else:
                 for r in k.rules:
-                    for l in r.languages or []:
-                        add_language(l)
+                    for lang in r.languages or []:
+                        add_language(lang)
 
         # if count > 0 and not "DFLT" in scripts:
         #     scripts["DFLT"] = []
@@ -306,7 +306,6 @@ class FontFeatures:
         self.markRoutineUseInChains()
 
         split_routines = {}
-        split_rules = {}
         # The first rule stays in the original
         split_routines[factor(routine.rules[0])] = (routine, [routine.rules[0]])
         for rule in routine.rules[1:]:
@@ -713,10 +712,10 @@ class Chaining(Rule):
         """Returns which shaping stage this routine is used in.
 
         Returns: ``sub`` for substitution stage, ``pos`` for positioning stage."""
-        for l in self.lookups:
-            if not l:
+        for lookuplist in self.lookups:
+            if not lookuplist:
                 continue
-            for aLookup in l:
+            for aLookup in lookuplist:
                 if not aLookup:
                     continue
                 return aLookup.stage
@@ -734,8 +733,8 @@ class Chaining(Rule):
         """Returns a list of :py:class:`Routine` objects called as lookups in
         this Routine."""
         deps = []
-        for l in self.lookups:
-            for aLookup in l or []:
+        for lookuplist in self.lookups:
+            for aLookup in lookuplist or []:
                 if isinstance(aLookup, RoutineReference):
                     deps.append(aLookup.routine)
                 else:

@@ -12,8 +12,8 @@ def add_language_system_statements(self, ff):
     if total_languages < 2:
         return
     for s, entry in self.scripts_and_languages.items():
-        for l in entry:
-            ff.statements.append(feaast.LanguageSystemStatement(s, l))
+        for lang in entry:
+            ff.statements.append(feaast.LanguageSystemStatement(s, lang))
 
 
 def asFea(self, **kwargs):
@@ -115,7 +115,7 @@ def asFeaAST(self, do_gdef=True):
         r.usecount = 0
         # Bubble up flags and languages
         if r.rules and not r.flags:
-            r.flags = r.rules[0].flags
+            r.flags = r.rules[0].flag
         if r.rules and not r.languages:
             r.languages = r.rules[0].languages
 
@@ -125,7 +125,6 @@ def asFeaAST(self, do_gdef=True):
         for reference in v:
             routine = reference.routine
             if len(routine.languages or []) > 1:
-                splitroutines = []
                 for language in routine.languages:
                     # This is wrong. It should really be a new reference to the
                     # same routine. But this will do for now.

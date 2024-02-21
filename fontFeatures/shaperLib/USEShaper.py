@@ -180,7 +180,7 @@ class USEShaper(SyllabicShaper):
                 continue
             elif composed != unicodedata.normalize("NFD", s):
                 assert len(s) == 1
-                newunicodes[ix] = ord(x)
+                newunicodes[ix] = ord(s)
                 del newunicodes[ix + 1]
                 continue
             else:

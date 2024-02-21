@@ -170,7 +170,6 @@ class VoltParser:
         return out
 
     def _groupDefinition(self, group):
-        name = self._className(group.name)
         glyphs = [self._glyphName(x) for x in group.enum.enum]
         self.ff.namedClasses[group.name.lower()] = glyphs
 
@@ -193,7 +192,7 @@ class VoltParser:
         for lang in script.langs:
             ltag = lang.tag
             for feature in lang.features:
-                lookups = {l.split("\\")[0]: True for l in feature.lookups}
+                lookups = {lookup.split("\\")[0]: True for lookup in feature.lookups}
                 ftag = feature.tag
                 if ftag not in self._features:
                     self._features[ftag] = {}
@@ -457,8 +456,8 @@ class VoltParser:
             name = lookup.name.split("\\")[0]
             if name.lower() not in self._lookups:
                 fealookup = ast.LookupBlock(self._lookupName(name))
-                if lookupflags is not None:
-                    fealookup.statements.append(lookupflags)
+                if flags:
+                    fealookup.statements.append(ast.LookupFlagStatement(flags))
                 fealookup.statements.append(ast.Comment("# " + lookup.name))
             else:
                 fealookup = self._lookups[name.lower()]

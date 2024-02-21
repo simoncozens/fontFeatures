@@ -355,7 +355,7 @@ class IndicShaper(SyllabicShaper):
                     self.buffer.items[i].multiplied = False
         try_pref = any(
             [
-                "pref" in item.feature_masks and item.feature_masks["pref"] == False
+                "pref" in item.feature_masks and item.feature_masks["pref"] is False
                 for item in self.buffer.items
             ]
         )
@@ -376,7 +376,7 @@ class IndicShaper(SyllabicShaper):
                                 self.buffer.items[
                                     base
                                 ].syllabic_positional_category = IndicPosition.BASE_C
-                                try_pref = false
+                                try_pref = False
                             break
                 if self.buffer.script == "Malayalam":
                     i = base + 1
@@ -465,7 +465,7 @@ class IndicShaper(SyllabicShaper):
 
             b = newunicodes[ix + 1]
             s = chr(a) + chr(b)
-            composed = unicodedata.normalize("NFC", s)
+            # composed = unicodedata.normalize("NFC", s)
             if ucd_data(a)["General_Category"][0] == "M":
                 newstring = newstring + chr(a)
                 ix = ix + 1

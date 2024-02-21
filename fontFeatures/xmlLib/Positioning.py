@@ -1,7 +1,7 @@
 """Routines for converting Positioning rules to and from XML."""
 
 from lxml import etree
-from fontFeatures import ValueRecord
+from fontFeatures import ValueRecord, Routine
 
 
 # We can't monkeypatch this, because it's not our class.

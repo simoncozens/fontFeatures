@@ -144,12 +144,12 @@ class Shaper:
             else:
                 return BaseShaper
 
-        if buf.script in ["Thai", "Lao"]:
-            return ThaiShaper
+        # if buf.script in ["Thai", "Lao"]:
+        #     return ThaiShaper
         if buf.script == "Hangul":
             return HangulShaper
-        if buf.script == "Hebrew":
-            return HebrewShaper
+        # if buf.script == "Hebrew":
+        #     return HebrewShaper
         if buf.script in [
             "Bengali",
             "Devanagari",
