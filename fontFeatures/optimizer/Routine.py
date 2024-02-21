@@ -38,7 +38,6 @@ class MergeMultipleSingleSubstitutions:
     level = 1
 
     def apply(self, routine, ff):
-
         _is_single_sub = (
             lambda rule: isinstance(rule, Substitution)
             and len(rule.input) == 1
@@ -91,12 +90,13 @@ class MergeMultipleSingleSubstitutions:
             postcontext=first.postcontext,
         )
 
+
 class EnsureFormat2Chaining:
     level = 1
 
     def apply(self, routine, ff):
         rules = routine.rules
-        if not all(isinstance(rule,Chaining) for rule in routine.rules):
+        if not all(isinstance(rule, Chaining) for rule in routine.rules):
             return
 
         while True:
@@ -114,7 +114,9 @@ class EnsureFormat2Chaining:
                 for slot in getattr(rule, which):
                     if not classdefbuilder.canAdd(set(slot)):
                         logger.warn("Mitigating. Rule count before=%i", len(rules))
-                        self.mitigate(rules, which, classdefbuilder.classes(), set(slot))
+                        self.mitigate(
+                            rules, which, classdefbuilder.classes(), set(slot)
+                        )
                         logger.warn("Mitigating. Rule count after=%i", len(rules))
                         return False
                     classdefbuilder.add(set(slot))
@@ -133,12 +135,14 @@ class EnsureFormat2Chaining:
         assert intersection
         for rule in rules:
             for ix, slot in enumerate(getattr(rule, which)):
-                if (set(slot) == set(problem) or set(slot) == failing_slot) and set(slot) != intersection:
+                if (set(slot) == set(problem) or set(slot) == failing_slot) and set(
+                    slot
+                ) != intersection:
                     new_rule = Chaining(
                         copy.deepcopy(rule.input),
                         precontext=copy.deepcopy(rule.precontext),
                         postcontext=copy.deepcopy(rule.postcontext),
-                        lookups=rule.lookups[:]
+                        lookups=rule.lookups[:],
                     )
                     setattr(new_rule, which, getattr(new_rule, which)[:])
                     setattr(rule, which, getattr(rule, which)[:])
@@ -146,8 +150,6 @@ class EnsureFormat2Chaining:
                     getattr(new_rule, which)[ix] = list(intersection)
                     additional_rules.append(new_rule)
         rules.extend(additional_rules)
-
-
 
 
 optimizations = [

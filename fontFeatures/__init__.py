@@ -49,10 +49,16 @@ class FontFeatures:
     The initializer has no parameters."""
 
     def __init__(self):
-        self.namedClasses = {}  #: A mapping of named classes to a list of glyph names which make up the class.
+        self.namedClasses = (
+            {}
+        )  #: A mapping of named classes to a list of glyph names which make up the class.
         self.routines = []  #: All of the layout routines used in this font.
-        self.features = OrderedDict()  #: An ordered dictionary mapping feature tags to a list of routine references.
-        self.anchors = {}  #: A dictionary mapping glyph names to a dictionary of anchor names / positions.
+        self.features = (
+            OrderedDict()
+        )  #: An ordered dictionary mapping feature tags to a list of routine references.
+        self.anchors = (
+            {}
+        )  #: A dictionary mapping glyph names to a dictionary of anchor names / positions.
         self.symbols = {}
         self.glyphclasses = {}  #: A dictionary mapping glyph names to their categories.
         self.scratch = {}  #: Space for items to communicate context to each other.
@@ -61,7 +67,14 @@ class FontFeatures:
     def __add__(self, other):
         """Combine two FontFeatures objects together."""
         combined = FontFeatures()
-        for k in ["namedClasses", "routines", "features", "anchors", "symbols", "glyphclasses"]:
+        for k in [
+            "namedClasses",
+            "routines",
+            "features",
+            "anchors",
+            "symbols",
+            "glyphclasses",
+        ]:
             if isinstance(getattr(combined, k), dict):
                 getattr(combined, k).update(getattr(self, k))
                 getattr(combined, k).update(getattr(other, k))
@@ -122,7 +135,7 @@ class FontFeatures:
             class will be returned. If not, then the class will be stored
             and the name provided as the ``name`` argument will be returned.
         """
-        for k,v in self.namedClasses.items():
+        for k, v in self.namedClasses.items():
             if sorted(glyphs) == sorted(v):
                 return k
         self.namedClasses[name] = glyphs
@@ -142,7 +155,6 @@ class FontFeatures:
             if isinstance(r, Routine):
                 r = self.referenceRoutine(r)
             self.features[name].append(r)
-
 
     def allRules(self, ruletype=None):
         """Return all rules in the font, optionally filtered by type
@@ -210,7 +222,7 @@ class FontFeatures:
                     add_language(l)
             else:
                 for r in k.rules:
-                    for l in (r.languages or []):
+                    for l in r.languages or []:
                         add_language(l)
 
         # if count > 0 and not "DFLT" in scripts:
@@ -447,6 +459,7 @@ class Routine:
 
 class ExtensionRoutine(Routine):
     """OpenType-specific concept: A routine which contains other routines."""
+
     def __init__(self, **kwargs):
         if "routines" in kwargs:
             self.routines = kwargs["routines"]
@@ -501,6 +514,7 @@ class RoutineReference:
     Routines can be referenced either by name (for example, when loaded from a
     textual representation), in which case they will be resolved at a later time,
     or by providing a pointer to the :py:class:`Routine` object."""
+
     def __init__(self, name=None, routine=None):
         self.languages = []
         self.routine = routine
@@ -538,8 +552,10 @@ class RoutineReference:
         """Returns this Rule as a string of AFDKO feature text."""
         return self.asFeaAST().asFea()
 
+
 class Rule:
     """A base class for all rules."""
+
     def asFea(self):
         """Returns this Rule as a string of AFDKO feature text."""
         return self.asFeaAST().asFea()
@@ -614,7 +630,7 @@ class Substitution(Rule):
         lookups=None,
         reverse=False,
         flags=0,
-        force_alt=False
+        force_alt=False,
     ):
         self.precontext = precontext or []
         self.postcontext = postcontext or []
@@ -719,7 +735,7 @@ class Chaining(Rule):
         this Routine."""
         deps = []
         for l in self.lookups:
-            for aLookup in (l or []):
+            for aLookup in l or []:
                 if isinstance(aLookup, RoutineReference):
                     deps.append(aLookup.routine)
                 else:
@@ -737,6 +753,7 @@ class ValueRecord(feaLibValueRecord):
 
     See :py:class:`fontTools.feaLib.ValueRecord`, from which this inherits.
     """
+
     from .ttLib.ValueRecord import toOTValueRecord
 
     @property
@@ -871,7 +888,7 @@ class Attachment(Rule):
         address=None,
         font=None,
         languages=None,
-        force_markmark=False
+        force_markmark=False,
     ):
         self.base_name = base_name
         self.mark_name = mark_name

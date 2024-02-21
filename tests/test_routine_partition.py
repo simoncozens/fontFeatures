@@ -6,19 +6,22 @@ import pytest
 def test_routine_partition():
     f = FontFeatures()
 
-    s1 = Substitution([["A"]],  [["A.grk"]], languages=["grek/*"])
-    s2 = Substitution([["A"]],  [["A.esp"]], languages=["latn/ESP "])
-    r = Routine(rules=[s1,s2], flags=0x2)
+    s1 = Substitution([["A"]], [["A.grk"]], languages=["grek/*"])
+    s2 = Substitution([["A"]], [["A.esp"]], languages=["latn/ESP "])
+    r = Routine(rules=[s1, s2], flags=0x2)
 
     f.routines.append(r)
 
     dummy = Routine(rules=[Substitution([["G"]], [["G"]])])
     f.routines.append(dummy)
 
-    c = Chaining([["A"], ["V"]], lookups=[
-        [RoutineReference(routine=dummy), RoutineReference(routine=r)],
-        [RoutineReference(routine=r), RoutineReference(routine=dummy)],
-        ])
+    c = Chaining(
+        [["A"], ["V"]],
+        lookups=[
+            [RoutineReference(routine=dummy), RoutineReference(routine=r)],
+            [RoutineReference(routine=r), RoutineReference(routine=dummy)],
+        ],
+    )
     r2 = Routine(rules=[c])
     f.routines.append(r2)
 
@@ -37,13 +40,12 @@ def test_routine_partition():
     assert len(f.features["locl"]) == 2
 
 
-
 def test_routine_partition_not_needed():
     f = FontFeatures()
 
-    s1 = Substitution([["A"]],  [["A.grk"]], languages=["grek/*"])
-    s2 = Substitution([["A"]],  [["A.esp"]], languages=["grek/*"])
-    r = Routine(rules=[s1,s2], flags=0x2)
+    s1 = Substitution([["A"]], [["A.grk"]], languages=["grek/*"])
+    s2 = Substitution([["A"]], [["A.esp"]], languages=["grek/*"])
+    r = Routine(rules=[s1, s2], flags=0x2)
 
     f.routines.append(r)
     f.partitionRoutine(r, lambda rule: tuple(rule.languages or []))

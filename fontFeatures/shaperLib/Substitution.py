@@ -1,5 +1,6 @@
 import copy
 
+
 def shaper_inputs(self):
     return self.input
 

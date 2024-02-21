@@ -64,7 +64,10 @@ class GTableUnparser:
             if not lookups[sl.SequenceIndex]:
                 lookups[sl.SequenceIndex] = []
             if sl.LookupListIndex >= len(self.lookups):
-                raise ValueError("Lookups unparsed out of order: unparse %i first!" % sl.LookupListIndex)
+                raise ValueError(
+                    "Lookups unparsed out of order: unparse %i first!"
+                    % sl.LookupListIndex
+                )
             rr = fontFeatures.RoutineReference(routine=self.lookups[sl.LookupListIndex])
             lookups[sl.SequenceIndex].append(rr)
         if len(lookups) < len(inputs):
@@ -131,9 +134,7 @@ class GTableUnparser:
                 ):
                     self.fontFeatures.addFeature(
                         featureTag,
-                        [
-                            self.lookups[lookupIdx]
-                        ],
+                        [self.lookups[lookupIdx]],
                     )
                 lookups.append(lookupIdx)
 
@@ -284,7 +285,6 @@ class GTableUnparser:
         if routine.flags & 0x10:
             assert routine.markFilteringSet is not None
 
-
     def unparseContextual(self, lookup):
         """Handles a generic contextual lookup, in various formats."""
         b = fontFeatures.Routine(
@@ -312,13 +312,15 @@ class GTableUnparser:
             for subrule in getattr(subrulesets, ruleattr):
                 lookups = []
                 allinput = [glyph(x) for x in ([input_] + subrule.Input)]
-                lookups, note = self._unparse_lookups(getattr(subrule, lookupattr), allinput)
+                lookups, note = self._unparse_lookups(
+                    getattr(subrule, lookupattr), allinput
+                )
                 rule = fontFeatures.Chaining(
-                        allinput,
-                        lookups=lookups,
-                        address=self.currentLookup,
-                        flags=lookup.LookupFlag,
-                    )
+                    allinput,
+                    lookups=lookups,
+                    address=self.currentLookup,
+                    flags=lookup.LookupFlag,
+                )
                 if note:
                     rule.note = note
                 b.addRule(rule)
@@ -359,15 +361,17 @@ class GTableUnparser:
                 inputs = [glyph(x) for x in ([input_] + subrule.Input)]
                 prefix = [glyph(x) for x in reversed(subrule.Backtrack)]
                 suffix = [glyph(x) for x in subrule.LookAhead]
-                lookups, note = self._unparse_lookups(getattr(subrule, lookupattr), inputs)
+                lookups, note = self._unparse_lookups(
+                    getattr(subrule, lookupattr), inputs
+                )
                 rule = fontFeatures.Chaining(
-                        inputs,
-                        prefix,
-                        suffix,
-                        lookups=lookups,
-                        address=self.currentLookup,
-                        flags=lookup.LookupFlag,
-                    )
+                    inputs,
+                    prefix,
+                    suffix,
+                    lookups=lookups,
+                    address=self.currentLookup,
+                    flags=lookup.LookupFlag,
+                )
                 if note:
                     rule.note = note
                 b.addRule(rule)
@@ -417,13 +421,13 @@ class GTableUnparser:
                     input_ = [inputclass] + [inputs[x] for x in r.Class]
                 lookups, note = self._unparse_lookups(getattr(r, lookupattr), input_)
                 rule = fontFeatures.Chaining(
-                        input_,
-                        prefix,
-                        suffix,
-                        lookups=lookups,
-                        address=self.currentLookup,
-                        flags=lookup.LookupFlag,
-                    )
+                    input_,
+                    prefix,
+                    suffix,
+                    lookups=lookups,
+                    address=self.currentLookup,
+                    flags=lookup.LookupFlag,
+                )
                 if note:
                     rule.note = note
                 b.addRule(rule)
@@ -445,13 +449,13 @@ class GTableUnparser:
 
         lookups, note = self._unparse_lookups(getattr(sub, lookupattr), inputs)
         rule = fontFeatures.Chaining(
-                inputs,
-                prefix,
-                suffix,
-                lookups=lookups,
-                address=self.currentLookup,
-                flags=lookup.LookupFlag,
-            )
+            inputs,
+            prefix,
+            suffix,
+            lookups=lookups,
+            address=self.currentLookup,
+            flags=lookup.LookupFlag,
+        )
         if note:
             rule.note = note
         b.addRule(rule)

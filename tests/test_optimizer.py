@@ -7,6 +7,7 @@ import pytest
 
 pytest.skip("Optimizer is currently broken", allow_module_level=True)
 
+
 class TestSubstitution(unittest.TestCase):
     def test_MergeMultipleSingleSubstitutions_1(self):
         r1 = Routine(
@@ -32,7 +33,9 @@ class TestSubstitution(unittest.TestCase):
 
     def test_GlyphClasses(self):
         r1 = Routine(
-            rules=[Substitution([["a", "b", "c", "d", "e", "f", "g", "h"]], [["z"]]),]
+            rules=[
+                Substitution([["a", "b", "c", "d", "e", "f", "g", "h"]], [["z"]]),
+            ]
         )
         ff = FontFeatures()
         Optimizer(ff).optimize_routine(r1, level=1)

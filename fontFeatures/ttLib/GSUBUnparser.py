@@ -5,11 +5,13 @@ from .GTableUnparser import GTableUnparser
 from itertools import groupby
 import fontFeatures
 
+
 # These are silly little functions which help to document the intent
 def glyph(x):
     """Wraps a glyph name in an array, to document the fact that it occupies a slot."""
     assert isinstance(x, str)
     return [x]
+
 
 def singleglyph(x):
     """Wraps a glyph name in two arrays, to document the fact that it is the only occupant of a slot."""
@@ -18,6 +20,7 @@ def singleglyph(x):
 
 class GSUBUnparser(GTableUnparser):
     """Unparse a GSUB table into a fontFeatures object. See :py:class:`fontFeatures.ttLib.GTableUnparser`."""
+
     _table = "GSUB"
     lookupTypes = {
         1: "SingleSubstitution",
@@ -53,17 +56,17 @@ class GSUBUnparser(GTableUnparser):
         )
         self._fix_flags(b, lookup)
         for sub in lookup.SubTable:
-            prefix  = []
+            prefix = []
             outputs = []
-            suffix  = []
+            suffix = []
             if hasattr(sub, "BacktrackCoverage"):
                 for coverage in reversed(sub.BacktrackCoverage):
                     prefix.append(coverage.glyphs)
             if hasattr(sub, "LookAheadCoverage"):
                 for i, coverage in enumerate(sub.LookAheadCoverage):
                     suffix.append(coverage.glyphs)
-            outputs = [ sub.Substitute ]
-            inputs =  [ sub.Coverage.glyphs ]
+            outputs = [sub.Substitute]
+            inputs = [sub.Coverage.glyphs]
             b.addRule(
                 fontFeatures.Substitution(
                     inputs,
@@ -71,10 +74,10 @@ class GSUBUnparser(GTableUnparser):
                     prefix,
                     suffix,
                     flags=lookup.LookupFlag,
-                    reverse=True
+                    reverse=True,
                 )
             )
-        return b,[]
+        return b, []
 
     def unparseLigatureSubstitution(self, lookup):
         """Turn a GPOS4 (ligature substitution) subtable into a fontFeatures Routine."""

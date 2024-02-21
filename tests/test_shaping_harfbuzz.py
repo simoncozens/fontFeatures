@@ -13,23 +13,23 @@ import logging
 if "CI" in os.environ:
     pytest.skip("Not running shaping tests on CI", allow_module_level=True)
 
-script_map = {
-    "Qaag": "Myanmar_Zawgyi"
-}
+script_map = {"Qaag": "Myanmar_Zawgyi"}
 
 # logging.getLogger("fontFeatures.shaperLib").setLevel(logging.DEBUG)
+
 
 def tounicode(s):
     out = ""
     for part in s.split(","):
         if part.startswith("U+"):
             part = part[2:]
-        out = out + chr(int(part,16))
+        out = out + chr(int(part, 16))
     return out
+
 
 tests = []
 for testfile in glob.glob("tests/harfbuzz/*/tests/*.tests"):
-    filetests = open(testfile,"r").readlines()
+    filetests = open(testfile, "r").readlines()
     for ix, t in enumerate(filetests):
         t = t.rstrip()
         if not t:
@@ -37,12 +37,12 @@ for testfile in glob.glob("tests/harfbuzz/*/tests/*.tests"):
         if t[0] == "#":
             continue
             # t = t[1:]
-        testname = testfile[:-6] + "_" + str(ix) # ".tests"
+        testname = testfile[:-6] + "_" + str(ix)  # ".tests"
         font, hb_args, buf, expectation = t.split(":")
         font = os.path.join(os.path.dirname(testfile), font)
         if not os.path.exists(font):
             continue
-        tests.append(pytest.param(font,hb_args,buf,expectation, id=testname))
+        tests.append(pytest.param(font, hb_args, buf, expectation, id=testname))
 
 
 @pytest.mark.parametrize("fontname,hb_args,input_string,expectation", tests)
@@ -96,4 +96,4 @@ def test_shaping(request, fontname, hb_args, input_string, expectation):
     # Finesse cluster information
     serialized = re.sub(r"=\d+", "", serialized)
     expectation = re.sub(r"=\d+", "", expectation)
-    assert "["+serialized+"]" == expectation
+    assert "[" + serialized + "]" == expectation

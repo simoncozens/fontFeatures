@@ -21,16 +21,21 @@ def test_noto_sharada():
     assert "blws" in ff.features
     assert len(ff.routines) == 12
     r1 = ff.features["abvs"][0].routine.asFea()
-    assertSufficientlyEqual(r1, """
+    assertSufficientlyEqual(
+        r1,
+        """
     sub Jihvamuliya by Jihvamuliya.ns;
     sub Upadhmaniya by Upadhmaniya.ns;
-""")
+""",
+    )
     r2 = ff.features["blws"][1].routine.asFea()
-    assertSufficientlyEqual(r2, """
+    assertSufficientlyEqual(
+        r2,
+        """
 sub [KKa NgKa RKa RGa JNya TtKa NnSha Sa]' [U UU]' lookup lookup_9;
 sub [KKa NgKa RKa RGa JNya TtKa NnSha Sa]' [UU.alt U.alt]' lookup lookup_9;
 sub [KTa RTa U UU]' [U UU]' lookup lookup_11;
 sub [KTa RTa U UU]' [UU.alt U.alt]' lookup lookup_11;
 sub [KKa NgKa RKa RGa JNya TtKa NnSha Sa]' [KTa RTa U UU]' lookup lookup_10;
-""")
-
+""",
+    )

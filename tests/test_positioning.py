@@ -14,7 +14,12 @@ class TestPositioning(unittest.TestCase):
         s = Positioning(["a"], [v])
         self.assertEqual(s.asFea(), "pos a 120;")
         print(etree.tostring(s.toXML()))
-        self.assertEqual(etree.tostring(s.toXML()), "<positioning><glyphs><slot><glyph>a</glyph></slot></glyphs><positions><valuerecord xAdvance=\"120\"/></positions></positioning>".encode("utf-8"))
+        self.assertEqual(
+            etree.tostring(s.toXML()),
+            '<positioning><glyphs><slot><glyph>a</glyph></slot></glyphs><positions><valuerecord xAdvance="120"/></positions></positioning>'.encode(
+                "utf-8"
+            ),
+        )
         self.roundTrip(s)
 
     def test_single_class(self):

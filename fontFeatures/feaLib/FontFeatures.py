@@ -17,7 +17,7 @@ def add_language_system_statements(self, ff):
             ff.statements.append(feaast.LanguageSystemStatement(s, l))
 
 
-def asFea(self,**kwargs):
+def asFea(self, **kwargs):
     return self.asFeaAST(**kwargs).asFea()
 
 
@@ -67,6 +67,7 @@ def asFeaAST(self, do_gdef=True):
     """Returns this font's features as a feaLib AST object, for later
     translation to AFDKO code."""
     from fontFeatures import Routine, Chaining
+
     ff = feaast.FeatureFile()
 
     add_language_system_statements(self, ff)
@@ -80,7 +81,7 @@ def asFeaAST(self, do_gdef=True):
     # to one another, because FEA syntax is stupid.
 
     # Now arrange them by type/etc.
-    for k,v in self.features.items():
+    for k, v in self.features.items():
         for reference in v:
             routine = reference.routine
             # If a rule has >1 language it must first be split
@@ -94,19 +95,21 @@ def asFeaAST(self, do_gdef=True):
                 else:
                     newrules.append(r)
             routine.rules = newrules
-            partitioned = self.partitionRoutine(routine,
-                lambda rule:
-                    tuple([tuple(rule.languages or []),
-                    type(rule),
-                    lookup_type(rule)
-                    ])
+            partitioned = self.partitionRoutine(
+                routine,
+                lambda rule: tuple(
+                    [tuple(rule.languages or []), type(rule), lookup_type(rule)]
+                ),
             )
             if routine.name and partitioned and len(partitioned) > 1:
                 for p in partitioned:
                     rule = p.rules[0]
                     language = (rule.languages or [("DFLT", "dflt")])[0]
                     p.name = p.name + "%s_%s_%s_%i" % (
-                        language[0].strip(), language[1].strip(), type(rule).__name__, lookup_type(rule)
+                        language[0].strip(),
+                        language[1].strip(),
+                        type(rule).__name__,
+                        lookup_type(rule),
                     )
 
     for r in self.routines:
@@ -140,7 +143,6 @@ def asFeaAST(self, do_gdef=True):
     # Next, we'll ensure that all chaining lookups are resolved and in the right order
     newRoutines = [self.routines[i] for i in reorderAndResolve(self)]
 
-
     # Preamble
     for k in newRoutines:
         assert isinstance(k, Routine)
@@ -168,7 +170,7 @@ def asFeaAST(self, do_gdef=True):
             if lang:
                 f.statements.append(feaast.ScriptStatement(lang[0][0]))
                 f.statements.append(feaast.LanguageStatement("%4s" % lang[0][1]))
-            f.statements.append(routine.asFeaAST(expand = k=="aalt"))
+            f.statements.append(routine.asFeaAST(expand=k == "aalt"))
             ff.statements.append(f)
     return ff
 

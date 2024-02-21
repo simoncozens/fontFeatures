@@ -127,14 +127,21 @@ def buildPos(self, font, lookuptype, ff):
         for r in self.rules:
             new_lookup_list = []
             import fontFeatures
+
             if isinstance(r, fontFeatures.Positioning):
                 lookups = []
                 for glyphs, vr in zip(r.glyphs, r.valuerecords):
                     # Make a fake pos routine
-                    subbuilder = buildPos(fontFeatures.Routine(rules=[fontFeatures.Positioning(
-                        [glyphs],
-                        valuerecords = [vr]
-                    )]), font, 1, ff)
+                    subbuilder = buildPos(
+                        fontFeatures.Routine(
+                            rules=[
+                                fontFeatures.Positioning([glyphs], valuerecords=[vr])
+                            ]
+                        ),
+                        font,
+                        1,
+                        ff,
+                    )
                     builders.extend(subbuilder)
                     new_lookup_list.append(subbuilder)
                 glyphs = r.glyphs
@@ -182,15 +189,22 @@ def buildSub(self, font, lookuptype, ff):
         builder = otl.ChainContextSubstBuilder(font, self.address)
         for r in self.rules:
             import fontFeatures
+
             if isinstance(r, fontFeatures.Substitution) and r.replacement:
                 lookups = []
                 for left, right in zip(r.input, r.replacement):
                     # Make a fake sub routine
 
-                    subbuilder = buildSub(fontFeatures.Routine(rules=[fontFeatures.Substitution(
-                        [left],
-                        replacement = [right]
-                    )]), font, 1, ff)
+                    subbuilder = buildSub(
+                        fontFeatures.Routine(
+                            rules=[
+                                fontFeatures.Substitution([left], replacement=[right])
+                            ]
+                        ),
+                        font,
+                        1,
+                        ff,
+                    )
                     builders.extend(subbuilder)
                     lookups.append(subbuilder)
             else:
@@ -210,7 +224,7 @@ def buildSub(self, font, lookuptype, ff):
     elif lookuptype == 8:
         builder = otl.ReverseChainSingleSubstBuilder(font, self.address)
         for rule in self.rules:
-            mapping = { l[0]:r[0] for l,r in zip(rule.input, rule.replacement) }
+            mapping = {l[0]: r[0] for l, r in zip(rule.input, rule.replacement)}
             builder.rules.append((rule.precontext, rule.postcontext, mapping))
     else:
         raise ValueError("Don't know how to build a SUB type %i lookup" % lookuptype)

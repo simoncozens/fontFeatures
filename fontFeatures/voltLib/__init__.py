@@ -11,9 +11,16 @@ from io import StringIO
 from fontTools.ttLib import TTFont, TTLibError
 from fontTools.voltLib import ast as VAst
 from fontTools.voltLib.parser import Parser
-from fontFeatures import ValueRecord, FontFeatures, Routine, Substitution, RoutineReference
+from fontFeatures import (
+    ValueRecord,
+    FontFeatures,
+    Routine,
+    Substitution,
+    RoutineReference,
+)
 
 log = logging.getLogger()
+
 
 class Group:
     def __init__(self, group):
@@ -418,7 +425,7 @@ class VoltParser:
                     replacements,
                     precontext=prefix,
                     postcontext=suffix,
-                    lookups=chain
+                    lookups=chain,
                 )
                 if isinstance(sub, VAst.SubstitutionReverseChainingSingleDefinition):
                     statement.reversed = True
@@ -458,9 +465,12 @@ class VoltParser:
                 fealookup.statements.append(ast.Comment("# " + lookup.name))
             self._lookups[name.lower()] = fealookup
         else:
-            routine = Routine(name=lookup.name, flags=flags,
-                markFilteringSet = mark_filtering,
-                markAttachmentSet = mark_attachement)
+            routine = Routine(
+                name=lookup.name,
+                flags=flags,
+                markFilteringSet=mark_filtering,
+                markAttachmentSet=mark_attachement,
+            )
             self.ff.routines.append(routine)
             self._lookups[lookup.name.lower()] = routine
 
@@ -497,7 +507,7 @@ class VoltParser:
                         lookup, prefix, suffix, ignore, fealookup, targetlookup
                     )
                 # else:
-                    # self._gposLookup(lookup, fealookup)
+                # self._gposLookup(lookup, fealookup)
 
 
 def main(args=None):

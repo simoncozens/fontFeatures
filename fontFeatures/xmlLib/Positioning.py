@@ -3,6 +3,7 @@
 from lxml import etree
 from fontFeatures import ValueRecord
 
+
 # We can't monkeypatch this, because it's not our class.
 def _valuerecord_fromXML(el):
     v = ValueRecord()

@@ -10,7 +10,7 @@ def test_language_ordering():
     s2 = Substitution([["a"]], ["c"], languages=[("arab", "FAR ")])
     s3 = Substitution([["x"], ["y"]], ["z"], languages=[("arab", "URD ")])
 
-    f.addFeature("locl", [Routine(rules=[ s1, s2, s3 ] )])
+    f.addFeature("locl", [Routine(rules=[s1, s2, s3])])
 
     # When going to fea, we put everything in its own feature block to
     # avoid stupid problems with language systems
@@ -60,18 +60,18 @@ feature locl {
 
     # But the same is true of multiple lookups in the same feature
     f = FontFeatures()
-    r1 = Routine(rules=[ s1 ])
-    r2 = Routine(rules=[ s2 ])
-    r3 = Routine(rules=[ s3 ])
+    r1 = Routine(rules=[s1])
+    r2 = Routine(rules=[s2])
+    r3 = Routine(rules=[s3])
 
-    f.addFeature("locl", [r1,r2,r3])
+    f.addFeature("locl", [r1, r2, r3])
     assert f.asFea(do_gdef=False) == expected
 
 
 @pytest.mark.xfail(reason="Harmless but annoying duplication of script/lang")
 def test_multiple_languages():
     f = FontFeatures()
-    s1 = Substitution([["a"]], ["b"], languages=[("arab", "URD "),("arab", "FAR ")])
+    s1 = Substitution([["a"]], ["b"], languages=[("arab", "URD "), ("arab", "FAR ")])
     expected = """languagesystem arab URD;
 languagesystem arab FAR;
 
@@ -102,9 +102,10 @@ feature locl {
 } locl;
 """
     f = FontFeatures()
-    r1 = Routine(rules=[ s1 ])
+    r1 = Routine(rules=[s1])
     f.addFeature("locl", [r1])
     assert f.asFea(do_gdef=False) == expected
+
 
 @pytest.mark.xfail(reason="Harmless but annoying duplication of script/lang")
 def test_multiple_languages_routine():
@@ -134,7 +135,6 @@ feature locl {
 } locl;
 """
     f = FontFeatures()
-    r1 = Routine(rules=[ s1 ], languages=[("arab", "URD "),("arab", "FAR ")])
+    r1 = Routine(rules=[s1], languages=[("arab", "URD "), ("arab", "FAR ")])
     f.addFeature("locl", [r1])
     assert f.asFea(do_gdef=False) == expected
-

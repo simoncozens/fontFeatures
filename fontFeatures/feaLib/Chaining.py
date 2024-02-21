@@ -14,7 +14,6 @@ def glyphref(g):
     return feaast.GlyphClass([feaast.GlyphName(x) for x in g])
 
 
-
 def gensym(ff):
     if not "index" in ff.scratch:
         ff.scratch["index"] = 0
@@ -31,7 +30,9 @@ def replaceLongWithClasses(i, ff):
 
 def feaPreamble(self, ff):
     if not "glyphclasses" in ff.scratch:
-        ff.scratch["glyphclasses"] = {tuple(sorted(ff.namedClasses[g])): g for g in ff.namedClasses.keys()}
+        ff.scratch["glyphclasses"] = {
+            tuple(sorted(ff.namedClasses[g])): g for g in ff.namedClasses.keys()
+        }
     replaceLongWithClasses(self.input, ff)
     replaceLongWithClasses(self.precontext, ff)
     replaceLongWithClasses(self.postcontext, ff)
@@ -39,11 +40,11 @@ def feaPreamble(self, ff):
 
     # Ensure all linked routines have names
     for lul in self.lookups:
-        for r in (lul or []):
+        for r in lul or []:
             assert isinstance(r, RoutineReference)
             assert r.routine
             if not r.routine.name:
-                r.routine.name = "ChainedRoutine"+gensym(ff)
+                r.routine.name = "ChainedRoutine" + gensym(ff)
             if not r.name:
                 r.name = r.routine.name
 
@@ -91,4 +92,3 @@ def asFeaAST(self):
                 ]
             ]
         )
-

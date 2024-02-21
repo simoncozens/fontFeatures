@@ -11,17 +11,19 @@ font = TTFont("fonts/Roboto-Regular.ttf")
 def test_script_language_split():
     f = FontFeatures()
 
-    s1 = Substitution([["question"]],  [["questiongreek"]], languages=[ ("grek","*") ])
-    s2 = Substitution([["A"]],  [["alpha"]], languages=[ ("grek","ELL ") ])
-    s3 = Substitution([["question"]],  [["questiondown"]], languages=[ ("latn", "ESP ") ])
-    s4 = Substitution([["question"]],  [["B"]], languages=[ ("latn", "POL ") ])
-    s5 = Substitution([["X"]],  [["Y"]])
-    r = Routine(rules=[s1,s2,s3,s4,s5])
+    s1 = Substitution([["question"]], [["questiongreek"]], languages=[("grek", "*")])
+    s2 = Substitution([["A"]], [["alpha"]], languages=[("grek", "ELL ")])
+    s3 = Substitution([["question"]], [["questiondown"]], languages=[("latn", "ESP ")])
+    s4 = Substitution([["question"]], [["B"]], languages=[("latn", "POL ")])
+    s5 = Substitution([["X"]], [["Y"]])
+    r = Routine(rules=[s1, s2, s3, s4, s5])
 
     f.addFeature("locl", [r])
     f.buildBinaryFeatures(font)
     gsub = "\n".join(getXML(font["GSUB"].toXML))
-    assert gsub == """<Version value="0x00010000"/>
+    assert (
+        gsub
+        == """<Version value="0x00010000"/>
 <ScriptList>
   <!-- ScriptCount=3 -->
   <ScriptRecord index="0">
@@ -168,10 +170,12 @@ def test_script_language_split():
     </SingleSubst>
   </Lookup>
 </LookupList>"""
+    )
 
 
 def test_different_sub_types():
-    parser = FeaParser("""
+    parser = FeaParser(
+        """
 lookup single { sub a by b; } single;
 lookup single_flags { lookupflag IgnoreMarks; sub a by b; } single_flags;
 lookup multiple { sub a by b c; } multiple;
@@ -179,11 +183,14 @@ lookup ligature { sub a b by c; } ligature;
 lookup chain1 { sub a b' by c; } chain1;
 lookup rsub { rsub a b' c by d; } rsub;
 lookup chain2 { sub a' lookup single_flags b; } chain2;
-""")
+"""
+    )
     parser.parse()
     parser.ff.buildBinaryFeatures(font)
     gsub = "\n".join(getXML(font["GSUB"].toXML))
-    assert gsub == """<Version value="0x00010000"/>
+    assert (
+        gsub
+        == """<Version value="0x00010000"/>
 <ScriptList>
   <!-- ScriptCount=0 -->
 </ScriptList>
@@ -297,9 +304,12 @@ lookup chain2 { sub a' lookup single_flags b; } chain2;
     </ChainContextSubst>
   </Lookup>
 </LookupList>"""
+    )
+
 
 def test_different_pos_types():
-    parser = FeaParser("""
+    parser = FeaParser(
+        """
 markClass [acute grave] <anchor 150 -10> @TOP_MARKS;
 lookup single { pos a 50; } single;
 lookup pair_and_class_pair { pos a 20 b 50; pos [a b] 15 c 10; } pair_and_class_pair;
@@ -308,12 +318,15 @@ lookup markbase { position base [a b] <anchor 250 450> mark @TOP_MARKS; } markba
 lookup markmark { position mark [dieresis] <anchor 20 40> mark @TOP_MARKS; } markmark;
 lookup chain1 { pos a' 50 b; } chain1;
 lookup chain2 { pos a' lookup single b; } chain2;
-""")
+"""
+    )
     parser.parse()
     parser.ff.glyphclasses["dieresis"] = "mark"
     parser.ff.buildBinaryFeatures(font)
     gpos = "\n".join(getXML(font["GPOS"].toXML))
-    assert gpos == """<Version value="0x00010000"/>
+    assert (
+        gpos
+        == """<Version value="0x00010000"/>
 <ScriptList>
   <!-- ScriptCount=0 -->
 </ScriptList>
@@ -545,3 +558,4 @@ lookup chain2 { pos a' lookup single b; } chain2;
     </ChainContextPos>
   </Lookup>
 </LookupList>"""
+    )

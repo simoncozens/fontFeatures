@@ -1,4 +1,3 @@
-
 def put_languages(self, root):
     if hasattr(self, "languages") and self.languages:
         lang_string = ",".join(["/".join(x) for x in self.languages])

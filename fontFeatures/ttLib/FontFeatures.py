@@ -48,8 +48,9 @@ def buildBinaryFeatures(self, font, axes=[]):
             varidx_map = store.optimize()
 
             font["GDEF"].table.remap_device_varidxes(varidx_map)
-            if 'GPOS' in font:
-                font['GPOS'].table.remap_device_varidxes(varidx_map)
+            if "GPOS" in font:
+                font["GPOS"].table.remap_device_varidxes(varidx_map)
+
 
 def reorderRoutines(self):
     """Reorders the routines table to ensure that all routines which are
@@ -68,6 +69,7 @@ def reorderRoutines(self):
         i = i + 1
     self.routines = newroutines
 
+
 # I am stealing the fontTools.feaLib.builder stuff here
 def buildGDEF(self, font):
     """Build a GDEF table and add it to the ``ttFont`` object."""
@@ -76,7 +78,7 @@ def buildGDEF(self, font):
 
     # gdef.AttachList = otl.buildAttachList(self.attachPoints_, self.glyphMap)
     # gdef.LigCaretList = otl.buildLigCaretList(
-        # self.ligCaretCoords_, self.ligCaretPoints_, self.glyphMap
+    # self.ligCaretCoords_, self.ligCaretPoints_, self.glyphMap
     # )
     # gdef.MarkAttachClassDef = self.buildGDEFMarkAttachClassDef_()
     # gdef.MarkGlyphSetsDef = self.buildGDEFMarkGlyphSetsDef_()
@@ -97,6 +99,7 @@ def buildGDEF(self, font):
 
 classnames = ["", "base", "ligature", "mark", "component"]
 
+
 def _buildGDEFGlyphClassDef(self):
     classes = {}
     for g, c in self.glyphclasses.items():
@@ -107,6 +110,7 @@ def _buildGDEFGlyphClassDef(self):
         return result
     else:
         return None
+
 
 def buildGPOSGSUB(self, font):
     """Builds GSUB and GPOS tables and adds them to the ``ttFont`` object."""
@@ -130,9 +134,9 @@ def arrangeByScripts(self):
     for r in self.routines:
         if not r.rules:
             continue
-        r.languages = r.rules[0].languages # Guaranteed to be the same
+        r.languages = r.rules[0].languages  # Guaranteed to be the same
         if r.languages:
-            for ix,langpair in enumerate(r.languages):
+            for ix, langpair in enumerate(r.languages):
                 if langpair[1] == "*":
                     r.languages[ix] = (langpair[0], "dflt")
                 if langpair[0] == "*":
@@ -149,6 +153,7 @@ def arrangeByScripts(self):
             script_lang_pairs.append((script, lang))
 
     the_big_map = OrderedDict()
+
     def put_in_map(tag, script, lang, routine):
         key = (tag, script, lang)
         if key not in the_big_map:
@@ -170,14 +175,16 @@ def arrangeByScripts(self):
                 put_in_map_with_default(tag, script, lang, r)
     return the_big_map
 
+
 def separate_by_stage(the_big_map, stage):
     """Splits up the routine map into GSUB/GPOS routines."""
     stage_map = OrderedDict()
-    for k,v in the_big_map.items():
+    for k, v in the_big_map.items():
         v = [r for r in v if r.stage == stage]
         if v:
             stage_map[k] = v
     return stage_map
+
 
 def makeTable(self, tag, font):
     """Compiles a binary GSUB/GPOS table."""
@@ -190,8 +197,8 @@ def makeTable(self, tag, font):
     table.LookupList = otTables.LookupList()
 
     stage_map = separate_by_stage(arrangeByScripts(self), tag[1:].lower())
-    stage_routines = [x for x in self.routines if x.stage == tag[1:].lower() ]
-    buildersset = [ x.toOTLookup(font, self) for x in stage_routines ]
+    stage_routines = [x for x in self.routines if x.stage == tag[1:].lower()]
+    buildersset = [x.toOTLookup(font, self) for x in stage_routines]
     lookups = []
     builderlist = []
     for builders in buildersset:
@@ -215,7 +222,9 @@ def makeTable(self, tag, font):
         # l.lookup_index will be None when a lookup is not needed
         # for the table under construction. For example, substitution
         # rules will have no lookup_index while building GPOS tables.
-        lookup_indices = tuple([builderlist.index(x.routine.__builder) for x in lookups ])
+        lookup_indices = tuple(
+            [builderlist.index(x.routine.__builder) for x in lookups]
+        )
 
         size_feature = tag == "GPOS" and feature_tag == "size"
         if len(lookup_indices) == 0 and not size_feature:
@@ -247,7 +256,7 @@ def makeTable(self, tag, font):
             langrec.LangSys = otTables.LangSys()
             langrec.LangSys.LookupOrder = None
             langrec.LangSys.ReqFeatureIndex = 0xFFFF
-            langrec.LangSys.FeatureIndex = [i for i in feature_indices ]
+            langrec.LangSys.FeatureIndex = [i for i in feature_indices]
             langrec.LangSys.FeatureCount = len(langrec.LangSys.FeatureIndex)
             if lang == "dflt":
                 srec.Script.DefaultLangSys = langrec.LangSys

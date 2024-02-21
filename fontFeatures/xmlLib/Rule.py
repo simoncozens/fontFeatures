@@ -2,6 +2,7 @@
 from lxml import etree
 from fontFeatures.xmlLib.utils import put_languages, put_address
 
+
 @classmethod
 def fromXML(klass, el):
     """Creates a Rule from a lxml Element object."""

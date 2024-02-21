@@ -20,6 +20,6 @@ def toOTValueRecord(self, ff, pairPosContext=False):
         if isinstance(itemvalue, VariableScalar):
             itemvalue, index = itemvalue.add_to_variation_store(ff.varstorebuilder)
             if index != 0xFFFF:
-                setattr(otl_value, item[0:4]+"Device", buildVarDevTable(index))
+                setattr(otl_value, item[0:4] + "Device", buildVarDevTable(index))
         setattr(otl_value, item, itemvalue)
     return otl_value

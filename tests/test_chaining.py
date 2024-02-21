@@ -1,4 +1,12 @@
-from fontFeatures import Chaining, Positioning, ValueRecord, Routine, Substitution, RoutineReference, FontFeatures
+from fontFeatures import (
+    Chaining,
+    Positioning,
+    ValueRecord,
+    Routine,
+    Substitution,
+    RoutineReference,
+    FontFeatures,
+)
 from lxml import etree
 
 
@@ -23,7 +31,12 @@ class TestChaining(unittest.TestCase):
         c = Chaining([["a"], ["b"]], lookups=[[rr], None])
         self.assertEqual(c.asFea(), "pos a' lookup dummy b';")
         xml = c.toXML()
-        self.assertEqual(etree.tostring(xml), '<chaining><lookups><slot><routinereference name="dummy"/></slot><slot><lookup/></slot></lookups><input><slot><glyph>a</glyph></slot><slot><glyph>b</glyph></slot></input></chaining>'.encode("utf-8"))
+        self.assertEqual(
+            etree.tostring(xml),
+            '<chaining><lookups><slot><routinereference name="dummy"/></slot><slot><lookup/></slot></lookups><input><slot><glyph>a</glyph></slot><slot><glyph>b</glyph></slot></input></chaining>'.encode(
+                "utf-8"
+            ),
+        )
         self.roundTrip(c, [r])
 
     def test_simple_sub(self):
@@ -58,4 +71,3 @@ class TestChaining(unittest.TestCase):
         c = Chaining([["a"], ["b"]], lookups=[[rr1], None])
         c.feaPreamble(FontFeatures())
         self.assertEqual(c.asFea(), "pos a' lookup ChainedRoutine1 b';")
-

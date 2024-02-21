@@ -70,20 +70,25 @@ class BufferItem:
             if self.glyph in font.exportedGlyphs():
                 self.gid = font.exportedGlyphs().index(self.glyph)
             else:
-                self.gid = -1 # ?
+                self.gid = -1  # ?
         self.substituted = False
         self.ligated = False
         self.multiplied = False
         self.recategorize(font)
         try:
             self.position = ValueRecord(xAdvance=0)
-            self.position.xAdvance=font.default_master.get_glyph_layer(self.glyph).width
+            self.position.xAdvance = font.default_master.get_glyph_layer(
+                self.glyph
+            ).width
         except Exception as e:
             if "pytest" in sys.modules:
                 # We tolerate broken fonts in pytest
                 pass
             else:
-                raise ValueError("Could not get xAdvance for glyph %s (%i)" % (self.glyph, self.codepoint))
+                raise ValueError(
+                    "Could not get xAdvance for glyph %s (%i)"
+                    % (self.glyph, self.codepoint)
+                )
 
     def recategorize(self, font):
         try:
@@ -115,9 +120,12 @@ class BufferItem:
 
 class Buffer:
     """A buffer holding either characters to be shaped or shaped glyphs."""
+
     itemclass = BufferItem
 
-    def __init__(self, font, glyphs=[], unicodes=[], direction=None, script=None, language=None):
+    def __init__(
+        self, font, glyphs=[], unicodes=[], direction=None, script=None, language=None
+    ):
         self.font = font
         self.direction = direction
         self.script = script
@@ -149,7 +157,7 @@ class Buffer:
         Args:
             glyphs (list or str): A list of characters.
         """
-        self.items = [self.itemclass.new_unicode(ord(char)) for char in unistring ]
+        self.items = [self.itemclass.new_unicode(ord(char)) for char in unistring]
 
     def guess_segment_properties(self):
         """Try to automatically determine the script and direction properties."""
@@ -161,6 +169,7 @@ class Buffer:
                     self.script = thisScript
         if not self.direction:
             from fontFeatures.shaperLib.Shaper import _script_direction
+
             self.direction = _script_direction(self.script)
 
     def map_to_glyphs(self):
@@ -224,10 +233,10 @@ class Buffer:
         """Apply a routine's flags and mark filtering set to the buffer."""
         self.flags = flags
         if self.flags & 0x10:
-            assert(markFilteringSet)
+            assert markFilteringSet
         self.markFilteringSet = markFilteringSet
         if self.flags & 0xFF00:
-            assert(markAttachmentSet)
+            assert markAttachmentSet
         self.markAttachmentSet = markAttachmentSet
         self.recompute_mask()
 
@@ -270,8 +279,8 @@ class Buffer:
             mask = list(
                 filter(
                     lambda ix: (feature not in self.items[ix].feature_masks)
-                        or (not self.items[ix].feature_masks[feature]),
-                    mask
+                    or (not self.items[ix].feature_masks[feature]),
+                    mask,
                 )
             )
         self.mask = mask
@@ -283,20 +292,20 @@ class Buffer:
 
     def move_item(self, src, dest):
         """Moves an item from src to dest."""
-        self.items[dest:dest] = [ self.items.pop(src) ]
+        self.items[dest:dest] = [self.items.pop(src)]
 
     def merge_clusters(self, start, end):
         """Currently unimplemented."""
         pass  # XXX
 
-    def serialize(self, additional = None, position=True, names=True, ned=False):
+    def serialize(self, additional=None, position=True, names=True, ned=False):
         """Serialize a buffer to a string.
 
-    Returns:
-        The contents of the given buffer in a string format similar to
-        that used by ``hb-shape``.
+        Returns:
+            The contents of the given buffer in a string format similar to
+            that used by ``hb-shape``.
 
-    """
+        """
         outs = []
         if additional:
             if not isinstance(additional, list):
@@ -304,7 +313,7 @@ class Buffer:
         else:
             additional = []
         xcursor = 0
-        for ix,info in enumerate(self.items):
+        for ix, info in enumerate(self.items):
             if hasattr(info, "glyph") and info.glyph:
                 if names:
                     outs.append("%s" % info.glyph)
@@ -315,7 +324,10 @@ class Buffer:
             if ned:
                 position = info.position
                 if xcursor + (position.xPlacement or 0):
-                    outs[-1] = outs[-1] + "@%i,%i" % (xcursor + (position.xPlacement or 0), position.yPlacement or 0)
+                    outs[-1] = outs[-1] + "@%i,%i" % (
+                        xcursor + (position.xPlacement or 0),
+                        position.yPlacement or 0,
+                    )
                 xcursor = xcursor + position.xAdvance
             elif position and hasattr(info, "position"):
                 position = info.position
@@ -330,7 +342,7 @@ class Buffer:
                         position.yPlacement or 0,
                     )
                 outs[-1] = outs[-1] + "+%i" % (position.xAdvance)
-            relevant = list(filter(lambda a: hasattr(info,a), additional))
+            relevant = list(filter(lambda a: hasattr(info, a), additional))
             if relevant:
                 outs[-1] = outs[-1] + "(%s)" % ",".join(
                     [str(getattr(info, a)) for a in relevant]

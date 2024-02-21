@@ -23,8 +23,8 @@ def _toXML(self, root):
 def fromXML(klass, el):
     """Creates a rule from a lxml Element object."""
     rule = klass(
-        base_name = el.get("basename"),
-        mark_name = el.get("markname"),
+        base_name=el.get("basename"),
+        mark_name=el.get("markname"),
         address=el.get("address"),
         flags=int(el.get("flags") or 0),
     )

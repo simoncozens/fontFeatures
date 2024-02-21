@@ -28,16 +28,21 @@ def gensym(prefix):
     counter = counter + 1
     return prefix + str(counter)
 
+
 def feaPreamble(self, ff):
     preamble = []
     for r in self.rules:
         preamble.extend(r.feaPreamble(ff))
     if self.flags & 0xFF00:
-        assert(self.markAttachmentSet is not None)
-        self.markAttachmentSetAsClass = ff.getNamedClassFor(self.markAttachmentSet, gensym("markAttachmentSet"))
+        assert self.markAttachmentSet is not None
+        self.markAttachmentSetAsClass = ff.getNamedClassFor(
+            self.markAttachmentSet, gensym("markAttachmentSet")
+        )
     if self.flags & 0x10:
-        assert(self.markFilteringSet is not None)
-        self.markFilteringSetAsClass = ff.getNamedClassFor(self.markFilteringSet, gensym("markFilteringSet"))
+        assert self.markFilteringSet is not None
+        self.markFilteringSetAsClass = ff.getNamedClassFor(
+            self.markFilteringSet, gensym("markFilteringSet")
+        )
     return preamble
 
 
@@ -49,17 +54,17 @@ def asFeaAST(self):
 
     if hasattr(self, "flags"):
         flags = feaast.LookupFlagStatement(self.flags)
-        if self.flags & 0x10 and hasattr(self, "markFilteringSetAsClass"): # XXX
+        if self.flags & 0x10 and hasattr(self, "markFilteringSetAsClass"):  # XXX
             # We only need the name, not the contents
-            mfs = feaast.GlyphClassDefinition(self.markFilteringSetAsClass,
-                feaast.GlyphClass([])
+            mfs = feaast.GlyphClassDefinition(
+                self.markFilteringSetAsClass, feaast.GlyphClass([])
             )
             flags.markFilteringSet = feaast.GlyphClassName(mfs)
-        if self.flags & 0xFF00 and hasattr(self, "markAttachmentSetAsClass"): # XXX
-            mfs = feaast.GlyphClassDefinition(self.markAttachmentSetAsClass,
-                feaast.GlyphClass([])
+        if self.flags & 0xFF00 and hasattr(self, "markAttachmentSetAsClass"):  # XXX
+            mfs = feaast.GlyphClassDefinition(
+                self.markAttachmentSetAsClass, feaast.GlyphClass([])
             )
-            flags.markAttachment=feaast.GlyphClassName(mfs)
+            flags.markAttachment = feaast.GlyphClassName(mfs)
 
         f.statements.append(flags)
 
@@ -69,13 +74,19 @@ def asFeaAST(self):
     f.statements.append(feaast.Comment(";"))
     lastaddress = self.address
     if lastaddress:
-        f.statements.append(feaast.Comment("# Original source: %s " % (" ".join([str(x) for x in lastaddress]))))
+        f.statements.append(
+            feaast.Comment(
+                "# Original source: %s " % (" ".join([str(x) for x in lastaddress]))
+            )
+        )
     for x in self.rules:
         if x.address and x.address != lastaddress:
             f.statements.append(feaast.Comment("# Original source: %s " % x.address))
             lastaddress = x.address
         if hasattr(x, "note"):
-            f.statements.append(feaast.Comment("\n".join([ f"# {n}" for n in x.note.split("\n")])))
+            f.statements.append(
+                feaast.Comment("\n".join([f"# {n}" for n in x.note.split("\n")]))
+            )
         f.statements.append(bad_statement_to_comment(x.asFeaAST()))
     return f
 

@@ -13,7 +13,12 @@ class TestSubstitution(unittest.TestCase):
         s = Substitution(["a"], ["b"])
         self.assertEqual(s.asFea(), "sub a by b;")
         self.assertEqual(s.involved_glyphs, set(["a", "b"]))
-        self.assertEqual(etree.tostring(s.toXML()), "<substitution><from><slot><glyph>a</glyph></slot></from><to><slot><glyph>b</glyph></slot></to></substitution>".encode("utf-8"))
+        self.assertEqual(
+            etree.tostring(s.toXML()),
+            "<substitution><from><slot><glyph>a</glyph></slot></from><to><slot><glyph>b</glyph></slot></to></substitution>".encode(
+                "utf-8"
+            ),
+        )
         self.roundTrip(s)
 
     def test_single_classes(self):
@@ -30,8 +35,12 @@ class TestSubstitution(unittest.TestCase):
 
     def test_ligature_expansion(self):
         s = Substitution([["f", "f.ss01"], ["i", "i.ss01"]], [["f_i", "f_i.ss01"]])
-        self.assertEqual(s.asFea(), "    sub f i by f_i;\n    sub f.ss01 i.ss01 by f_i.ss01;\n")
-        self.assertEqual(s.involved_glyphs, set(["f", "i", "f_i", "f.ss01", "i.ss01", "f_i.ss01"]))
+        self.assertEqual(
+            s.asFea(), "    sub f i by f_i;\n    sub f.ss01 i.ss01 by f_i.ss01;\n"
+        )
+        self.assertEqual(
+            s.involved_glyphs, set(["f", "i", "f_i", "f.ss01", "i.ss01", "f_i.ss01"])
+        )
         self.roundTrip(s)
 
     def test_multiple(self):

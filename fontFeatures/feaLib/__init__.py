@@ -280,6 +280,11 @@ class FeaParser:
 
     add_mark_mark_pos = add_mark_base_pos
 
+    def add_mark_lig_pos(self, location, bases, marks):
+        self._start_routine_if_necessary(location)
+        location = "%s:%i:%i" % (location)
+        # xxx pass
+
     def set_lookup_flag(self, location, value, markAttach, markFilter):
         if self.currentRoutine and value == self.currentRoutineFlag:
             return

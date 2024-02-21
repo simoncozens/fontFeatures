@@ -13,6 +13,7 @@ def fix_scalar(scalar):
         return scalar
     raise ValueError("Illegal anchor position %s" % scalar)
 
+
 def _glyphref(g):
     if len(g) == 1:
         return feaast.GlyphName(g[0])
@@ -63,8 +64,14 @@ def asFeaAST(self):
             b.statements.append(
                 feaast.CursivePosStatement(
                     _glyphref([g]),
-                    g in self.bases and feaast.Anchor(fix_scalar(self.bases[g][0]),fix_scalar(self.bases[g][1])),
-                    g in self.marks and feaast.Anchor(fix_scalar(self.marks[g][0]),fix_scalar(self.marks[g][1])),
+                    g in self.bases
+                    and feaast.Anchor(
+                        fix_scalar(self.bases[g][0]), fix_scalar(self.bases[g][1])
+                    ),
+                    g in self.marks
+                    and feaast.Anchor(
+                        fix_scalar(self.marks[g][0]), fix_scalar(self.marks[g][1])
+                    ),
                 )
             )
     else:
@@ -80,7 +87,14 @@ def asFeaAST(self):
             b.statements.append(
                 statementtype(
                     _glyphref(base[0]),
-                    [[feaast.Anchor(fix_scalar(base[1][0]), fix_scalar(base[1][1])), feaast.MarkClass(self.fullname)]],
+                    [
+                        [
+                            feaast.Anchor(
+                                fix_scalar(base[1][0]), fix_scalar(base[1][1])
+                            ),
+                            feaast.MarkClass(self.fullname),
+                        ]
+                    ],
                 )
             )
 

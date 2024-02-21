@@ -11,6 +11,7 @@ class GDEFUnparser:
         table: a GDEF table (e.g. ``font["GDEF"]``)
         ff: a fontFeatures object.
     """
+
     def __init__(self, table, fontfeatures):
         self.table = table.table
         self.ff = fontfeatures

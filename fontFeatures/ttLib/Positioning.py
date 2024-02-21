@@ -1,5 +1,6 @@
 """ttLib.Positioning: Converting Positioning rules to TrueType."""
 
+
 def lookup_type(self):
     """Mixin to determine the GPOS lookup type of a fontFeatures.Positioning object
 
@@ -10,4 +11,3 @@ def lookup_type(self):
         if len(self.glyphs) == 2:
             return 2
     return 8
-

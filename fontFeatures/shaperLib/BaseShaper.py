@@ -10,7 +10,6 @@ from youseedee import ucd_data
 from fontFeatures import RoutineReference
 
 
-
 def _is_default_ignorable(c):
     return (
         c in [0x00AD, 0x034F, 0x061C, 0x17B4, 0x17B5, 0xFEFF]
@@ -27,6 +26,7 @@ def _is_default_ignorable(c):
 
 class BaseShaper:
     """A complex shaper object."""
+
     def __init__(self, plan, font, buf, features=[]):
         self.plan = plan
         self.font = font
@@ -103,7 +103,7 @@ class BaseShaper:
                 i.position.xAdvance = 0
         # zero width default ignorables
         self.zero_width_default_ignorables()
-        for i in range(0,len(self.buffer.items)):
+        for i in range(0, len(self.buffer.items)):
             self.propagate_attachment_offsets(i)
         self.plan.msg("Positioning done", self.buffer)
 
@@ -124,18 +124,29 @@ class BaseShaper:
             pass
             # self.buffer.items[i].position.yPlacement = (self.buffer.items[i].position.yPlacement or 0) + (self.buffer.items[j].position.yPlacement or 0) # XXX Horizontal only
         else:
-            self.buffer.items[i].position.xPlacement += self.buffer.items[j].position.xPlacement or 0
-            self.buffer.items[i].position.yPlacement += self.buffer.items[j].position.yPlacement or 0
+            self.buffer.items[i].position.xPlacement += (
+                self.buffer.items[j].position.xPlacement or 0
+            )
+            self.buffer.items[i].position.yPlacement += (
+                self.buffer.items[j].position.yPlacement or 0
+            )
             assert j < i
             if self.buffer.direction == "LTR":
-                for k in range(j,i):
-                    self.buffer.items[i].position.xPlacement -= self.buffer.items[k].position.xAdvance
-                    self.buffer.items[i].position.yPlacement -= self.buffer.items[k].position.yAdvance or 0
+                for k in range(j, i):
+                    self.buffer.items[i].position.xPlacement -= self.buffer.items[
+                        k
+                    ].position.xAdvance
+                    self.buffer.items[i].position.yPlacement -= (
+                        self.buffer.items[k].position.yAdvance or 0
+                    )
             else:
-                for k in range(j+1,i+1):
-                    self.buffer.items[i].position.xPlacement += self.buffer.items[k].position.xAdvance
-                    self.buffer.items[i].position.yPlacement += self.buffer.items[k].position.yAdvance or 0
-
+                for k in range(j + 1, i + 1):
+                    self.buffer.items[i].position.xPlacement += self.buffer.items[
+                        k
+                    ].position.xAdvance
+                    self.buffer.items[i].position.yPlacement += (
+                        self.buffer.items[k].position.yAdvance or 0
+                    )
 
     def _run_stage(self, current_stage):
         self.plan.msg("Running %s stage" % current_stage)
@@ -148,7 +159,10 @@ class BaseShaper:
                         continue
 
                     routines = self.plan.fontfeatures.features[f]
-                    routines = [x.routine if isinstance(x, RoutineReference) else x for x in routines]
+                    routines = [
+                        x.routine if isinstance(x, RoutineReference) else x
+                        for x in routines
+                    ]
                     lookups.extend(
                         [(routine, f) for routine in self._filter_by_lang(routines)]
                     )
@@ -157,7 +171,12 @@ class BaseShaper:
                     self.plan.msg(
                         "Before %s (%s)" % (r.name, feature), buffer=self.buffer
                     )
-                    r.apply_to_buffer(self.buffer, stage=current_stage, feature=feature, namedclasses=self.plan.fontfeatures.namedClasses)
+                    r.apply_to_buffer(
+                        self.buffer,
+                        stage=current_stage,
+                        feature=feature,
+                        namedclasses=self.plan.fontfeatures.namedClasses,
+                    )
                     self.plan.msg(
                         "After %s (%s)" % (r.name, feature), buffer=self.buffer
                     )
@@ -167,20 +186,33 @@ class BaseShaper:
                     stage(current_stage)
 
     def _filter_by_lang(self, routines):
-        script = self.script_to_opentype.get(self.buffer.script,"DFLT")
+        script = self.script_to_opentype.get(self.buffer.script, "DFLT")
         s_l = self.plan.fontfeatures.scripts_and_languages
-        if not self.buffer.script or len(s_l.values()) < 2 and (
-            len(s_l.values()) == 0 or len(list(s_l.values())[0]) < 2):
-            return routines # !
+        if (
+            not self.buffer.script
+            or len(s_l.values()) < 2
+            and (len(s_l.values()) == 0 or len(list(s_l.values())[0]) < 2)
+        ):
+            return routines  # !
         language = self.buffer.language or "dflt"
         if script in s_l and (script, language) != ("DFLT", "dflt"):
-            return [x for x in routines if x.languages and (script, language) in x.languages]
+            return [
+                x for x in routines if x.languages and (script, language) in x.languages
+            ]
         else:
-            return [x for x in routines if not x.languages or ("DFLT", language) in x.languages]
+            return [
+                x
+                for x in routines
+                if not x.languages or ("DFLT", language) in x.languages
+            ]
 
     def delete_default_ignorables(self):
         """Remove all items from the buffer which are ignorable."""
-        self.buffer.items = [x for x in self.buffer.items if not(x.codepoint) or not _is_default_ignorable(x.codepoint)]
+        self.buffer.items = [
+            x
+            for x in self.buffer.items
+            if not (x.codepoint) or not _is_default_ignorable(x.codepoint)
+        ]
 
     def zero_width_default_ignorables(self):
         """Set all items from the buffer which are ignorable to zero advance width."""
@@ -218,7 +250,11 @@ class BaseShaper:
                     continue
                 if any(
                     [
-                        rule.would_apply_at_position(subbuffer, i, namedclasses=self.plan.fontfeatures.namedClasses)
+                        rule.would_apply_at_position(
+                            subbuffer,
+                            i,
+                            namedclasses=self.plan.fontfeatures.namedClasses,
+                        )
                         for i in range(len(subbuffer))
                     ]
                 ):
@@ -231,25 +267,25 @@ class BaseShaper:
         "Unknown": "zzzz",
         "Arabic": "arab",
         "Armenian": "armn",
-        "Bengali": "bng2", # Not beng
+        "Bengali": "bng2",  # Not beng
         "Cyrillic": "cyrl",
-        "Devanagari": "dev2", # Not deva
+        "Devanagari": "dev2",  # Not deva
         "Georgian": "geor",
         "Greek": "grek",
-        "Gujarati": "gjr2", # Not gujr
-        "Gurmukhi": "gur2", # Not guru
+        "Gujarati": "gjr2",  # Not gujr
+        "Gurmukhi": "gur2",  # Not guru
         "Hangul": "hang",
         "Han": "hani",
         "Hebrew": "hebr",
         "Hiragana": "hira",
-        "Kannada": "knd2", # Not knda
+        "Kannada": "knd2",  # Not knda
         "Katakana": "kana",
         "Lao": "laoo",
         "Latin": "latn",
-        "Malayalam": "mlm2", # Not mlym
-        "Oriya": "ory2", # Not orya
-        "Tamil": "tml2", # Not taml
-        "Telugu": "tel2", # Not telu
+        "Malayalam": "mlm2",  # Not mlym
+        "Oriya": "ory2",  # Not orya
+        "Tamil": "tml2",  # Not taml
+        "Telugu": "tel2",  # Not telu
         "Thai": "thai",
         "Tibetan": "tibt",
         "Bopomofo": "bopo",
@@ -259,7 +295,7 @@ class BaseShaper:
         "Ethiopic": "ethi",
         "Khmer": "khmr",
         "Mongolian": "mong",
-        "Myanmar": "mym2", # Not mymr
+        "Myanmar": "mym2",  # Not mymr
         "Ogham": "ogam",
         "Runic": "runr",
         "Sinhala": "sinh",
@@ -384,4 +420,3 @@ class BaseShaper:
         "Khitan_Small_Script": "kits",
         "Yezidi": "yezi",
     }
-

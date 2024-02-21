@@ -53,6 +53,7 @@ def unparse(font, do_gdef=False, doLookups=True, config={}):
     """
     gsub_gpos = [font[tableTag] for tableTag in ("GSUB", "GPOS") if tableTag in font]
     from fontFeatures import FontFeatures
+
     ff = FontFeatures()
 
     languageSystems = unparseLanguageSystems(gsub_gpos)

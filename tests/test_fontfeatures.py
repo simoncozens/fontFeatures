@@ -53,7 +53,7 @@ def test_add():
     f2.namedClasses["Two"] = ["d", "e", "f"]
     f2.addFeature("twox", [r2])
     f2.glyphclasses["d"] = "mark"
-    f2.anchors["a"] = { "top": (300, 200) }
+    f2.anchors["a"] = {"top": (300, 200)}
 
     combined = f1 + f2
     assert combined.namedClasses["One"] == ["A", "B", "C"]
@@ -68,6 +68,7 @@ def test_add():
     el = combined.toXML()
     assert etree.tostring(el).decode() == expected
 
+
 def test_fromXML():
     ff = FontFeatures.fromXML(etree.fromstring(expected))
     assert ff.namedClasses["One"] == ["A", "B", "C"]
@@ -78,7 +79,7 @@ def test_fromXML():
     assert ff.features["twox"][0].routine == ff.routines[1]
     assert ff.glyphclasses["a"] == "base"
     assert ff.glyphclasses["d"] == "mark"
-    assert ff.anchors["a"] == { "top": (300, 200) }
+    assert ff.anchors["a"] == {"top": (300, 200)}
 
 
 def test_routine_named():

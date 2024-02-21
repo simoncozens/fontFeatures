@@ -22,6 +22,7 @@ class Shaper:
         font: A ``Babelfont`` font object.
         message_function: A function called with a message and buffer object.
     """
+
     def __init__(self, ff, font, message_function=None):
         assert isinstance(ff, FontFeatures)
         self.fontfeatures = ff
@@ -78,7 +79,7 @@ class Shaper:
                 outfeat.append({"tag": f, "value": True})
         return outfeat
 
-    def add_pause(self, thing = None):
+    def add_pause(self, thing=None):
         """Add a pause in the shaping stage. Used internally."""
         if thing:
             self.stages.append(thing)
@@ -137,7 +138,7 @@ class Shaper:
             "Psalter_Pahlavi": "phlp",
             "Adlam": "adlm",
             "Hanifi_Rohingya": "rohg",
-            "Sogdian": "sogd"
+            "Sogdian": "sogd",
         }
         if buf.script in connected_scripts:
             if self.fontfeatures.hasScriptSupport(connected_scripts[buf.script]):
@@ -175,7 +176,9 @@ class Shaper:
                 "Telugu": "tel",
             }
             # Sinhala is different
-            if buf.script in indic23map and self.fontfeatures.hasScriptSupport(indic23map[buf.script] + "3"):
+            if buf.script in indic23map and self.fontfeatures.hasScriptSupport(
+                indic23map[buf.script] + "3"
+            ):
                 return USEShaper
             else:
                 return IndicShaper
@@ -243,6 +246,7 @@ class Shaper:
             return USEShaper
         return BaseShaper
 
+
 def _script_direction(script):
     if script in [
         "Arabic",
@@ -277,7 +281,8 @@ def _script_direction(script):
         "Sogdian",
         "Elymaic",
         "Chorasmian",
-        "Yezidi"]:
+        "Yezidi",
+    ]:
         return "RTL"
     if script in ["Old_Hungarian", "Old_Italic", "Runic"]:
         return "invalid"
