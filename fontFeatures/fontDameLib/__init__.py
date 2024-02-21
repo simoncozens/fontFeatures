@@ -177,7 +177,7 @@ class FontDameParser:
             self.add_to_class_definition("lookaheadclass", line)
 
     def add_to_script_table(self, line):
-        m = re.match("^(\\w+)\\s+(\\w+)\\s+(.*)$", line)
+        m = re.match(r"^(\w+)\s+(\w+)\s+(.*)$", line)
         lang = m[1] + "/" + m[2]
         self.all_languages.append(lang)
         for f in re.split(r",\s*", m[3]):
@@ -187,7 +187,7 @@ class FontDameParser:
             self.script_applications[f].append(lang)
 
     def add_to_feature_table(self, line):
-        m = re.match("^(\w+)\s+(\w+)\s+(.*)$", line)
+        m = re.match(r"^(\w+)\s+(\w+)\s+(.*)$", line)
         self.features[int(m[1])] = {
             "tag": m[2],
             "lookups": re.split(r",\s*", m[3]),
