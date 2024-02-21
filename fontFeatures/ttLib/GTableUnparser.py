@@ -161,24 +161,6 @@ class GTableUnparser:
                 )
         self.features = features
 
-    def addFeatures(self, doLookups=True):
-        """Add lookup references from the features list into the fontFeatures object."""
-        for name, feature in self.features.items():
-            f = []
-            for scriptname, langs in feature.items():
-                for lang, lookups in langs.items():
-                    if doLookups:
-                        for lookupIdx in lookups:
-                            f.append(
-                                RoutineReference(
-                                    routine=self.fontFeatures.routines[lookupIdx]
-                                )
-                            )
-                            self.fontFeatures.routines[lookupIdx].languages.append(
-                                (scriptname, lang)
-                            )
-            self.fontFeatures.addFeature(name, f)
-
     def unparseLookups(self):
         """Unparses the lookups to fontFeatures routines."""
         if not self.table.LookupList:
