@@ -10,6 +10,7 @@ import re
 from io import StringIO
 from fontTools.ttLib import TTFont, TTLibError
 from fontTools.voltLib import ast as VAst
+from fontTools.feaLib import ast
 from fontTools.voltLib.parser import Parser
 from fontFeatures import (
     ValueRecord,
