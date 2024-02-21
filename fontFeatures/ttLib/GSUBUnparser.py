@@ -1,8 +1,5 @@
 """GSUBUnparser: Convert binary GSUB lookups to fontFeatures objects."""
-import fontTools
-from collections import OrderedDict
 from .GTableUnparser import GTableUnparser
-from itertools import groupby
 import fontFeatures
 
 

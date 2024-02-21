@@ -11,11 +11,9 @@ call::
     ff.buildBinaryFeatures(font)
 
 """
-import copy
-from fontTools.ttLib.tables import otBase, otTables
+from fontTools.ttLib.tables import otTables
 from fontTools.ttLib import newTable
 from collections import OrderedDict
-import itertools
 from fontTools.varLib.varStore import OnlineVarStoreBuilder
 
 
@@ -147,7 +145,7 @@ def arrangeByScripts(self):
     self.hoist_languages()
     script_lang_pairs = []
     for script in self.scripts_and_languages.keys():
-        if not (script, "dflt") in script_lang_pairs:
+        if (script, "dflt") not in script_lang_pairs:
             script_lang_pairs.append((script, "dflt"))
         for lang in self.scripts_and_languages[script]:
             script_lang_pairs.append((script, lang))

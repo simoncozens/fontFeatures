@@ -1,13 +1,8 @@
 from youseedee import ucd_data
-from .BaseShaper import BaseShaper
-import re
 from fontFeatures.shaperLib.Buffer import BufferItem
-from fontFeatures.shaperLib.VowelConstraints import preprocess_text_vowel_constraints
 from .IndicShaperData import (
     script_config,
-    syllabic_category_map,
     syllable_machine_indic,
-    IndicPositionalCategory2IndicPosition,
     IndicPosition,
     reassign_category_and_position_indic,
 )

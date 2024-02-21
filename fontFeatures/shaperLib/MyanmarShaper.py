@@ -1,4 +1,4 @@
-from .IndicShaperData import IndicPosition, make_syllable_machine, syllabic_category_map
+from .IndicShaperData import IndicPosition, make_syllable_machine
 from .SyllabicShaper import SyllabicShaper
 from collections import OrderedDict
 

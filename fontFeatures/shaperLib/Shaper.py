@@ -1,8 +1,6 @@
 """A Python Unicode Shaping Engine."""
 
 from fontFeatures import FontFeatures
-import unicodedata
-from fontFeatures.shaperLib import Buffer
 from .BaseShaper import BaseShaper
 from .ArabicShaper import ArabicShaper
 from .IndicShaper import IndicShaper

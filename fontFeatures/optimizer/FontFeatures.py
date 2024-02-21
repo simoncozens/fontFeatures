@@ -1,4 +1,4 @@
-from fontFeatures import Substitution, Chaining, Routine
+from fontFeatures import Chaining, Routine
 import logging
 
 

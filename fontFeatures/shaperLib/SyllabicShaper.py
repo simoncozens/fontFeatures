@@ -4,12 +4,9 @@ import re
 from fontFeatures.shaperLib.Buffer import BufferItem
 from fontFeatures.shaperLib.VowelConstraints import preprocess_text_vowel_constraints
 from .IndicShaperData import (
-    script_config,
     syllabic_category_map,
     IndicPositionalCategory2IndicPosition,
-    IndicPosition,
 )
-import unicodedata
 
 DOTTED_CIRCLE = 0x25CC
 

@@ -1,6 +1,5 @@
 """Routines for converting Chaining rules to and from XML."""
 
-from lxml import etree
 
 
 def _toXML(self, root):

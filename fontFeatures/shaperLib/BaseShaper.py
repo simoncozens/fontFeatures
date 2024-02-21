@@ -230,7 +230,7 @@ class BaseShaper:
 
     def would_substitute(self, feature, subbuffer_items):
         """Test whether the feature would apply to a list of BufferItem objects."""
-        if not feature in self.plan.fontfeatures.features:
+        if feature not in self.plan.fontfeatures.features:
             return False
         subbuffer = Buffer(
             self.buffer.font,

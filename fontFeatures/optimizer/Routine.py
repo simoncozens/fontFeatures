@@ -8,7 +8,7 @@ class MoveLongCoverageToClassDefinition:
     level = 1
 
     def gensym(self, ff):
-        if not "index" in ff.scratch:
+        if "index" not in ff.scratch:
             ff.scratch["index"] = 0
         ff.scratch["index"] = ff.scratch["index"] + 1
         return str(ff.scratch["index"])
@@ -74,7 +74,7 @@ class MergeMultipleSingleSubstitutions:
             if r in secondmapping:
                 firstmapping[l] = secondmapping[r]
         for l, r in secondmapping.items():
-            if not (l in firstmapping):
+            if l not in firstmapping:
                 firstmapping[l] = r
         logger = logging.getLogger("fontFeatures")
         logger.info("Merging two adjacent single subs")

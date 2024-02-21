@@ -23,14 +23,14 @@ def _glyphref(g):
 def sortByAnchor(self):
     anchors = {}
     for name, pos in self.marks.items():
-        if not pos in anchors:
+        if pos not in anchors:
             anchors[pos] = []
         anchors[pos].append(name)
     self.markslist = [(v, k) for k, v in anchors.items()]
 
     anchors = {}
     for name, pos in self.bases.items():
-        if not pos in anchors:
+        if pos not in anchors:
             anchors[pos] = []
         anchors[pos].append(name)
     self.baseslist = [(v, k) for k, v in anchors.items()]
@@ -40,11 +40,11 @@ def feaPreamble(self, ff):
     if self.is_cursive:
         return []
     sortByAnchor(self)
-    if not "mark_classes_done" in ff.scratch:
+    if "mark_classes_done" not in ff.scratch:
         ff.scratch["mark_classes_done"] = {}
     b = feaast.Block()
     for mark in self.markslist:
-        if not (self.fullname, tuple(mark[0])) in ff.scratch["mark_classes_done"]:
+        if (self.fullname, tuple(mark[0])) not in ff.scratch["mark_classes_done"]:
             b.statements.append(
                 feaast.MarkClassDefinition(
                     feaast.MarkClass(self.fullname),

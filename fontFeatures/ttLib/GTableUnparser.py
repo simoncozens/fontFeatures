@@ -126,7 +126,7 @@ class GTableUnparser:
                 if (scriptTag, langTag) not in self.lookups[lookupIdx].languages:
                     self.lookups[lookupIdx].languages.append((scriptTag, langTag))
                 # Add reference if there isn't one
-                if not featureTag in self.fontFeatures.features:
+                if featureTag not in self.fontFeatures.features:
                     self.fontFeatures.features[featureTag] = []
                 if not any(
                     r.routine == self.lookups[lookupIdx]

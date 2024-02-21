@@ -80,7 +80,7 @@ class BufferItem:
             self.position.xAdvance = font.default_master.get_glyph_layer(
                 self.glyph
             ).width
-        except Exception as e:
+        except Exception:
             if "pytest" in sys.modules:
                 # We tolerate broken fonts in pytest
                 pass

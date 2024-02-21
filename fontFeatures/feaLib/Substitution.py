@@ -107,7 +107,7 @@ def paired_mult(self) -> feaast.MultipleSubstStatement:
 
     input_length = input_lengths[0]
 
-    if not sum([l for l in replacement_lengths if l == 1]) in [
+    if sum([l for l in replacement_lengths if l == 1]) not in [
         len(replacement_lengths),
         len(replacement_lengths) - 1,
     ]:

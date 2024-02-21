@@ -36,7 +36,7 @@ Here is an example of constructing a simple feature file using fontFeatures::
     font.save("Test-liga.ttf")
 """
 
-from collections import OrderedDict, namedtuple
+from collections import OrderedDict
 from fontTools.feaLib.ast import ValueRecord as feaLibValueRecord
 from fontTools.feaLib.variableScalar import VariableScalar
 from itertools import chain
@@ -89,7 +89,7 @@ class FontFeatures:
             category (str): The category for this symbol
 
         Returns: a string representing a unique label."""
-        if not category in self.symbols:
+        if category not in self.symbols:
             self.symbols[category] = 0
         self.symbols[category] += 1
         return f"{category}{self.symbols[category]}"
@@ -148,7 +148,7 @@ class FontFeatures:
             name: The feature name.
             rs: A sequence of :py:class:`Routine` or :py:class:`RoutineReference` objects.
         """
-        if not name in self.features:
+        if name not in self.features:
             self.features[name] = []
         for r in rs:
             r.parent = self
@@ -208,11 +208,11 @@ class FontFeatures:
             nonlocal scripts
             nonlocal count
             s, l = p
-            if not s in scripts:
+            if s not in scripts:
                 scripts[s] = []
             if l == "*":
                 return
-            if not l in scripts[s]:
+            if l not in scripts[s]:
                 count = count + 1
                 scripts[s].append(l)
 

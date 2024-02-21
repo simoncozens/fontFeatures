@@ -1,6 +1,5 @@
 import re
 from fontFeatures import *
-from fontFeatures.optimizer import Optimizer
 from fontTools.ttLib import TTFont
 from collections import OrderedDict
 from fontTools.feaLib.ast import ValueRecord
@@ -55,7 +54,7 @@ class FontDameParser:
                     m = re.match("\\s*(\\S+),\\s*(\\S+)", i)
                     if not m:
                         raise ValueError("Unparsable lookup chain %s" % i)
-                    if not lid in self.dependencies:
+                    if lid not in self.dependencies:
                         self.dependencies[lid] = []
                     self.dependencies[lid].append(m[2])
                     if not reallookups[int(m[1]) - 1]:
@@ -183,7 +182,7 @@ class FontDameParser:
         self.all_languages.append(lang)
         for f in re.split(r",\s*", m[3]):
             f = int(f)
-            if not (f in self.script_applications):
+            if f not in self.script_applications:
                 self.script_applications[f] = []
             self.script_applications[f].append(lang)
 
@@ -213,7 +212,7 @@ class FontDameParser:
         if len(res) == 1:
             return res[0]
         if len(res) > 5:
-            if not tuple(res) in self.classes:
+            if tuple(res) not in self.classes:
                 self.classes.append(tuple(res))
             classname = "@class%i" % self.classes.index(tuple(res))
             if classname in self.config:
@@ -408,7 +407,7 @@ class FontDameParser:
                     for c in which.values():
                         members = members - set(c)
             else:
-                if not x in which:
+                if x not in which:
                     print(
                         "Couldn't find a class definition for class %s in lookup %s"
                         % (x, self.current_lookup.name)
@@ -428,7 +427,7 @@ class FontDameParser:
         elif which == "lookaheadclass":
             which = self.lookaheadclassContexts
 
-        if not m[2] in which:
+        if m[2] not in which:
             which[m[2]] = []
         which[m[2]].append(m[1])
 

@@ -1,7 +1,6 @@
 from youseedee import ucd_data, database
 from .SyllabicShaper import SyllabicShaper
 from .IndicShaperData import make_syllable_machine
-from fontFeatures.shaperLib.Buffer import BufferItem
 import unicodedata
 from collections import OrderedDict
 

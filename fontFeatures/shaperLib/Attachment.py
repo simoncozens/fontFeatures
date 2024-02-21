@@ -1,5 +1,4 @@
 import logging
-from fontFeatures import Rule
 
 
 def shaper_inputs(self):
@@ -121,7 +120,6 @@ def _do_apply_cursive(self, buf, ix):
 def _do_apply(self, buf, ix, namedclasses={}):
     if self.is_cursive:
         return _do_apply_cursive(self, buf, ix)
-    from fontFeatures import ValueRecord
 
     base_ix = find_base_backwards(self, buf, ix)
     mark = buf[ix].glyph

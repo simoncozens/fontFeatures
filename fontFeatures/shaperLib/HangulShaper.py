@@ -1,6 +1,5 @@
 from .BaseShaper import BaseShaper
 from fontFeatures.shaperLib.Buffer import BufferItem
-import unicodedata
 
 LBase = 0x1100
 VBase = 0x1161

@@ -3,7 +3,6 @@ import fontTools.feaLib.ast as feaast
 from fontFeatures.ttLib.Substitution import lookup_type as sub_lookup_type
 from fontFeatures.ttLib.Positioning import lookup_type as pos_lookup_type
 from fontFeatures.feaLib import bad_statement_to_comment
-import copy
 
 
 def lookup_type(rule):

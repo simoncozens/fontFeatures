@@ -1,6 +1,5 @@
 # Code for converting a FontFeatures object into feaLib statements
 import fontTools.feaLib.ast as feaast
-import itertools
 from fontFeatures.feaLib.Routine import lookup_type
 import copy
 
@@ -66,7 +65,7 @@ def reorderAndResolve(self):
 def asFeaAST(self, do_gdef=True):
     """Returns this font's features as a feaLib AST object, for later
     translation to AFDKO code."""
-    from fontFeatures import Routine, Chaining
+    from fontFeatures import Routine
 
     ff = feaast.FeatureFile()
 

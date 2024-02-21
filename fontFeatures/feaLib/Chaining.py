@@ -1,11 +1,8 @@
 # Code for converting a Chaining object into feaLib statements
 import fontTools.feaLib.ast as feaast
-import fontFeatures
 
 
 # Can we chain multiple lookups?
-from fontTools.feaLib.parser import Parser
-import io
 
 
 def glyphref(g):
@@ -15,7 +12,7 @@ def glyphref(g):
 
 
 def gensym(ff):
-    if not "index" in ff.scratch:
+    if "index" not in ff.scratch:
         ff.scratch["index"] = 0
     ff.scratch["index"] = ff.scratch["index"] + 1
     return str(ff.scratch["index"])
@@ -29,7 +26,7 @@ def replaceLongWithClasses(i, ff):
 
 
 def feaPreamble(self, ff):
-    if not "glyphclasses" in ff.scratch:
+    if "glyphclasses" not in ff.scratch:
         ff.scratch["glyphclasses"] = {
             tuple(sorted(ff.namedClasses[g])): g for g in ff.namedClasses.keys()
         }

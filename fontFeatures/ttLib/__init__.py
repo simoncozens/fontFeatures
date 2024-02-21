@@ -35,7 +35,7 @@ def unparseLanguageSystems(tables):
             items += [(l.LangSysTag, l.LangSys) for l in script.LangSysRecord]
             languages = set([i[0] for i in items])
 
-            if languages and not scriptTag in scripts:
+            if languages and scriptTag not in scripts:
                 scripts[scriptTag] = languages
 
     return scripts
