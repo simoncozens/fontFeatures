@@ -115,7 +115,7 @@ def asFeaAST(self, do_gdef=True):
         r.usecount = 0
         # Bubble up flags and languages
         if r.rules and not r.flags:
-            r.flags = r.rules[0].flag
+            r.flags = r.rules[0].flags
         if r.rules and not r.languages:
             r.languages = r.rules[0].languages
 
