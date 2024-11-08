@@ -1,6 +1,6 @@
 coverage_html
 htmlcov
-*.pyc 
+*.pyc
 build
 docs
 fontFeatures.egg-info
@@ -15,3 +15,5 @@ dist
 *.ttx
 *.test
 *.json
+
+.venv
