@@ -279,7 +279,7 @@ class FontFeatures:
 
     def setGlyphClassesFromFont(self, font):
         """Loads glyph classes from the font."""
-        for g in font.exportedGlyphs():
+        for g in font.exported_glyphs():
             if hasattr(font, "glyphs"):
                 self.glyphclasses[g] = font.glyphs[g].category
             else:
