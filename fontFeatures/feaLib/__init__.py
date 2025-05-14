@@ -92,10 +92,10 @@ class FeaParser:
         else:
             self.ff.routines.append(self.currentRoutine)
 
-    def start_lookup_block(self, location, name):
+    def start_lookup_block(self, location, name, use_extension=False):
         self._start_routine(location, name)
 
-    def start_feature(self, location, name):
+    def start_feature(self, location, name, use_extension=False):
         self.currentFeature = name
 
     def set_font_revision(self, location, revision):
