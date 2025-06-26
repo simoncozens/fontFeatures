@@ -1,0 +1,35 @@
+name: Test
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                python-version: ["3.9", "3.10", "3.11"]
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  submodules: recursive
+                  fetch-depth: 0
+            - name: Set up Python ${{ matrix.python-version }}
+              uses: actions/setup-python@v5
+              with:
+                  python-version: ${{ matrix.python-version }}
+            - name: Install packages
+              run: |
+                  pip install '.'
+                  pip install '.[shaper]'
+            - name: lint
+              run: |
+                  black . --check --diff --color
+            - name: Run Tests
+              run: |
+                  pytest tests/*.py
+              shell: bash

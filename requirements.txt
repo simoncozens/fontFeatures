@@ -1,3 +1,0 @@
-fs
-fontTools>=4.54.0
-lxml

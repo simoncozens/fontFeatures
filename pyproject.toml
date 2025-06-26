@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fontFeatures"
+description = "Python library for manipulating OpenType font features"
+readme = "README.md"
+dynamic = ["version"]
+authors = [{ name = "Simon Cozens", email = "simon@simon-cozens.org" }]
+classifiers = ['Environment :: Console', 'Topic :: Text Processing :: Fonts']
+dependencies = ['fontTools>=4.54.0', 'lxml']
+
+[project.optional-dependencies]
+shaper = ["youseedee >=0.3.0", "babelfont >=3.0.0"]
+
+[project.scripts]
+ff-shape = "fontFeatures.bin.ff_shape:main"
+otf2fea = "fontFeatures.bin.otf2fea:main"
+otflayout2glyphs = "fontFeatures.bin.otflayout2glyphs:main"
+siesta = "fontFeatures.bin.siesta:main"
+txt2fea = "fontFeatures.bin.txt2fea:main"
+
+[tool.setuptools.packages.find]
+where = ["Lib"]
+
+[tool.setuptools_scm]
+write_to = "Lib/fontFeatures/_version.py"
+git_describe_command = "git describe --match 'v*'"
+
+[tool.pytest.ini_options]
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.interrogate]
+ignore-init-method = true
+ignore-init-module = false
+ignore-magic = true
+ignore-semiprivate = true
+ignore-private = true
+ignore-nested-functions = true
+ignore-property-decorators = false
+ignore-module = false
+fail-under = 95
+exclude = ["setup.py", "docs", "build"]
+ignore-regex = ["^get$", "^mock_.*", ".*BaseClass.*"]
+verbose = 0
+quiet = false
+whitelist-regex = []
+color = true
