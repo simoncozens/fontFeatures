@@ -81,8 +81,7 @@ class GTableUnparser:
             if klass not in classes:
                 classes[klass] = []
             classes[klass].append(glyph)
-        glyphset = set(font.getGlyphOrder())
-        classes[0] = glyphset - set(a.keys())
+        classes[0] = [g for g in font.getGlyphOrder() if g not in a]
         return classes
 
     def getname(self, n):
