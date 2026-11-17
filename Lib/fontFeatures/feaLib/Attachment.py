@@ -59,7 +59,7 @@ def feaPreamble(self, ff):
 def asFeaAST(self):
     b = feaast.Block()
     if self.is_cursive:
-        allglyphs = set(self.bases.keys()) | set(self.marks.keys())
+        allglyphs = list(dict.fromkeys([*self.bases, *self.marks]))
         for g in allglyphs:
             b.statements.append(
                 feaast.CursivePosStatement(
