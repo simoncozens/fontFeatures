@@ -149,9 +149,9 @@ def asFeaAST(self):
 
     if not self.replacement:  # Delete
         return feaast.MultipleSubstStatement(
-            [glyphref(x) for x in self.precontext],
+            [glyphref(x) for x in self.precontext or []],
             glyphref(self.input[0]),
-            [glyphref(x) for x in self.postcontext],
+            [glyphref(x) for x in self.postcontext or []],
             [],
         )
 
