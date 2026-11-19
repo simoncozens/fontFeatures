@@ -179,6 +179,10 @@ def buildSub(self, font, lookuptype, ff):
         builder = otl.MultipleSubstBuilder(font, self.address)
         for rule in self.rules:
             builder.mapping[rule.input[0][0]] = [x[0] for x in rule.replacement]
+    elif lookuptype == 3:
+        builder = otl.AlternateSubstBuilder(font, self.address)
+        for rule in self.rules:
+            builder.alternates[rule.input[0][0]] = rule.replacement[0]
     elif lookuptype == 4:
         builder = otl.LigatureSubstBuilder(font, self.address)
         for rule in self.rules:
