@@ -4,7 +4,7 @@ from fontFeatures.feaLib.Routine import lookup_type
 import copy
 
 
-def add_language_system_statements(self, ff):
+def add_language_system_statements(self, ff) -> None:
     self.hoist_languages()
 
     total_languages = sum([len(x) for x in self.scripts_and_languages.values()])
@@ -16,15 +16,15 @@ def add_language_system_statements(self, ff):
             ff.statements.append(feaast.LanguageSystemStatement(s, lang))
 
 
-def asFea(self, **kwargs):
+def asFea(self, **kwargs) -> str:
     return self.asFeaAST(**kwargs).asFea()
 
 
-def _to_inline_class(glyphs):
+def _to_inline_class(glyphs) -> feaast.GlyphClass:
     return feaast.GlyphClass([feaast.GlyphName(x) for x in glyphs])
 
 
-def reorderAndResolve(self):
+def reorderAndResolve(self) -> list[int]:
     from fontFeatures import Chaining
 
     # Arrange the routines based on dependencies
@@ -62,7 +62,7 @@ def reorderAndResolve(self):
     return ordering
 
 
-def asFeaAST(self, do_gdef=True):
+def asFeaAST(self, do_gdef=True) -> feaast.FeatureFile:
     """Returns this font's features as a feaLib AST object, for later
     translation to AFDKO code."""
     from fontFeatures import Routine

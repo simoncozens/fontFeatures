@@ -669,9 +669,9 @@ class Rule:
     """A base class for all rules."""
 
     #: Glyph classes which must appear before the rule's input.
-    precontext: GlyphClasses
+    precontext: Optional[GlyphClasses]
     #: Glyph classes which must appear after the rule's input.
-    postcontext: GlyphClasses
+    postcontext: Optional[GlyphClasses]
     #: The scripts and languages to which this rule applies.
     languages: Optional[List[ScriptLanguage]]
     #: Rules which call other routines (chains and substitutions) may have
@@ -698,7 +698,7 @@ class Rule:
     @property
     def has_context(self) -> bool:
         """Does this rule have any pre- or post-context defined?"""
-        return bool(len(self.precontext) or len(self.postcontext))
+        return not (self.precontext is None and self.postcontext is None)
 
     @property
     def involved_glyphs(self) -> Set[str]:
@@ -765,8 +765,8 @@ class Substitution(Rule):
         flags: int = 0,
         force_alt: bool = False,
     ) -> None:
-        self.precontext = precontext or []
-        self.postcontext = postcontext or []
+        self.precontext = precontext
+        self.postcontext = postcontext
         self.input = input_
         self.replacement = replacement
         self.address = address
@@ -782,8 +782,8 @@ class Substitution(Rule):
         """Returns a set of all glyphs involved in this rule."""
         i = set(chain.from_iterable(self.input))
         o = set(chain.from_iterable(self.replacement))
-        b = set(chain.from_iterable(self.precontext))
-        a = set(chain.from_iterable(self.postcontext))
+        b = set(chain.from_iterable(self.precontext or []))
+        a = set(chain.from_iterable(self.postcontext or []))
         return i | o | b | a
 
     from .feaLib.Substitution import asFeaAST
@@ -948,8 +948,8 @@ class Positioning(Rule):
         languages: Optional[List[ScriptLanguage]] = None,
         flags: int = 0,
     ) -> None:
-        self.precontext = precontext or []
-        self.postcontext = postcontext or []
+        self.precontext = precontext
+        self.postcontext = postcontext
         assert len(glyphs) == len(valuerecords)
         self.glyphs = glyphs
         self.valuerecords = valuerecords
@@ -962,8 +962,8 @@ class Positioning(Rule):
     def involved_glyphs(self) -> Set[str]:
         """Returns a set of all glyphs involved in this rule."""
         i = set(chain.from_iterable(self.glyphs))
-        b = set(chain.from_iterable(self.precontext))
-        a = set(chain.from_iterable(self.postcontext))
+        b = set(chain.from_iterable(self.precontext or []))
+        a = set(chain.from_iterable(self.postcontext or []))
         return i | b | a
 
     from .feaLib.Positioning import asFeaAST

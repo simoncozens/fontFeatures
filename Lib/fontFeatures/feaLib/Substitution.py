@@ -60,7 +60,7 @@ def is_paired(self) -> bool:
 # Expands to:
 #   * sub f i -> f_i;
 #   * sub f.ss01 i.ss01 -> f_i.ss01;
-def paired_ligature(self) -> feaast.LigatureSubstStatement:
+def paired_ligature(self) -> feaast.Block:
     b = feaast.Block()
     inputs = []
     for i in self.input:
@@ -79,9 +79,9 @@ def paired_ligature(self) -> feaast.LigatureSubstStatement:
 
     for l, r in zip(lhs, rhs):
         stmt = feaast.LigatureSubstStatement(
-            [glyphref(x) for x in self.precontext],
+            [glyphref(x) for x in self.precontext or []],
             [glyphref([x]) for x in l],
-            [glyphref(x) for x in self.postcontext],
+            [glyphref(x) for x in self.postcontext or []],
             glyphref([r[0]]),
             False,
         )
@@ -94,7 +94,7 @@ def paired_ligature(self) -> feaast.LigatureSubstStatement:
 # Becomes in FEA:
 #   * sub a by before_tail a.2 tail;
 #   * sub b by before_tail b.2 tail;
-def paired_mult(self) -> feaast.MultipleSubstStatement:
+def paired_mult(self) -> feaast.Block:
     b = feaast.Block()
 
     input_lengths = [len(x) for x in self.input]
@@ -132,9 +132,9 @@ def paired_mult(self) -> feaast.MultipleSubstStatement:
 
     for f, t in zipped:
         stmt = feaast.MultipleSubstStatement(
-            [glyphref(x) for x in self.precontext],
+            [glyphref(x) for x in self.precontext or []],
             glyphref([f]),
-            [glyphref(x) for x in self.postcontext],
+            [glyphref(x) for x in self.postcontext or []],
             [glyphref(g) for g in prior_reps + [[t]] + after_reps],
         )
         b.statements.append(stmt)
@@ -159,9 +159,9 @@ def asFeaAST(self):
         return feaast.SingleSubstStatement(
             [glyphref(x) for x in self.input],
             [glyphref(x) for x in self.replacement],
-            [glyphref(x) for x in self.precontext],
-            [glyphref(x) for x in self.postcontext],
-            False,
+            [glyphref(x) for x in self.precontext or []],
+            [glyphref(x) for x in self.postcontext or []],
+            forceChain=self.has_context,
         )
     elif lut == 2:  # GSUB 2 Multiple Substitution
         # Paired rules need to become a set of statements
@@ -169,16 +169,17 @@ def asFeaAST(self):
             return paired_mult(self)
 
         return feaast.MultipleSubstStatement(
-            [glyphref(x) for x in self.precontext],
+            [glyphref(x) for x in self.precontext or []],
             glyphref(self.input[0]),
-            [glyphref(x) for x in self.postcontext],
+            [glyphref(x) for x in self.postcontext or []],
             [glyphref(x) for x in self.replacement],
+            forceChain=self.has_context,
         )
     elif lut == 3:  # GSUB 3 Alternate Substitution
         return feaast.AlternateSubstStatement(
-            [glyphref(x) for x in self.precontext],
+            [glyphref(x) for x in self.precontext or []],
             glyphref(self.input[0]),
-            [glyphref(x) for x in self.postcontext],
+            [glyphref(x) for x in self.postcontext or []],
             feaast.GlyphClass([feaast.GlyphName(x) for x in self.replacement[0]]),
         )
     elif lut == 4:  # GSUB 4 Ligature Substitution
@@ -191,18 +192,18 @@ def asFeaAST(self):
             return paired_ligature(self)
 
         return feaast.LigatureSubstStatement(
-            [glyphref(x) for x in self.precontext],
+            [glyphref(x) for x in self.precontext or []],
             [glyphref(x) for x in self.input],
-            [glyphref(x) for x in self.postcontext],
+            [glyphref(x) for x in self.postcontext or []],
             glyphref(self.replacement[0]),
-            False,
+            forceChain=self.has_context,
         )
     elif lut in [5, 6, 7]:  # GSUB 5, 6, 7 Different types of contextual substitutions
         raise NotImplementedError("Use the Chain verb for this")
     elif lut == 8:  # GSUB 8 Reverse Chaining Single Substitution
         return feaast.ReverseChainSingleSubstStatement(
-            [glyphref(x) for x in self.precontext],
-            [glyphref(x) for x in self.postcontext],
+            [glyphref(x) for x in self.precontext or []],
+            [glyphref(x) for x in self.postcontext or []],
             [glyphref(x) for x in self.input],
             [glyphref(self.replacement[0])],
         )

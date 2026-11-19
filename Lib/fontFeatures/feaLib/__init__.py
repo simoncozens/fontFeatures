@@ -1,3 +1,4 @@
+from typing import Optional
 import io
 import re
 import fontFeatures
@@ -23,6 +24,10 @@ class FeaParser:
         font: Optionally, a TTFont object.
         glyphNames: Optionally, a list of glyph names in the font
     """
+
+    currentRoutine: Optional[fontFeatures.Routine] = None
+    currentRoutineFlag: Optional[int] = None
+    currentLanguage: Optional[list] = None
 
     def __init__(self, featurefile, font=None, glyphNames=None, includeDir=None):
         self.ff = fontFeatures.FontFeatures()
@@ -116,12 +121,19 @@ class FeaParser:
 
     def add_single_subst(self, location, prefix, suffix, mapping, forceChain):
         self._start_routine_if_necessary(location)
+        assert self.currentRoutine is not None
         location = "%s:%i:%i" % (location)
+        precontext = [[str(g) for g in group] for group in prefix]
+        if len(precontext) == 0 and not forceChain:
+            precontext = None
+        postcontext = [[str(g) for g in group] for group in suffix]
+        if len(postcontext) == 0 and not forceChain:
+            postcontext = None
         s = fontFeatures.Substitution(
             input_=[list(mapping.keys())],
             replacement=[list(mapping.values())],
-            precontext=[[str(g) for g in group] for group in prefix],
-            postcontext=[[str(g) for g in group] for group in suffix],
+            precontext=precontext,
+            postcontext=postcontext,
             address=location,
             languages=self.currentLanguage,
         )
@@ -129,6 +141,7 @@ class FeaParser:
 
     def add_reverse_chain_single_subst(self, location, prefix, suffix, mapping):
         self._start_routine_if_necessary(location)
+        assert self.currentRoutine is not None
         location = "%s:%i:%i" % (location)
         s = fontFeatures.Substitution(
             input_=[list(mapping.keys())],
@@ -145,12 +158,20 @@ class FeaParser:
         self, location, prefix, glyph, suffix, replacements, forceChain
     ):
         self._start_routine_if_necessary(location)
+        precontext = [[str(g) for g in group] for group in prefix]
+        if len(precontext) == 0 and not forceChain:
+            precontext = None
+        postcontext = [[str(g) for g in group] for group in suffix]
+        if len(postcontext) == 0 and not forceChain:
+            postcontext = None
+
+        assert self.currentRoutine is not None
         location = "%s:%i:%i" % (location)
         s = fontFeatures.Substitution(
             input_=[[glyph]],
             replacement=[[g] for g in replacements],
-            precontext=[[str(g) for g in group] for group in prefix],
-            postcontext=[[str(g) for g in group] for group in suffix],
+            precontext=precontext,
+            postcontext=postcontext,
             address=location,
             languages=self.currentLanguage,
         )
@@ -158,6 +179,7 @@ class FeaParser:
 
     def add_alternate_subst(self, location, prefix, glyph, suffix, replacement):
         self._start_routine_if_necessary(location)
+        assert self.currentRoutine is not None
         location = "%s:%i:%i" % (location)
         s = fontFeatures.Substitution(
             input_=[[glyph]],
@@ -173,12 +195,20 @@ class FeaParser:
         self, location, prefix, glyphs, suffix, replacement, forceChain
     ):
         self._start_routine_if_necessary(location)
+        precontext = [[str(g) for g in group] for group in prefix]
+        if len(precontext) == 0 and not forceChain:
+            precontext = None
+        postcontext = [[str(g) for g in group] for group in suffix]
+        if len(postcontext) == 0 and not forceChain:
+            postcontext = None
+
+        assert self.currentRoutine is not None
         location = "%s:%i:%i" % (location)
         s = fontFeatures.Substitution(
             input_=[list(x) for x in glyphs],
             replacement=[[replacement]],
-            precontext=[[str(g) for g in group] for group in prefix],
-            postcontext=[[str(g) for g in group] for group in suffix],
+            precontext=precontext,
+            postcontext=postcontext,
             address=location,
             languages=self.currentLanguage,
         )
@@ -194,6 +224,7 @@ class FeaParser:
                 mylookups.append([self.ff.routineNamed(y.name) for y in x])
             else:
                 mylookups.append(None)
+        assert self.currentRoutine is not None
         s = fontFeatures.Chaining(
             input_=[list(x) for x in glyphs],
             precontext=[[str(g) for g in group] for group in prefix],
@@ -208,12 +239,19 @@ class FeaParser:
 
     def add_single_pos(self, location, prefix, suffix, pos, forceChain):
         self._start_routine_if_necessary(location)
+        precontext = [[str(g) for g in group] for group in prefix]
+        if len(precontext) == 0 and not forceChain:
+            precontext = None
+        postcontext = [[str(g) for g in group] for group in suffix]
+        if len(postcontext) == 0 and not forceChain:
+            postcontext = None
+        assert self.currentRoutine is not None
         location = "%s:%i:%i" % (location)
         s = fontFeatures.Positioning(
             glyphs=[p[0] for p in pos],
             valuerecords=[p[1] for p in pos],
-            precontext=[[str(g) for g in group] for group in prefix],
-            postcontext=[[str(g) for g in group] for group in suffix],
+            precontext=precontext,
+            postcontext=postcontext,
             address=location,
             languages=self.currentLanguage,
         )
@@ -228,6 +266,7 @@ class FeaParser:
             address=location,
             languages=self.currentLanguage,
         )
+        assert self.currentRoutine is not None
         self.currentRoutine.addRule(s)
 
     def add_class_pair_pos(self, location, glyphclass1, value1, glyphclass2, value2):
@@ -239,6 +278,7 @@ class FeaParser:
             address=location,
             languages=self.currentLanguage,
         )
+        assert self.currentRoutine is not None
         self.currentRoutine.addRule(s)
 
     def add_cursive_pos(self, location, glyphclass, entryAnchor, exitAnchor):
@@ -257,6 +297,7 @@ class FeaParser:
             address=location,
             languages=self.currentLanguage,
         )
+        assert self.currentRoutine is not None
         self.currentRoutine.addRule(s)
 
     def add_mark_base_pos(self, location, bases, marks):
@@ -275,6 +316,7 @@ class FeaParser:
                     address=location,
                     languages=self.currentLanguage,
                 )
+                assert self.currentRoutine is not None
                 s.fontfeatures = self.ff
                 self.currentRoutine.addRule(s)
 

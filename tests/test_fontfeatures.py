@@ -1,7 +1,6 @@
-from fontFeatures import FontFeatures, Routine
+from fontFeatures import FontFeatures, Routine, Substitution
 from lxml import etree
 import re
-
 
 expected = """
     <fontfeatures>
@@ -87,3 +86,21 @@ def test_routine_named():
     f1 = FontFeatures()
     f1.addFeature("onex", [r1])
     assert f1.routineNamed("One") == r1
+
+
+def test_issue_71():
+    rule1 = Substitution(precontext=[["A"]], input_=[["O"]], replacement=[["B"]])
+    rule2 = Substitution(
+        precontext=[], postcontext=[], input_=[["O"]], replacement=[["A"]]
+    )
+
+    routine = Routine(rules=[rule1, rule2])
+
+    ff = FontFeatures()
+    ff.addFeature("liga", [routine])
+    # There should only be one lookup emitted for the routine.
+    fea = ff.asFea()
+    assert "A O' by B" in fea
+    assert "O' by A" in fea
+    assert "Routine_1" in fea
+    assert "Routine_2" not in fea
