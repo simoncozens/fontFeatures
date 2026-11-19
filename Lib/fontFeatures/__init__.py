@@ -36,11 +36,46 @@ Here is an example of constructing a simple feature file using fontFeatures::
     font.save("Test-liga.ttf")
 """
 
-from collections import OrderedDict
+from __future__ import annotations
+
+from copy import copy
+from itertools import chain
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+    overload,
+)
+
 from fontTools.feaLib.ast import ValueRecord as feaLibValueRecord
 from fontTools.feaLib.variableScalar import VariableScalar
-from itertools import chain
-from copy import copy
+
+#: A list of glyph names which match a single position in the glyph stream.
+GlyphClass = Sequence[str]
+#: A list of glyph classes, one for each position in a rule's input sequence.
+GlyphClasses = Sequence[GlyphClass]
+#: A ``(script, language)`` pair, e.g. ``("latn", "dflt")``.
+ScriptLanguage = Tuple[str, str]
+#: The position of an anchor in font design units. Values may also be
+#: :py:class:`fontTools.feaLib.variableScalar.VariableScalar` objects.
+AnchorPosition = Tuple[
+    Union[int, float, VariableScalar], Union[int, float, VariableScalar]
+]
+#: A routine, or a reference to one, as used in chain rule lookups.
+Lookup = Union["Routine", "RoutineReference"]
+
+RuleT = TypeVar("RuleT", bound="Rule")
 
 
 class FontFeatures:
@@ -48,70 +83,76 @@ class FontFeatures:
 
     The initializer has no parameters."""
 
-    def __init__(self):
-        self.namedClasses = (
-            {}
-        )  #: A mapping of named classes to a list of glyph names which make up the class.
-        self.routines = []  #: All of the layout routines used in this font.
-        self.features = (
-            OrderedDict()
-        )  #: An ordered dictionary mapping feature tags to a list of routine references.
-        self.anchors = (
-            {}
-        )  #: A dictionary mapping glyph names to a dictionary of anchor names / positions.
-        self.symbols = {}
-        self.glyphclasses = {}  #: A dictionary mapping glyph names to their categories.
-        self.scratch = {}  #: Space for items to communicate context to each other.
-        self.doneUsageMarking = False
+    def __init__(self) -> None:
+        #: A mapping of named classes to the glyph names which make up the class.
+        self.namedClasses: Dict[str, GlyphClass] = {}
+        #: All of the layout routines used in this font.
+        self.routines: List[Routine] = []
+        #: An ordered mapping of feature tags to lists of routine references.
+        self.features: Dict[str, List[RoutineReference]] = {}
+        #: A mapping of glyph names to a mapping of anchor names to positions.
+        self.anchors: Dict[str, Dict[str, AnchorPosition]] = {}
+        #: A mapping of symbol categories to the last generated symbol number.
+        self.symbols: Dict[str, int] = {}
+        #: A mapping of glyph names to their categories.
+        self.glyphclasses: Dict[str, str] = {}
+        #: Space for items to communicate context to each other.
+        self.scratch: Dict[str, Any] = {}
+        #: Scripts and languages supported by these features, keyed by script
+        #: tag. Filled in by :py:meth:`hoist_languages`.
+        self.scripts_and_languages: Dict[str, List[str]] = {}
+        self.doneUsageMarking: bool = False
 
-    def __add__(self, other):
+    def __add__(self, other: FontFeatures) -> FontFeatures:
         """Combine two FontFeatures objects together."""
         combined = FontFeatures()
-        for k in [
-            "namedClasses",
-            "routines",
-            "features",
-            "anchors",
-            "symbols",
-            "glyphclasses",
-        ]:
-            if isinstance(getattr(combined, k), dict):
-                getattr(combined, k).update(getattr(self, k))
-                getattr(combined, k).update(getattr(other, k))
-            else:
-                setattr(combined, k, getattr(self, k) + getattr(other, k))
+        combined.namedClasses = {**self.namedClasses, **other.namedClasses}
+        combined.routines = self.routines + other.routines
+        combined.features = {**self.features, **other.features}
+        combined.anchors = {**self.anchors, **other.anchors}
+        combined.symbols = {**self.symbols, **other.symbols}
+        combined.glyphclasses = {**self.glyphclasses, **other.glyphclasses}
         return combined
 
-    def gensym(self, category):
+    def gensym(self, category: str) -> str:
         """Generate a new unique symbol (used for labeling unlabeled data).
 
         Args:
-            category (str): The category for this symbol
+            category: The category for this symbol.
 
-        Returns: a string representing a unique label."""
+        Returns:
+            A string representing a unique label.
+        """
         if category not in self.symbols:
             self.symbols[category] = 0
         self.symbols[category] += 1
         return f"{category}{self.symbols[category]}"
 
-    def routineNamed(self, name):
+    def routineNamed(self, name: str) -> Routine:
         """Finds a routine with the given name.
 
         Args:
-            name (str): The name to find
+            name: The name to find.
 
-        Returns: a :py:class:`Routine` object if the named routine was found
-          in the features object. Raises a ``ValueError`` if not."""
+        Returns:
+            The :py:class:`Routine` object with that name.
+
+        Raises:
+            ValueError: If no routine with that name is present.
+        """
         for r in self.routines:
             if r.name == name:
                 return r
         raise ValueError("Can't find routine '%s'" % name)
 
-    def referenceRoutine(self, r, do_usecount=True):
+    def referenceRoutine(
+        self, r: Routine, do_usecount: bool = True
+    ) -> RoutineReference:
         """Store a routine and return a reference to it.
 
         Args:
             r: A :py:class:`Routine` object.
+            do_usecount: Whether to increment the routine's usage count.
         """
         assert isinstance(r, Routine)
 
@@ -122,18 +163,18 @@ class FontFeatures:
             r.usecount = r.usecount + 1
         return RoutineReference(routine=r)
 
-    def getNamedClassFor(self, glyphs, name):
-        """Find and optionally stores a named class of glyphs
+    def getNamedClassFor(self, glyphs: Sequence[str], name: str) -> str:
+        """Find and optionally store a named class of glyphs.
 
         Args:
             glyphs: A sequence of glyph names.
             name: A name for this glyph class if it does not exist.
 
         Returns:
-            The name of a glyph class. If the exact same set of glyphs
-            was already stored as a glyph class, then the name of that
-            class will be returned. If not, then the class will be stored
-            and the name provided as the ``name`` argument will be returned.
+            The name of a glyph class. If the exact same set of glyphs was
+            already stored as a glyph class, then the name of that class will
+            be returned. If not, then the class will be stored and the name
+            provided as the ``name`` argument will be returned.
         """
         for k, v in self.namedClasses.items():
             if sorted(glyphs) == sorted(v):
@@ -141,12 +182,15 @@ class FontFeatures:
         self.namedClasses[name] = glyphs
         return name
 
-    def addFeature(self, name, rs):
+    def addFeature(
+        self, name: str, rs: Iterable[Union[Routine, RoutineReference]]
+    ) -> None:
         """Add Routines to a named feature.
 
         Args:
             name: The feature name.
-            rs: A sequence of :py:class:`Routine` or :py:class:`RoutineReference` objects.
+            rs: A sequence of :py:class:`Routine` or
+                :py:class:`RoutineReference` objects.
         """
         if name not in self.features:
             self.features[name] = []
@@ -156,26 +200,30 @@ class FontFeatures:
                 r = self.referenceRoutine(r)
             self.features[name].append(r)
 
-    def allRules(self, ruletype=None):
-        """Return all rules in the font, optionally filtered by type
+    @overload
+    def allRules(self) -> List[Rule]: ...
+
+    @overload
+    def allRules(self, ruletype: Type[RuleT]) -> List[RuleT]: ...
+
+    def allRules(self, ruletype: Optional[Type[Rule]] = None) -> List[Rule]:
+        """Return all rules in the font, optionally filtered by type.
 
         Args:
-            ruletype: A class (``Positioning``, ``Substitution`` etc)
-                to filter the results.
+            ruletype: A class (``Positioning``, ``Substitution`` etc) to filter
+                the results by.
 
         Returns:
-            Routines stored in the preamble and within features.
+            All rules in the routines stored in this font features object.
         """
-
-        rules = []
-        for r in self.routines:
-            rules.extend(r.rules)
-
-        if ruletype:
-            rules = filter(lambda x: isinstance(x, ruletype), rules)
+        rules: List[Rule] = list(
+            chain.from_iterable(routine.rules for routine in self.routines)
+        )
+        if ruletype is not None:
+            rules = [rule for rule in rules if isinstance(rule, ruletype)]
         return rules
 
-    def markRoutineUseInChains(self):
+    def markRoutineUseInChains(self) -> None:
         """Annotate routines which are used in chaining rules.
 
         Generally used when converting the fontFeatures object to another
@@ -190,31 +238,28 @@ class FontFeatures:
             for routinelist in chain_rule.lookups:
                 if not routinelist:
                     continue
-                for routine in routinelist:
+                for lookup in routinelist:
                     # Using a set here so it is safe to call more than once
-                    if isinstance(routine, RoutineReference):
-                        routine.resolve(self)
-                        routine.routine.usedin.add(chain_rule)
+                    if isinstance(lookup, RoutineReference):
+                        lookup.resolve(self).usedin.add(chain_rule)
                     else:
-                        routine.usedin.add(chain_rule)
+                        lookup.usedin.add(chain_rule)
         self.doneUsageMarking = True
 
-    def hoist_languages(self):
+    def hoist_languages(self) -> None:
         """Sort routines into scripts and languages and resolve wildcards."""
-        scripts = OrderedDict()
+        scripts: Dict[str, List[str]] = {}
         count = 0
 
-        def add_language(p):
-            nonlocal scripts
+        def add_language(pair: ScriptLanguage) -> None:
             nonlocal count
-            script, lang = p
-            if script not in scripts:
-                scripts[script] = []
+            script, lang = pair
             if lang == "*":
                 return
-            if lang not in scripts[script]:
+            languages = scripts.setdefault(script, [])
+            if lang not in languages:
                 count = count + 1
-                scripts[script].append(lang)
+                languages.append(lang)
 
         for k in self.routines:
             if k.languages:
@@ -233,18 +278,19 @@ class FontFeatures:
 
         self.scripts_and_languages = scripts
 
-    def hasScriptSupport(self, script):
+    def hasScriptSupport(self, script: str) -> bool:
         """Check if the features object has support for a particular script.
 
         Args:
-            script (str): A four-character OpenType script code.
+            script: A four-character OpenType script code.
 
-        Returns: boolean
+        Returns:
+            Whether the script is supported by these features.
         """
         self.hoist_languages()
         return script in self.scripts_and_languages
 
-    def resolveAllRoutines(self):
+    def resolveAllRoutines(self) -> None:
         """Resolve reference use in chains.
 
         Checks that all routines referenced in chain rules can actually
@@ -260,32 +306,43 @@ class FontFeatures:
                         r.lookups[lookuplistIx]
                     )
 
-    def ensureLookupsAreReferences(self, lookuplist):
+    def ensureLookupsAreReferences(
+        self, lookuplist: Optional[Iterable[Lookup]]
+    ) -> Optional[List[Lookup]]:
         """Ensures that all references are lookups.
 
         Naughty people might put :py:class:`Routine` objects directly into
-        :py:class:`Chain` lookups. This tidies them up."""
-        rv = []
+        :py:class:`Chain` lookups. This tidies them up.
+        """
         if not lookuplist:
             return None
+        rv: List[Lookup] = []
         for r in lookuplist:
             if isinstance(r, RoutineReference):
                 r.resolve(self)
+                reference = r
             else:
-                r = self.referenceRoutine(r)
-            assert r.routine in self.routines
-            rv.append(r)
+                reference = self.referenceRoutine(r)
+            assert reference.routine in self.routines
+            rv.append(reference)
         return rv
 
-    def setGlyphClassesFromFont(self, font):
-        """Loads glyph classes from the font."""
+    def setGlyphClassesFromFont(self, font: Any) -> None:
+        """Loads glyph classes from the font.
+
+        Args:
+            font: Either a ``babelfont`` font object or a ``fontTools``
+                ``TTFont``-like object with glyph category information.
+        """
         for g in font.exported_glyphs():
             if hasattr(font, "glyphs"):
                 self.glyphclasses[g] = font.glyphs[g].category
             else:
                 self.glyphclasses[g] = font[g].category
 
-    def partitionRoutine(self, routine, factor):
+    def partitionRoutine(
+        self, routine: Routine, factor: Callable[[Rule], Any]
+    ) -> List[Routine]:
         """Splits a routine based on a predicate.
 
         This method applies a function to each rule in the routine and creates
@@ -298,20 +355,22 @@ class FontFeatures:
             routine: A :py:class:`Routine` object.
             factor: A function applied to each of the :py:class:`Rule` objects.
 
-        Returns: A list of :py:class:`Routine` objects. Additionally, modifies
-        the ``.routines`` list of the FontFeatures object."""
+        Returns:
+            A list of :py:class:`Routine` objects. The ``.routines`` list of the
+            FontFeatures object is also modified in place.
+        """
         if not routine.rules:
-            return
+            return []
         self.doneUsageMarking = False
         self.markRoutineUseInChains()
 
-        split_routines = {}
+        split_routines: Dict[Any, Tuple[Routine, List[Rule]]] = {}
         # The first rule stays in the original
         split_routines[factor(routine.rules[0])] = (routine, [routine.rules[0]])
         for rule in routine.rules[1:]:
             thisfactor = factor(rule)
             if thisfactor not in split_routines:
-                rulelist = []
+                rulelist: List[Rule] = []
                 newroutine = copy(routine)
                 newroutine.rules = rulelist
                 split_routines[thisfactor] = (newroutine, rulelist)
@@ -325,41 +384,60 @@ class FontFeatures:
         allroutines = [x[0] for x in split_routines.values()]
         return self.replaceRoutineWithSplitList(routine, allroutines)
 
-    def replaceRoutineWithSplitList(self, routine, allroutines):
+    def replaceRoutineWithSplitList(
+        self, routine: Routine, allroutines: List[Routine]
+    ) -> List[Routine]:
+        """Replace a routine with the routines it was split into.
+
+        Args:
+            routine: The original :py:class:`Routine` object.
+            allroutines: The routines which replace it.
+
+        Returns:
+            The replacement routines.
+        """
         self.markRoutineUseInChains()
         index = self.routines.index(routine)
         usedin = routine.usedin
         self.routines[index : index + 1] = allroutines
         for user in usedin:
-            for lookuplist in user.lookups:
-                if lookuplist is None:
+            for ix, lookuplist in enumerate(user.lookups):
+                if not lookuplist:
                     continue
-                i = 0
-                while i < len(lookuplist):
-                    lookup = lookuplist[i]
-                    if lookup == routine or (
-                        isinstance(lookup, RoutineReference)
-                        and lookup.routine == routine
-                    ):
-                        lookuplist[i : i + 1] = [
-                            RoutineReference(routine=r) for r in allroutines
-                        ]
-                    i = i + 1
+                user.lookups[ix] = self._replaceRoutineInLookupList(
+                    lookuplist, routine, allroutines
+                )
         # Same trick for features
-        for lookuplist in self.features.values():
-            if lookuplist is None:
-                continue
-            i = 0
-            while i < len(lookuplist):
-                lookup = lookuplist[i]
-                if lookup == routine or (
-                    isinstance(lookup, RoutineReference) and lookup.routine == routine
-                ):
-                    lookuplist[i : i + 1] = [
-                        RoutineReference(routine=r) for r in allroutines
-                    ]
-                i = i + 1
+        for tag, lookuplist in self.features.items():
+            self.features[tag] = cast(
+                "List[RoutineReference]",
+                self._replaceRoutineInLookupList(lookuplist, routine, allroutines),
+            )
         return allroutines
+
+    @staticmethod
+    def _replaceRoutineInLookupList(
+        lookuplist: Iterable[Lookup], routine: Routine, allroutines: List[Routine]
+    ) -> List[Lookup]:
+        """Replace references to a routine with a list of new routines.
+
+        Args:
+            lookuplist: The lookups to adjust.
+            routine: The routine being replaced.
+            allroutines: The routines which replace it.
+
+        Returns:
+            A new list of lookups with matching entries expanded.
+        """
+        newlist: List[Lookup] = []
+        for lookup in lookuplist:
+            if lookup == routine or (
+                isinstance(lookup, RoutineReference) and lookup.routine == routine
+            ):
+                newlist.extend(RoutineReference(routine=r) for r in allroutines)
+            else:
+                newlist.append(lookup)
+        return newlist
 
     from .feaLib.FontFeatures import asFea, asFeaAST
     from .xmlLib.FontFeatures import toXML, fromXML
@@ -375,33 +453,39 @@ class Routine:
 
     def __init__(
         self,
-        name="",
-        rules=None,
-        address=None,
-        inlined=False,
-        languages=None,
-        parent=None,
-        flags=0,
-        markFilteringSet=None,
-        markAttachmentSet=None,
-    ):
+        name: str = "",
+        rules: Optional[List[Rule]] = None,
+        address: Optional[Any] = None,
+        inlined: bool = False,
+        languages: Optional[List[ScriptLanguage]] = None,
+        parent: Optional[FontFeatures] = None,
+        flags: int = 0,
+        markFilteringSet: Optional[Sequence[str]] = None,
+        markAttachmentSet: Optional[Sequence[str]] = None,
+    ) -> None:
         self.name = name
-        self.usecount = 0
-        self.usedin = set()
-        if rules:
-            self.rules = rules
-        else:
-            self.rules = []
+        self.usecount: int = 0
+        self.usedin: Set[Chaining] = set()
+        self._rules: List[Rule] = rules if rules is not None else []
         self.address = address
-        self.comments = []
+        self.comments: List[str] = []
         self.inlined = inlined
-        self.languages = languages or []
+        self.languages: List[ScriptLanguage] = languages or []
         self.parent = parent
         self.flags = flags
         self.markFilteringSet = markFilteringSet
         self.markAttachmentSet = markAttachmentSet
 
-    def addRule(self, rule):
+    @property
+    def rules(self) -> List[Rule]:
+        """The rules contained in this routine."""
+        return self._rules
+
+    @rules.setter
+    def rules(self, rules: List[Rule]) -> None:
+        self._rules = rules
+
+    def addRule(self, rule: Rule) -> None:
         """Adds a rule to a Routine.
 
         Args:
@@ -410,7 +494,7 @@ class Routine:
         assert isinstance(rule, Rule)
         self.rules.append(rule)
 
-    def addComment(self, comment):
+    def addComment(self, comment: str) -> None:
         """Adds a comment to a Routine.
 
         Comments are emitted when the Routine is converted to text formats
@@ -422,15 +506,17 @@ class Routine:
         self.comments.append(comment)
 
     @property
-    def involved_glyphs(self):
+    def involved_glyphs(self) -> Set[str]:
         """Returns the names of all of the glyphs involved in this Routine."""
         return set().union(*(r.involved_glyphs for r in self.rules))
 
     @property
-    def stage(self):
+    def stage(self) -> Optional[str]:
         """Returns which shaping stage this routine is used in.
 
-        Returns: ``sub`` for substitution stage, ``pos`` for positioning stage."""
+        Returns:
+            ``sub`` for substitution stage, ``pos`` for positioning stage.
+        """
         for r in self.rules:
             if isinstance(r, Substitution):
                 return "sub"
@@ -440,12 +526,13 @@ class Routine:
                 return "pos"
             if isinstance(r, Chaining):
                 return r.stage
+        return None
 
     @property
-    def dependencies(self):
+    def dependencies(self) -> List[Routine]:
         """Returns a list of :py:class:`Routine` objects called as lookups in
         this Routine."""
-        deps = []
+        deps: List[Routine] = []
         for r in self.rules:
             deps.extend(r.dependencies)
         return deps
@@ -459,26 +546,31 @@ class Routine:
 class ExtensionRoutine(Routine):
     """OpenType-specific concept: A routine which contains other routines."""
 
-    def __init__(self, **kwargs):
-        if "routines" in kwargs:
-            self.routines = kwargs["routines"]
-            del kwargs["routines"]
+    def __init__(self, routines: List[Routine], **kwargs: Any) -> None:
+        self.routines = routines
         super().__init__(**kwargs)
 
-    def apply_to_buffer(self, buf, stage=None, feature=None):
+    def apply_to_buffer(
+        self,
+        buf: Any,
+        stage: Optional[str] = None,
+        feature: Optional[str] = None,
+        namedclasses: Optional[Mapping[str, Sequence[str]]] = None,
+    ) -> None:
         """Applies shaping rules from this routine to a buffer.
 
         Args:
             buf: A :py:class:`fontFeatures.shaperLib.Buffer` object.
-            stage (str): Shaping stage - ``sub`` or ``pos``.
-            feature (str): The feature being processed. (For debugging.)
+            stage: Shaping stage - ``sub`` or ``pos``.
+            feature: The feature being processed. (For debugging.)
+            namedclasses: A mapping of named glyph classes to glyph lists.
 
         Modifies the ``buf`` object.
         """
         for r in self.routines:
-            r.apply_to_buffer(buf, stage, feature)
+            r.apply_to_buffer(buf, stage, feature, namedclasses or {})
 
-    def asFeaAST(self):
+    def asFeaAST(self) -> Any:
         """Returns this extension routine as ``fontTools.feaLib.ast`` objects."""
         import fontTools.feaLib.ast as feaast
 
@@ -488,23 +580,26 @@ class ExtensionRoutine(Routine):
         return f
 
     @property
-    def stage(self):
+    def stage(self) -> Optional[str]:
         """Returns which shaping stage this routine is used in.
 
-        Returns: ``sub`` for substitution stage, ``pos`` for positioning stage."""
+        Returns:
+            ``sub`` for substitution stage, ``pos`` for positioning stage.
+        """
         return self.routines[0].stage
 
     @property
-    def rules(self):
+    def rules(self) -> List[Rule]:
         """All rules under this extension.
 
-        Returns: A flattened list of :py:class:`Rule` objects."""
-        return list(chain(*[routine.rules for routine in self.routines]))
+        Returns:
+            A flattened list of :py:class:`Rule` objects.
+        """
+        return list(chain.from_iterable(routine.rules for routine in self.routines))
 
     @rules.setter
-    def rules(self, foo):
+    def rules(self, rules: List[Rule]) -> None:
         """Does nothing. Don't set rules here."""
-        pass
 
 
 class RoutineReference:
@@ -512,34 +607,52 @@ class RoutineReference:
 
     Routines can be referenced either by name (for example, when loaded from a
     textual representation), in which case they will be resolved at a later time,
-    or by providing a pointer to the :py:class:`Routine` object."""
+    or by providing a pointer to the :py:class:`Routine` object.
+    """
 
-    def __init__(self, name=None, routine=None):
-        self.languages = []
+    #: The object which owns this rule, if any.
+    parent: Optional[FontFeatures]
+
+    def __init__(
+        self, name: Optional[str] = None, routine: Optional[Routine] = None
+    ) -> None:
+        self.languages: List[ScriptLanguage] = []
         self.routine = routine
-        if self.routine:
-            self.name = routine.name
+        self.name: Optional[str] = routine.name if routine is not None else None
         if name:
             self.name = name
 
-    def resolve(self, ff):
+    def resolve(self, ff: FontFeatures) -> Routine:
         """Resolves the reference in the context of a :py:class:`FontFeatures`
         object.
 
-        Raises a ``ValueError`` if a named routine cannot be found.
+        Args:
+            ff: The :py:class:`FontFeatures` object in which to look up the
+                routine.
+
+        Returns:
+            The :py:class:`Routine` this reference points at.
+
+        Raises:
+            ValueError: If the named routine cannot be found.
         """
-        if not self.routine:
-            self.routine = ff.routineNamed(self.name)
-            if not self.routine:
-                raise ValueError("Could not resolve routine")
+        routine = self.routine
+        if routine is None:
+            if self.name is None:
+                raise ValueError("Cannot resolve a routine reference without a name")
+            routine = ff.routineNamed(self.name)
+            self.routine = routine
         if not self.name:
-            self.name = self.routine.name
+            self.name = routine.name
+        return routine
 
     @property
-    def stage(self):
+    def stage(self) -> Optional[str]:
         """Returns which shaping stage this routine is used in.
 
-        Returns: ``sub`` for substitution stage, ``pos`` for positioning stage."""
+        Returns:
+            ``sub`` for substitution stage, ``pos`` for positioning stage.
+        """
         if not self.routine:
             raise ValueError("Routine reference not resolved")
         return self.routine.stage
@@ -547,7 +660,7 @@ class RoutineReference:
     from .xmlLib.RoutineReference import fromXML, toXML
     from .feaLib.RoutineReference import asFeaAST, feaPreamble
 
-    def asFea(self):
+    def asFea(self) -> str:
         """Returns this Rule as a string of AFDKO feature text."""
         return self.asFeaAST().asFea()
 
@@ -555,11 +668,27 @@ class RoutineReference:
 class Rule:
     """A base class for all rules."""
 
-    def asFea(self):
+    #: Glyph classes which must appear before the rule's input.
+    precontext: GlyphClasses
+    #: Glyph classes which must appear after the rule's input.
+    postcontext: GlyphClasses
+    #: The scripts and languages to which this rule applies.
+    languages: Optional[List[ScriptLanguage]]
+    #: Rules which call other routines (chains and substitutions) may have
+    #: lookups to apply at each position of their input sequence.
+    lookups: List[Optional[List[Lookup]]]
+    #: The object which owns this rule, if any.
+    parent: Optional[FontFeatures]
+
+    def asFeaAST(self) -> Any:
+        """Returns this rule as a ``fontTools.feaLib.ast`` statement."""
+        raise NotImplementedError
+
+    def asFea(self) -> str:
         """Returns this Rule as a string of AFDKO feature text."""
         return self.asFeaAST().asFea()
 
-    def feaPreamble(self, ff):
+    def feaPreamble(self, ff: FontFeatures) -> List[Any]:
         """Computes any text that needs to go in the feature file header."""
         return []
 
@@ -567,12 +696,17 @@ class Rule:
     from .xmlLib.Rule import fromXML, toXML, _makeglyphslots, _slotArray
 
     @property
-    def has_context(self):
+    def has_context(self) -> bool:
         """Does this rule have any pre- or post-context defined?"""
-        return len(self.precontext) or len(self.postcontext)
+        return bool(len(self.precontext) or len(self.postcontext))
 
     @property
-    def dependencies(self):
+    def involved_glyphs(self) -> Set[str]:
+        """Returns a set of all glyphs involved in this rule."""
+        return set()
+
+    @property
+    def dependencies(self) -> List[Routine]:
         """Returns a list of :py:class:`Routine` objects called as lookups in
         this Routine."""
         return []
@@ -620,17 +754,17 @@ class Substitution(Rule):
 
     def __init__(
         self,
-        input_,
-        replacement,
-        precontext=None,
-        postcontext=None,
-        address=None,
-        languages=None,
-        lookups=None,
-        reverse=False,
-        flags=0,
-        force_alt=False,
-    ):
+        input_: GlyphClasses,
+        replacement: GlyphClasses,
+        precontext: Optional[GlyphClasses] = None,
+        postcontext: Optional[GlyphClasses] = None,
+        address: Optional[Any] = None,
+        languages: Optional[List[ScriptLanguage]] = None,
+        lookups: Optional[List[Optional[List[Lookup]]]] = None,
+        reverse: bool = False,
+        flags: int = 0,
+        force_alt: bool = False,
+    ) -> None:
         self.precontext = precontext or []
         self.postcontext = postcontext or []
         self.input = input_
@@ -644,7 +778,7 @@ class Substitution(Rule):
         self.force_alt = force_alt
 
     @property
-    def involved_glyphs(self):
+    def involved_glyphs(self) -> Set[str]:
         """Returns a set of all glyphs involved in this rule."""
         i = set(chain.from_iterable(self.input))
         o = set(chain.from_iterable(self.replacement))
@@ -691,14 +825,14 @@ class Chaining(Rule):
 
     def __init__(
         self,
-        input_,
-        precontext=None,
-        postcontext=None,
-        address=None,
-        languages=None,
-        lookups=None,
-        flags=0,
-    ):
+        input_: GlyphClasses,
+        precontext: Optional[GlyphClasses] = None,
+        postcontext: Optional[GlyphClasses] = None,
+        address: Optional[Any] = None,
+        languages: Optional[List[ScriptLanguage]] = None,
+        lookups: Optional[List[Optional[List[Lookup]]]] = None,
+        flags: int = 0,
+    ) -> None:
         self.precontext = precontext or []
         self.postcontext = postcontext or []
         self.input = input_
@@ -708,10 +842,12 @@ class Chaining(Rule):
         self.flags = flags
 
     @property
-    def stage(self):
+    def stage(self) -> Optional[str]:
         """Returns which shaping stage this routine is used in.
 
-        Returns: ``sub`` for substitution stage, ``pos`` for positioning stage."""
+        Returns:
+            ``sub`` for substitution stage, ``pos`` for positioning stage.
+        """
         for lookuplist in self.lookups:
             if not lookuplist:
                 continue
@@ -719,9 +855,10 @@ class Chaining(Rule):
                 if not aLookup:
                     continue
                 return aLookup.stage
+        return None
 
     @property
-    def involved_glyphs(self):
+    def involved_glyphs(self) -> Set[str]:
         """Returns a set of all glyphs involved in this rule."""
         i = set(chain.from_iterable(self.input))
         b = set(chain.from_iterable(self.precontext))
@@ -729,13 +866,14 @@ class Chaining(Rule):
         return i | b | a
 
     @property
-    def dependencies(self):
+    def dependencies(self) -> List[Routine]:
         """Returns a list of :py:class:`Routine` objects called as lookups in
         this Routine."""
-        deps = []
+        deps: List[Routine] = []
         for lookuplist in self.lookups:
             for aLookup in lookuplist or []:
                 if isinstance(aLookup, RoutineReference):
+                    assert aLookup.routine is not None
                     deps.append(aLookup.routine)
                 else:
                     deps.append(aLookup)
@@ -756,7 +894,7 @@ class ValueRecord(feaLibValueRecord):
     from .ttLib.ValueRecord import toOTValueRecord
 
     @property
-    def is_variable(self):
+    def is_variable(self) -> bool:
         """Returns true if any of the elements of the value record are a
         :py:class:`fontTools.feaLib.VariableScalar`."""
         return any(
@@ -802,14 +940,14 @@ class Positioning(Rule):
 
     def __init__(
         self,
-        glyphs,
-        valuerecords,
-        precontext=None,
-        postcontext=None,
-        address=None,
-        languages=None,
-        flags=0,
-    ):
+        glyphs: GlyphClasses,
+        valuerecords: Sequence[ValueRecord],
+        precontext: Optional[GlyphClasses] = None,
+        postcontext: Optional[GlyphClasses] = None,
+        address: Optional[Any] = None,
+        languages: Optional[List[ScriptLanguage]] = None,
+        flags: int = 0,
+    ) -> None:
         self.precontext = precontext or []
         self.postcontext = postcontext or []
         assert len(glyphs) == len(valuerecords)
@@ -821,7 +959,7 @@ class Positioning(Rule):
         self.stage = "pos"
 
     @property
-    def involved_glyphs(self):
+    def involved_glyphs(self) -> Set[str]:
         """Returns a set of all glyphs involved in this rule."""
         i = set(chain.from_iterable(self.glyphs))
         b = set(chain.from_iterable(self.precontext))
@@ -878,17 +1016,17 @@ class Attachment(Rule):
 
     def __init__(
         self,
-        base_name,
-        mark_name,
-        bases=None,
-        marks=None,
-        fullname=None,
-        flags=0,
-        address=None,
-        font=None,
-        languages=None,
-        force_markmark=False,
-    ):
+        base_name: str,
+        mark_name: str,
+        bases: Optional[Dict[str, AnchorPosition]] = None,
+        marks: Optional[Dict[str, AnchorPosition]] = None,
+        fullname: Optional[str] = None,
+        flags: int = 0,
+        address: Optional[Any] = None,
+        font: Optional[Any] = None,
+        languages: Optional[List[ScriptLanguage]] = None,
+        force_markmark: bool = False,
+    ) -> None:
         self.base_name = base_name
         self.mark_name = mark_name
         self.fullname = fullname or (self.base_name + "_" + self.mark_name)
@@ -902,7 +1040,7 @@ class Attachment(Rule):
         self.force_markmark = force_markmark
 
     @property
-    def is_cursive(self):
+    def is_cursive(self) -> bool:
         """Returns true if this is a cursive attachment rule."""
         return self.base_name == "cursive_entry" or self.base_name == "entry"  # XXX
 
@@ -912,7 +1050,7 @@ class Attachment(Rule):
     from .ttLib.Attachment import lookup_type
 
     @property
-    def involved_glyphs(self):
+    def involved_glyphs(self) -> Set[str]:
         """Returns a set of all glyphs involved in this rule."""
         b = set(self.bases.keys())
         m = set(self.marks.keys())

@@ -24,7 +24,7 @@ def categorize_glyph(font, glyphname):
         if c == "Mark":
             return ("mark", None)
         return ("base", None)
-    if hasattr(font, "_set_kerning"):  # Babelfont 1/2/3
+    if hasattr(font, "upm"):  # Babelfont 1/2/3
         if hasattr(font, "_master_map") or hasattr(font, "get_glyph_layer"):
             return (font.glyphs[glyphname].category, None)  # Babelfont 3
         else:

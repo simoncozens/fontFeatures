@@ -4,6 +4,7 @@ This package contains routines for converting between fontTools objects
 (representing TrueType/OpenType fonts) and fontFeatures. This particular
 module is mainly concerned with getting information out of binary OTF/TTF
 fonts and into fontFeatures."""
+
 from collections import OrderedDict
 
 from .GDEFUnparser import GDEFUnparser
