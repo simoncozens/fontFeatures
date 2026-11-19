@@ -207,7 +207,7 @@ class FontDameParser:
         self.resetContexts()
 
     def parse_lookup_header(self, line):
-        m = re.match("^lookup\s+([\\w-]+)\s+(.*)$", line)
+        m = re.match(r"^lookup\s+([\w-]+)\s+(.*)$", line)
         if not m:
             raise ValueError("Unparsable lookup header: |%s|" % line)
         self.current_lookup = Routine(name="lookup_%s" % m[1])
@@ -292,12 +292,12 @@ class FontDameParser:
             rule.marks[glyph] = pos
 
     def add_to_lookup(self, line):
-        m = re.match("(\w+)\s+(yes|no)", line)
+        m = re.match(r"(\w+)\s+(yes|no)", line)
         if m:
             if m[2] == "yes":
                 self.append_lookup_flag(m[1])
             return
-        m = re.match("MarkAttachmentType\s+(\d+)", line, flags=re.IGNORECASE)
+        m = re.match(r"MarkAttachmentType\s+(\d+)", line, flags=re.IGNORECASE)
         if m:
             self.append_lookup_flag("mat" + m[1])
             return
@@ -315,7 +315,7 @@ class FontDameParser:
             if m:
                 self.add_single_pos_x_placement(m[1], int(m[2]))
                 return
-            m = re.match("([\\w\\.-]+)\s+([\\w\\.-]+)\n", line)
+            m = re.match(r"([\w.-]+)\s+([\w\\.-]+)\n", line)
             if not m:
                 warnings.warn("Odd single lookup: %s" % line)
             #     import code
@@ -331,11 +331,11 @@ class FontDameParser:
                 self.add_pair(m[1], m[2], int(m[3]))
 
         elif self.current_lookup_type == "multiple":
-            m = re.match("([\\w\\.-]+)\s+(.*)\n", line)
+            m = re.match(r"([\w\\.-]+)\s+(.*)\n", line)
             self.add_subst([[m[1]]], [[x] for x in m[2].split("\t")])
 
         elif self.current_lookup_type == "ligature":
-            m = re.match("([\\w\\.-]+)\s(.*)\n", line)
+            m = re.match(r"([\w\\.-]+)\s(.*)\n", line)
             if not m:
                 raise ValueError("Unparsable line '%s'" % line)
             self.add_subst([[m[2]]], [m[1].split("\t")])
@@ -424,7 +424,7 @@ class FontDameParser:
         return context
 
     def add_to_class_definition(self, which, line):
-        m = re.match("([\w\.]+)\s+(\d+)", line)
+        m = re.match(r"([\w\.]+)\s+(\d+)", line)
         if not m:
             raise ValueError("Unparsable line '%s'" % line)
         if which == "class":
