@@ -4,7 +4,6 @@ from fontFeatures.optimizer import Optimizer
 import unittest
 import pytest
 
-
 pytest.skip("Optimizer is currently broken", allow_module_level=True)
 
 

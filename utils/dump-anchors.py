@@ -3,7 +3,6 @@ from fontFeatures.ttLib import unparse
 from argparse import ArgumentParser
 from fontTools.ttLib import TTFont
 
-
 parser = ArgumentParser()
 parser.add_argument("input", help="font file to process", metavar="FILE")
 args = parser.parse_args()
@@ -15,7 +14,9 @@ mark = list(flatten([x.rules for x in parsed.features["mark"]]))
 mkmk = list(flatten([x.rules for x in parsed.features["mkmk"]]))
 allfeat = mark + mkmk
 
-import code; code.interact(local=locals())
+import code
+
+code.interact(local=locals())
 
 for f in allfeat:
     for b in f.bases.keys():

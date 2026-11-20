@@ -29,7 +29,7 @@ jobs:
                   pip install black pytest
             - name: lint
               run: |
-                  black . --check --diff --color
+                  black . --check --diff --color --exclude _version
             - name: Run Tests
               run: |
                   pytest tests/*.py

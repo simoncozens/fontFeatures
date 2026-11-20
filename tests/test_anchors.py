@@ -23,7 +23,9 @@ class TestAnchors(unittest.TestCase):
         self.assertEqual(rt.asFea(), thing.asFea())
 
     def test_markbase(self):
-        s = Attachment("top", "top_", bases = {"A": (679, 1600)}, marks = {"acutecomb": (-570, 1290)})
+        s = Attachment(
+            "top", "top_", bases={"A": (679, 1600)}, marks={"acutecomb": (-570, 1290)}
+        )
         assertSufficientlyEqual(
             s.asFea(), "    pos base A <anchor 679 1600> mark @top_top_;\n"
         )
