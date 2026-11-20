@@ -21,6 +21,7 @@ def warning_on_one_line(message, category, filename, lineno, file=None, line=Non
 
 warnings.formatwarning = warning_on_one_line
 
+
 def main(args=None):
     parser = ArgumentParser()
     parser.add_argument("input", help="font file to process", metavar="FILE")
@@ -32,8 +33,11 @@ def main(args=None):
     )
 
     parser.add_argument(
-        "-i", "--index",
-        dest="index", type=int, default=-1,
+        "-i",
+        "--index",
+        dest="index",
+        type=int,
+        default=-1,
         help="Font index number (required for collections)",
     )
 
@@ -60,7 +64,10 @@ def main(args=None):
             config = json.load(f)
 
     if args.input.endswith("c") and args.index == -1:
-        print("Must provide -i argument with TrueType/OpenType collection file", file=sys.stderr)
+        print(
+            "Must provide -i argument with TrueType/OpenType collection file",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     font = TTFont(args.input, fontNumber=args.index)
@@ -69,6 +76,7 @@ def main(args=None):
     #     Optimizer(ff).optimize(level=args.optimize)
 
     print(ff.asFea())
+
 
 if __name__ == "__main__":
     main()

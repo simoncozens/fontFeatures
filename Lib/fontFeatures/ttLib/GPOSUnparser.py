@@ -1,4 +1,5 @@
 """GPOSUnparser: Convert binary GPOS lookups to fontFeatures objects."""
+
 from .GTableUnparser import GTableUnparser
 import fontFeatures
 

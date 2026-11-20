@@ -1,7 +1,6 @@
 """Routines for converting Chaining rules to and from XML."""
 
 
-
 def _toXML(self, root):
     self._makeglyphslots(root, "input", self.input)
     return root

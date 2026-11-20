@@ -1,4 +1,5 @@
 """Convert fontFeatures.Routine objects to binary GPOS/GSUB lookups."""
+
 import fontTools.otlLib.builder as otl
 from fontTools.varLib.builder import buildVarDevTable
 from fontTools.feaLib.variableScalar import VariableScalar

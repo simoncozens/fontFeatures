@@ -1,5 +1,6 @@
 #!/bin/env python3
 """Stupid Inefficient Exhaustive Shaping Test Architecture."""
+
 import argparse
 import json
 import os
@@ -17,11 +18,14 @@ from fontFeatures.ttLib import unparse
 from fontTools.ttLib import TTFont
 from vharfbuzz import Vharfbuzz
 
+
 def main(args=None):
     parser = argparse.ArgumentParser(description="Test coverage of OT features.")
     subparsers = parser.add_subparsers(required=True, dest="cmd")
     report = subparsers.add_parser("report")
-    report.add_argument("--suite", help="Test suite to read", metavar="JSON", required=True)
+    report.add_argument(
+        "--suite", help="Test suite to read", metavar="JSON", required=True
+    )
     report.add_argument("font", metavar="TTF", help="font file")
 
     generate = subparsers.add_parser("generate")
@@ -62,7 +66,6 @@ def main(args=None):
     generate.add_argument("font", metavar="TTF", help="font file")
     args = parser.parse_args(args)
 
-
     def restrict(unicodes, range_arg):
         allowable = set()
         ranges = range_arg.split(",")
@@ -74,13 +77,11 @@ def main(args=None):
                 allowable.add(chr(cp))
         return set(allowable) & set(unicodes)
 
-
     font = TTFont(args.font)
     ff = unparse(font)
     bbfont = load(args.font)
     num_routines = 0
     num_rules = 0
-
 
     # Monkeypatch shaperLib functions
     def wrap_do_apply(fn):
@@ -91,7 +92,6 @@ def main(args=None):
 
         return result
 
-
     for r in ff.routines:
         r.applied = False
         num_routines += 1
@@ -100,7 +100,6 @@ def main(args=None):
             rule.parent = r
             rule._do_apply = wrap_do_apply(rule._do_apply)
             num_rules += 1
-
 
     def count_triggered(ff):
         num_triggered_routines = 0
@@ -112,7 +111,6 @@ def main(args=None):
                 if rule.applied:
                     num_triggered_rules += 1
         return num_triggered_routines, num_triggered_rules
-
 
     num_triggered_routines = 0
     num_triggered_rules = 0
@@ -153,7 +151,9 @@ def main(args=None):
                             this_slot.extend([chr(c) for c in reversecmap[x]])
                     allowable.append(this_slot)
                 if all(allowable):
-                    blobs.extend(["".join(blob) for blob in itertools.product(*allowable)])
+                    blobs.extend(
+                        ["".join(blob) for blob in itertools.product(*allowable)]
+                    )
 
         unicodes = [c for c in unicodes if font.getBestCmap()[c] in involved]
         unicodes = [chr(c) for c in unicodes]
@@ -162,7 +162,6 @@ def main(args=None):
         if args.just_blobs:
             unicodes = []
         unicodes.extend(blobs)
-
 
     rule = tqdm.tqdm(
         total=num_rules,
@@ -180,11 +179,10 @@ def main(args=None):
     )
     vh = Vharfbuzz(args.font)
 
-
     def run_a_test(string, tests=None, output=True):
         global num_triggered_routines
         global num_triggered_rules
-        buf = Buffer(bbfont, unicodes=string)#,language=args.language)
+        buf = Buffer(bbfont, unicodes=string)  # ,language=args.language)
         try:
             shaper.execute(buf)
         except Exception:
@@ -212,7 +210,6 @@ def main(args=None):
         num_triggered_rules = new_triggered_rules
         num_triggered_routines = new_triggered_routines
         return new_triggered_rules == num_rules  # Done?
-
 
     tests = []
     suite = {"tests": []}
@@ -246,12 +243,12 @@ def main(args=None):
         params["language"] = args.language
     # Use HB for gold-standard output
     for test in new_tests:
-        buf = vh.shape(test["input"],parameters=params)
+        buf = vh.shape(test["input"], parameters=params)
         test["expectation"] = vh.serialize_buf(buf)
         if args.only:
             test["only"] = os.path.basename(args.font)
         test["note"] = "Added by SIESTA"
-        for k,v in params.items():
+        for k, v in params.items():
             test[k] = v
 
     suite["tests"].extend(new_tests)
@@ -262,6 +259,7 @@ def main(args=None):
         if not r.applied:
             print(r.asFea())
     sys.exit(0)
+
 
 if __name__ == "__main__":
     main()

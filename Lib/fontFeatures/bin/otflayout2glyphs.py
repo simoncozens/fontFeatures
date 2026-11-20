@@ -29,11 +29,16 @@ def warning_on_one_line(message, category, filename, lineno, file=None, line=Non
 
 warnings.formatwarning = warning_on_one_line
 
+
 def main(args=None):
     parser = ArgumentParser()
     parser.add_argument("source", help="source file to process", metavar="SOURCE")
-    parser.add_argument("firstmaster", help="binary font file to process", metavar="TTF")
-    parser.add_argument("--no-kerning", help="Don't try to convert kerning", action="store_true")
+    parser.add_argument(
+        "firstmaster", help="binary font file to process", metavar="TTF"
+    )
+    parser.add_argument(
+        "--no-kerning", help="Don't try to convert kerning", action="store_true"
+    )
     parser.add_argument(
         "-o",
         "--output",
@@ -43,7 +48,9 @@ def main(args=None):
     parser.add_argument(
         "--config", default=None, help="config file to process", metavar="CONFIG"
     )
-    parser.add_argument("othermasters", help="additional binary masters", metavar="TTF", nargs="*")
+    parser.add_argument(
+        "othermasters", help="additional binary masters", metavar="TTF", nargs="*"
+    )
 
     args = parser.parse_args(args)
 
@@ -79,7 +86,6 @@ def main(args=None):
             for feature in ["kern", "dist"]:
                 if feature in ff.features and not args.no_kerning:
                     self.add_kerning(feature)
-
 
         def add_anchor_to_glyph(self, glyphname, anchor_name, pos):
             anchor = GSAnchor(name=anchor_name, position=Point(*pos))
@@ -118,7 +124,7 @@ def main(args=None):
                     if "Cursive" in routine.name:
                         anchor_name = "exit"
                     else:
-                        anchor_name = "_"+rule.base_name
+                        anchor_name = "_" + rule.base_name
                     for mark, pos in rule.marks.items():
                         self.add_anchor_to_glyph(mark, anchor_name, pos)
             return delete_me
@@ -132,14 +138,13 @@ def main(args=None):
             if old_val == self.gsfont.EMPTY_KERNING_VALUE:
                 old_val = 0
             else:
-                print("Adding %i to existing kern %s/%s=%i" % (val, left, right, old_val))
+                print(
+                    "Adding %i to existing kern %s/%s=%i" % (val, left, right, old_val)
+                )
             if not val:
                 return
             self.gsfont.setKerningForPair(
-                self.gsfont.masters[self.master].id,
-                left,
-                right,
-                old_val + val
+                self.gsfont.masters[self.master].id, left, right, old_val + val
             )
 
         def add_kerning(self, feature):
@@ -159,14 +164,19 @@ def main(args=None):
                             continue
                         if not rule.valuerecords[0].xAdvance:
                             continue
-                        if rule.valuerecords[0].xPlacement or rule.valuerecords[0].yPlacement:
+                        if (
+                            rule.valuerecords[0].xPlacement
+                            or rule.valuerecords[0].yPlacement
+                        ):
                             continue
                         for left in rule.glyphs[0]:
                             for right in rule.glyphs[1]:
                                 if (left, right) in pairs:
                                     continue
-                                pairs.add((left,right))
-                                self.add_kern(left, right, rule.valuerecords[0].xAdvance)
+                                pairs.add((left, right))
+                                self.add_kern(
+                                    left, right, rule.valuerecords[0].xAdvance
+                                )
                                 print(
                                     "# Kerning %s %s = %i"
                                     % (left, right, rule.valuerecords[0].xAdvance)
@@ -190,16 +200,16 @@ def main(args=None):
                     for markclass, anchor in enumerate(cr.iter("LigatureAnchor")):
                         x = int(anchor.xpath(".//XCoordinate")[0].get("value"))
                         y = int(anchor.xpath(".//YCoordinate")[0].get("value"))
-                        anchor_name = name+f"_class{markclass}_"+str(1 + ix)
-                        self.add_anchor_to_glyph(ligature, anchor_name, (x,y))
+                        anchor_name = name + f"_class{markclass}_" + str(1 + ix)
+                        self.add_anchor_to_glyph(ligature, anchor_name, (x, y))
 
             array = tree.xpath("//*/MarkArray")[0]
             for mark, attach in zip(marks, array.iter("MarkRecord")):
                 markclass = int(attach.find("Class").get("value"))
-                anchor_name = "_"+name+f"_class{markclass}"
+                anchor_name = "_" + name + f"_class{markclass}"
                 x = int(attach.xpath(".//XCoordinate")[0].get("value"))
                 y = int(attach.xpath(".//YCoordinate")[0].get("value"))
-                anchor = self.add_anchor_to_glyph(mark, anchor_name, (x,y))
+                anchor = self.add_anchor_to_glyph(mark, anchor_name, (x, y))
 
         def fix_gdef_classes(self):
             for glyph, cat in self.ff.glyphclasses.items():
@@ -248,10 +258,12 @@ def main(args=None):
 
         def add_features_to_glyphs(self):
             for featuretag, routines in self.ff.features.items():
-                code = "\n".join([
-                    f"# {routine.languages}\n"+
-                    routine.asFea() for routine in routines
-                ])
+                code = "\n".join(
+                    [
+                        f"# {routine.languages}\n" + routine.asFea()
+                        for routine in routines
+                    ]
+                )
                 if featuretag in ["mark", "mkmk", "dist", "kern", "abvm", "blwm"]:
                     code = "# Automatic Code Start\n" + code
                 self.gsfont.features.append(GSFeature(name=featuretag, code=code))
@@ -261,7 +273,9 @@ def main(args=None):
             for script, langs in self.ff.scripts_and_languages.items():
                 for lang in langs:
                     code += f"languagesystem {script} {lang};\n"
-            self.gsfont.featurePrefixes.append(GSFeaturePrefix(name="Languagesystems", code=code))
+            self.gsfont.featurePrefixes.append(
+                GSFeaturePrefix(name="Languagesystems", code=code)
+            )
 
         def fix_duplicate_anchors(self):
             #  Get names of all anchors
@@ -288,11 +302,17 @@ def main(args=None):
                                 elif not l.anchors[ours]:
                                     print("Bad anchor %s in %s" % (ours, l))
                                     same = False
-                                elif l.anchors[theirs].position != l.anchors[ours].position:
+                                elif (
+                                    l.anchors[theirs].position
+                                    != l.anchors[ours].position
+                                ):
                                     same = False
                         if not same:
                             continue
-                        print("Our anchor '%s' was duplicate of original source '%s'" % (ours, theirs))
+                        print(
+                            "Our anchor '%s' was duplicate of original source '%s'"
+                            % (ours, theirs)
+                        )
                         drop_anchors.add(ours)
                         break
 
@@ -310,15 +330,16 @@ def main(args=None):
     Layout2Glyphs(gsfont, ff, args).process()
 
     for ix, master in enumerate(args.othermasters):
-        print("%s -> %i" % (master, ix+1))
+        print("%s -> %i" % (master, ix + 1))
         font = TTFont(master)
         ff = unparse(font, do_gdef=True, doLookups=True, config=config)
-        Layout2Glyphs(gsfont, ff, args, master=ix+1).process_gpos()
+        Layout2Glyphs(gsfont, ff, args, master=ix + 1).process_gpos()
 
     if not args.output:
         args.output = args.source
     gsfont.save(args.output)
     print(f"Saved {args.output}")
+
 
 if __name__ == "__main__":
     main()

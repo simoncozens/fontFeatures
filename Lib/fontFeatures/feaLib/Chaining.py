@@ -1,7 +1,6 @@
 # Code for converting a Chaining object into feaLib statements
 import fontTools.feaLib.ast as feaast
 
-
 # Can we chain multiple lookups?
 
 

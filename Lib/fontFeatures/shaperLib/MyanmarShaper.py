@@ -2,7 +2,6 @@ from .IndicShaperData import IndicPosition, make_syllable_machine
 from .SyllabicShaper import SyllabicShaper
 from collections import OrderedDict
 
-
 myanmar_category_reassignments = {
     0x002D: "GB",
     0x00A0: "GB",

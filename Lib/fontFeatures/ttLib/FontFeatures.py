@@ -11,6 +11,7 @@ call::
     ff.buildBinaryFeatures(font)
 
 """
+
 from fontTools.ttLib.tables import otTables
 from fontTools.ttLib import newTable
 from collections import OrderedDict

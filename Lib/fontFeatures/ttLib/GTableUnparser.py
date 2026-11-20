@@ -2,6 +2,7 @@
 GTableUnparser: Base class for reading binary GSUB/GPOS tables
 ==============================================================
 """
+
 from collections import OrderedDict
 from fontTools.misc.xmlWriter import XMLWriter
 import fontFeatures

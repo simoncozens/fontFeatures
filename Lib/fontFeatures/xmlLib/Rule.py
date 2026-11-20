@@ -1,4 +1,5 @@
 """Routines for converting Rule objects to and from XML."""
+
 from lxml import etree
 from fontFeatures.xmlLib.utils import put_languages, put_address
 

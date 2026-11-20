@@ -3,7 +3,6 @@ from enum import IntEnum
 import re
 from youseedee import ucd_data
 
-
 script_config = {
     "Invalid": dict(
         old_spec=False,

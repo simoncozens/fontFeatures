@@ -1,7 +1,6 @@
 from .BaseShaper import BaseShaper
 from youseedee import ucd_data
 
-
 jts = {"U": 0, "L": 1, "R": 2, "D": 3, "ALAPH": 4, "DALATH_RISH": 5}
 state_table = [
     #   jt_U,          jt_L,          jt_R,          jt_D,          jg_ALAPH,      jg_DALATH_RISH */

@@ -373,9 +373,9 @@ class IndicShaper(SyllabicShaper):
                                 base = i
                                 while base < end and is_halant(base):
                                     base = base + 1
-                                self.buffer.items[
-                                    base
-                                ].syllabic_positional_category = IndicPosition.BASE_C
+                                self.buffer.items[base].syllabic_positional_category = (
+                                    IndicPosition.BASE_C
+                                )
                                 try_pref = False
                             break
                 if self.buffer.script == "Malayalam":
@@ -394,9 +394,9 @@ class IndicShaper(SyllabicShaper):
                             and pos(i) == IndicPosition.BELOW_C
                         ):
                             base = i
-                            self.buffer.items[
-                                base
-                            ].syllabic_positional_category = IndicPosition.BASE_C
+                            self.buffer.items[base].syllabic_positional_category = (
+                                IndicPosition.BASE_C
+                            )
                         i = i + 1
                 if start < base and pos(base) > IndicPosition.BASE_C:
                     base = base - 1

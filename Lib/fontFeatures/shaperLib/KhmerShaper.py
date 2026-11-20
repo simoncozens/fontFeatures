@@ -4,7 +4,6 @@ import unicodedata
 from youseedee import ucd_data
 from collections import OrderedDict
 
-
 khmer_category_reassignments = {
     0x179A: "Ra",
     0x17CC: "Robatic",
